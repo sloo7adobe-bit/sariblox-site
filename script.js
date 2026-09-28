@@ -481,7 +481,7 @@ const VIDEOS = [
         ? undefined
         : {
             trigger: intro,
-            start: "top top",
+            start: "top 64px", // 固定ヘッダーの下に貼り付ける(頭が隠れないように)
             end: "+=130%",
             pin: true,
             scrub: 0.7,
