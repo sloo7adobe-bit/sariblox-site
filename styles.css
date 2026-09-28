@@ -635,6 +635,11 @@ p {
   gap: 28px;
 }
 
+.job-item {
+  display: flex;
+  flex-direction: column;
+}
+
 .job-label {
   font-family: var(--font-hand);
   font-size: 26px;
@@ -652,6 +657,7 @@ p {
   border: 2px solid var(--ink);
   box-shadow: 6px 6px 0 rgba(28, 28, 28, 0.85);
   min-height: 120px;
+  flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -663,7 +669,7 @@ p {
 
 .job-text {
   font-family: var(--font-hand);
-  font-size: 22px;
+  font-size: 20px;
   text-align: center;
   line-height: 1.5;
 }
