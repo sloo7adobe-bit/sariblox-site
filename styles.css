@@ -265,9 +265,9 @@ p {
   position: absolute;
   z-index: 1;
   left: 50%;
-  top: -3%;
-  width: min(120vh, 135vw, 1100px);
-  height: min(120vh, 135vw, 1100px);
+  top: 4%;
+  width: min(100vh, 135vw, 960px);
+  height: min(100vh, 135vw, 960px);
   transform: translateX(-50%);
   perspective: 1400px;
   will-change: transform;
@@ -407,7 +407,7 @@ p {
   position: absolute;
   z-index: 4;
   left: 50%;
-  bottom: 18vh;
+  bottom: 15vh;
   transform: translateX(-50%);
   width: min(92vw, 720px);
   text-align: center;
@@ -421,12 +421,8 @@ p {
   text-shadow: 2px 2px 0 var(--blue-shadow), 4px 4px 0 rgba(42, 127, 212, 0.35);
 }
 
-.intro-sub {
-  margin-top: 10px;
-  font-family: var(--font-hand);
-  font-size: 15px;
-  letter-spacing: 0.08em;
-  color: var(--ink);
+.intro-apply {
+  margin-top: 14px;
 }
 
 .intro-final {

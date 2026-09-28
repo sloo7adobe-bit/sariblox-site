@@ -248,7 +248,7 @@ const VIDEOS = [
 (function () {
   const card = document.getElementById("channel-card");
   const grid = document.getElementById("video-grid");
-  if (!card || !grid) return;
+  if (!grid) return;
 
   const ytIcon =
     '<svg width="16" height="12" viewBox="0 0 24 17" fill="#fff" aria-hidden="true"><path d="M9.5 12.5v-8l7 4-7 4z"/></svg>';
@@ -286,7 +286,7 @@ const VIDEOS = [
       "</ul>"
     : "";
 
-  card.innerHTML =
+  if (card) card.innerHTML =
     '<div class="channel-avatar">' +
     avatarHtml +
     '<span class="yt-badge" aria-hidden="true">' +
