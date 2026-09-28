@@ -357,7 +357,7 @@ const VIDEOS = [
   tl.to(lid, { y: "-130%", rotateX: -60, rotation: -18, autoAlpha: 0, duration: 0.16, ease: "power2.in" }, 0.2);
   tl.to(inner, { opacity: 0.7, scaleX: 1, scaleY: 1.3, duration: 0.08, ease: "power2.out" }, 0.08);
   tl.to(inner, { opacity: 0, scaleY: 0.6, duration: 0.1, ease: "power1.in" }, 0.2);
-  tl.to(glow, { scale: 1.6, opacity: 1.4, duration: 0.4, ease: "power1.out" }, 0.1);
+  tl.to(glow, { scale: 1.5, opacity: 1.2, duration: 0.4, ease: "power1.out" }, 0.1);
 
   // 0.14-0.55: 中身が「どばっ」と飛び出す
   items.forEach(function (it) {

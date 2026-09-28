@@ -12,9 +12,10 @@
   <meta property="og:url" content="https://sariblox.com/" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Russo+One&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700&family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
   <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+  <meta name="theme-color" content="#3fa9f5" />
 </head>
 <body>
   <header class="site-header">
@@ -46,6 +47,9 @@
           <img class="me me-lid" src="me-lid.webp" alt="" width="1194" height="1200" decoding="async" />
         </div>
         <div class="intro-fade" aria-hidden="true"></div>
+        <div class="grass-strip" aria-hidden="true"></div>
+        <svg class="cloud-deco" style="left:4%;top:14%;width:180px" viewBox="0 0 180 70" aria-hidden="true"><path d="M30 60h120a20 20 0 0 0 0-40 26 26 0 0 0-50-8 22 22 0 0 0-38 12 18 18 0 0 0-32 36z" fill="#fff" stroke="#1c1c1c" stroke-width="2.5" stroke-linejoin="round"/></svg>
+        <svg class="cloud-deco" style="right:6%;top:22%;width:140px" viewBox="0 0 180 70" aria-hidden="true"><path d="M30 60h120a20 20 0 0 0 0-40 26 26 0 0 0-50-8 22 22 0 0 0-38 12 18 18 0 0 0-32 36z" fill="#fff" stroke="#1c1c1c" stroke-width="2.5" stroke-linejoin="round"/></svg>
         <div class="burst" id="burst" aria-hidden="true"></div>
         <div class="intro-copy" id="intro-copy">
           <p class="intro-name">サリーぶろっくす</p>
@@ -75,13 +79,14 @@
         </div>
         <div class="scroll-hint" id="scroll-hint" aria-hidden="true">
           <span class="scroll-hint-line"></span>
-          <span class="scroll-hint-text">SCROLL</span>
+          <span class="scroll-hint-text">↓ スクロール</span>
         </div>
       </div>
     </section>
 
     <!-- ABOUT / JOB -->
     <section id="about" class="section">
+      <svg class="cloud-deco" style="right:3%;top:40px;width:160px" viewBox="0 0 180 70" aria-hidden="true"><path d="M30 60h120a20 20 0 0 0 0-40 26 26 0 0 0-50-8 22 22 0 0 0-38 12 18 18 0 0 0-32 36z" fill="#fff" stroke="#1c1c1c" stroke-width="2.5" stroke-linejoin="round"/></svg>
       <div class="container">
         <h2 class="section-title"><span class="en">JOB</span>募集内容</h2>
         <p class="section-lead">YouTube に投稿する横動画の編集をお願いします。素材と指示はこちらで用意するので、編集に集中できます。</p>
@@ -168,6 +173,7 @@
 
     <!-- FLOW -->
     <section id="flow" class="section">
+      <svg class="cloud-deco" style="left:2%;top:60px;width:130px" viewBox="0 0 180 70" aria-hidden="true"><path d="M30 60h120a20 20 0 0 0 0-40 26 26 0 0 0-50-8 22 22 0 0 0-38 12 18 18 0 0 0-32 36z" fill="#fff" stroke="#1c1c1c" stroke-width="2.5" stroke-linejoin="round"/></svg>
       <div class="container">
         <h2 class="section-title"><span class="en">FLOW</span>応募の流れ</h2>
         <p class="section-lead">応募からスタートまで、最短で 1 週間ほどです。</p>
@@ -263,7 +269,6 @@
     </div>
   </footer>
 
-  <div class="grain" aria-hidden="true"></div>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
   <script src="script.js" defer></script>
