@@ -448,6 +448,47 @@ p {
   max-width: 640px;
 }
 
+.intro-final .job-grid {
+  width: 100%;
+  max-width: 1000px;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.intro-final .job-label {
+  font-size: 20px;
+  margin-bottom: 6px;
+}
+
+.intro-final .job-card {
+  padding: 12px 16px;
+  min-height: 0;
+  border-radius: 14px;
+  box-shadow: 4px 4px 0 rgba(28, 28, 28, 0.85);
+}
+
+.intro-final .job-card .list {
+  text-align: left;
+}
+
+.intro-final .job-card .list li {
+  font-size: 14px;
+  line-height: 1.6;
+  padding-left: 18px;
+}
+
+.intro-final .job-card .list li + li {
+  margin-top: 4px;
+}
+
+.intro-final .hero-title {
+  font-size: clamp(38px, 7.5vw, 76px);
+}
+
+.intro-final .hero-actions {
+  margin-top: 18px;
+}
+
 .scroll-hint {
   position: absolute;
   z-index: 4;
@@ -1222,6 +1263,10 @@ p {
     grid-template-columns: repeat(2, 1fr);
   }
 
+  .intro-final .job-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
   .channel-card {
     flex-direction: row;
     justify-content: center;
@@ -1275,6 +1320,10 @@ p {
   .job-grid {
     grid-template-columns: repeat(3, 1fr);
     gap: 32px;
+  }
+
+  .intro-final .job-grid {
+    gap: 20px;
   }
 }
 
