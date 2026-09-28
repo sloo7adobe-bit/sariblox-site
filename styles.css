@@ -1225,6 +1225,61 @@ p {
   text-shadow: 1.5px 1.5px 0 var(--grass-dark);
 }
 
+.social {
+  display: flex;
+  gap: 12px;
+  margin: 10px 0 6px;
+}
+
+.social-btn {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: #fff;
+  border: 2px solid var(--ink);
+  color: var(--ink);
+  box-shadow: 3px 3px 0 var(--ink);
+  transition: transform 200ms var(--ease), box-shadow 200ms;
+}
+
+.social-btn svg {
+  width: 22px;
+  height: 22px;
+}
+
+.social-btn:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 4px 4px 0 var(--ink);
+}
+
+.footer-mail {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 6px 0 12px;
+  padding: 10px 20px;
+  border-radius: 999px;
+  background: #fff;
+  border: 2px solid var(--ink);
+  color: var(--ink);
+  font-family: "Zen Maru Gothic", "Noto Sans JP", sans-serif;
+  font-weight: 700;
+  font-size: 15px;
+  box-shadow: 3px 3px 0 var(--ink);
+  transition: transform 200ms var(--ease), box-shadow 200ms;
+}
+
+.footer-mail:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 4px 4px 0 var(--ink);
+}
+
+.footer-mail[hidden] {
+  display: none;
+}
+
 .footer-copy {
   font-size: 13px;
   color: rgba(255, 255, 255, 0.9);

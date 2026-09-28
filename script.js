@@ -336,6 +336,42 @@ const VIDEOS = [
     .join("");
 })();
 
+/* ==========================================================
+   フッターの SNS リンクとメール
+   URL を入れたものだけ表示されます(空欄は非表示)
+   ========================================================== */
+const SOCIAL = {
+  youtube: "https://www.youtube.com/@サリーぶろっくす",
+  tiktok: "",
+  x: "",
+  discord: "",
+  email: "",
+};
+
+(function () {
+  const ul = document.getElementById("social-links");
+  if (!ul) return;
+  const icons = {
+    youtube: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.6 12 3.6 12 3.6s-7.5 0-9.4.5A3 3 0 0 0 .5 6.2 31 31 0 0 0 0 12a31 31 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1c1.9.5 9.4.5 9.4.5s7.5 0 9.4-.5a3 3 0 0 0 2.1-2.1A31 31 0 0 0 24 12a31 31 0 0 0-.5-5.8zM9.6 15.6V8.4l6.3 3.6-6.3 3.6z"/></svg>',
+    tiktok: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16.6 5.8A4.3 4.3 0 0 1 15.5 3h-3.1v12.4a2.6 2.6 0 1 1-2.6-2.6c.3 0 .5 0 .8.1V9.7a5.7 5.7 0 1 0 4.9 5.7V9.1a7.4 7.4 0 0 0 4.3 1.4V7.4a4.3 4.3 0 0 1-3.2-1.6z"/></svg>',
+    x: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.244 2H21.5l-7.5 8.57L22.8 22h-6.9l-5.4-7.06L4.3 22H1.04l8.02-9.17L1.2 2h7.08l4.88 6.45L18.244 2zm-1.21 18h1.8L7.05 3.9H5.12L17.03 20z"/></svg>',
+    discord: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.3 4.4A19.8 19.8 0 0 0 15.4 3l-.2.4a18 18 0 0 1 4.5 1.5 15 15 0 0 0-15.4 0A18 18 0 0 1 8.8 3.4L8.6 3a19.8 19.8 0 0 0-4.9 1.5C.6 9.1-.2 13.7.2 18.2a20 20 0 0 0 6 3l1.3-2a12.8 12.8 0 0 1-2-1l.5-.4a14.3 14.3 0 0 0 12 0l.5.4-2 1 1.3 2a20 20 0 0 0 6-3c.5-5.2-.8-9.7-3.5-13.8zM8.7 15.4c-1.2 0-2.1-1.1-2.1-2.4s1-2.4 2.1-2.4 2.2 1.1 2.1 2.4-.9 2.4-2.1 2.4zm6.6 0c-1.2 0-2.1-1.1-2.1-2.4s1-2.4 2.1-2.4 2.2 1.1 2.1 2.4-.9 2.4-2.1 2.4z"/></svg>',
+  };
+  const labels = { youtube: "YouTube", tiktok: "TikTok", x: "X", discord: "Discord" };
+  ul.innerHTML = ["youtube", "tiktok", "x", "discord"]
+    .filter(function (k) { return SOCIAL[k]; })
+    .map(function (k) {
+      return '<li><a class="social-btn" href="' + SOCIAL[k] + '" target="_blank" rel="noopener noreferrer" aria-label="' + labels[k] + '">' + icons[k] + "</a></li>";
+    })
+    .join("");
+  const mail = document.getElementById("footer-mail");
+  if (mail && SOCIAL.email) {
+    mail.href = "mailto:" + SOCIAL.email;
+    document.getElementById("footer-mail-text").textContent = SOCIAL.email;
+    mail.hidden = false;
+  }
+})();
+
 /* ---------- 年号 ---------- */
 (function () {
   const y = document.getElementById("year");
