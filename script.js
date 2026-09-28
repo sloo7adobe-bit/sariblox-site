@@ -236,6 +236,11 @@ const VIDEOS = [
   const stage = document.getElementById("intro-stage");
   const burst = document.getElementById("burst");
   if (!intro || !stage || !burst) return;
+  // 開発確認用: ?nointro=1 でオープニングを外して本文だけ表示
+  if (new URLSearchParams(location.search).has("nointro")) {
+    intro.remove();
+    return;
+  }
 
   const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const hasGsap = typeof window.gsap !== "undefined" && typeof window.ScrollTrigger !== "undefined";
@@ -310,13 +315,15 @@ const VIDEOS = [
 
   // 初期状態(中央配置は GSAP 側で管理する)
   gsap.set(figure, { xPercent: -50, yPercent: 0 });
-  gsap.set(opened, { opacity: 0 });
+  gsap.set(opened, { opacity: 0, clipPath: "inset(28.5% 0 0 0)" }); // フタが上がるまで中身は隠す
+  gsap.set(lid, { opacity: 0 }); // 最初は1枚の写真だけを見せる(フタは動く瞬間に出す)
   gsap.set(finalBlock, { autoAlpha: 0, y: 40 });
   gsap.set(items.map(function (i) { return i.el; }), { xPercent: -50, yPercent: -50, x: 0, y: 0, scale: 0, opacity: 0, rotation: 0 });
 
   // ---- タイムライン(スクロールに完全連動) ----
   // 開発確認用: ?p=0.5 のように指定すると、その進行度で静止表示する
   const debugP = new URLSearchParams(location.search).get("p");
+  if (debugP !== null) document.documentElement.style.scrollBehavior = "auto";
   const tl = gsap.timeline({
     defaults: { ease: "none" },
     paused: debugP !== null,
@@ -326,29 +333,33 @@ const VIDEOS = [
         : {
             trigger: intro,
             start: "top top",
-            end: "+=260%",
+            end: "+=130%",
             pin: true,
-            scrub: 0.9,
+            scrub: 0.7,
             anticipatePin: 1,
             invalidateOnRefresh: true,
           },
   });
 
-  // 0.00-0.18: 名前とヒントが消え、少し寄る
-  tl.to([copy, hint], { autoAlpha: 0, y: -20, duration: 0.12 }, 0);
-  tl.to(figure, { scale: 1.06, yPercent: 3, duration: 0.3, ease: "power1.inOut" }, 0);
+  // 0.00-0.10: 名前とヒントが消え、少し寄る
+  tl.to([copy, hint], { autoAlpha: 0, y: -16, duration: 0.08 }, 0);
+  tl.to(figure, { scale: 1.05, yPercent: 2, duration: 0.25, ease: "power1.inOut" }, 0);
 
-  // 0.12-0.40: 髪のフタが「ぱかっ」と外れて上へ飛び、脳みそが現れる
-  tl.to(lid, { y: "-3%", rotation: -2, duration: 0.05, ease: "power2.out" }, 0.12);
-  tl.to(lid, { y: "-30%", rotateX: -30, rotation: -10, duration: 0.14, ease: "power3.out" }, 0.17);
-  tl.to(lid, { y: "-120%", rotateX: -60, rotation: -18, autoAlpha: 0, duration: 0.22, ease: "power2.in" }, 0.31);
-  tl.to(closed, { opacity: 0, duration: 0.07, ease: "power1.inOut" }, 0.13);
-  tl.to(opened, { opacity: 1, duration: 0.07, ease: "power1.inOut" }, 0.13);
-  tl.to(inner, { opacity: 0.75, scaleX: 1, scaleY: 1.3, duration: 0.12, ease: "power2.out" }, 0.15);
-  tl.to(inner, { opacity: 0, scaleY: 0.6, duration: 0.14, ease: "power1.in" }, 0.3);
-  tl.to(glow, { scale: 1.6, opacity: 1.4, duration: 0.5, ease: "power1.out" }, 0.2);
+  // 0.06: フタを出すのと同時に写真を「開いた状態」へ切り替える(見た目は変わらない)
+  tl.set(lid, { opacity: 1 }, 0.06);
+  tl.to(closed, { opacity: 0, duration: 0.03 }, 0.06);
+  tl.to(opened, { opacity: 1, duration: 0.03 }, 0.06);
 
-  // 0.28-0.68: 中身が「どばっ」と飛び出す
+  // 0.07-0.32: 髪のフタが「ぱかっ」と外れて上へ飛ぶ
+  tl.to(lid, { y: "-3%", rotation: -2, duration: 0.04, ease: "power2.out" }, 0.07);
+  tl.to(lid, { y: "-34%", rotateX: -30, rotation: -10, duration: 0.1, ease: "power3.out" }, 0.11);
+  tl.to(opened, { clipPath: "inset(0% 0 0 0)", duration: 0.1, ease: "power2.out" }, 0.11);
+  tl.to(lid, { y: "-130%", rotateX: -60, rotation: -18, autoAlpha: 0, duration: 0.16, ease: "power2.in" }, 0.2);
+  tl.to(inner, { opacity: 0.7, scaleX: 1, scaleY: 1.3, duration: 0.08, ease: "power2.out" }, 0.08);
+  tl.to(inner, { opacity: 0, scaleY: 0.6, duration: 0.1, ease: "power1.in" }, 0.2);
+  tl.to(glow, { scale: 1.6, opacity: 1.4, duration: 0.4, ease: "power1.out" }, 0.1);
+
+  // 0.14-0.55: 中身が「どばっ」と飛び出す
   items.forEach(function (it) {
     tl.to(
       it.el,
@@ -358,33 +369,33 @@ const VIDEOS = [
         rotation: it.rot,
         scale: it.scale,
         opacity: 1,
-        duration: 0.32,
+        duration: 0.26,
         ease: "power3.out",
       },
-      0.28 + it.order
+      0.14 + it.order * 0.7
     );
   });
 
-  // 0.62-0.82: 主役が引いて、飛び出したものは奥へ
-  tl.to(figure, { scale: 0.9, yPercent: 10, autoAlpha: 0.16, duration: 0.2, ease: "power2.inOut" }, 0.62);
+  // 0.52-0.70: 主役が引いて、飛び出したものは奥へ
+  tl.to(figure, { scale: 0.92, yPercent: 8, autoAlpha: 0.16, duration: 0.18, ease: "power2.inOut" }, 0.52);
   items.forEach(function (it) {
     tl.to(
       it.el,
       {
         x: function () { return (stage.clientWidth * it.tx * 1.25) / 100; },
         y: function () { return (stage.clientHeight * it.ty * 1.25) / 100; },
-        opacity: 0.22,
+        opacity: 0.2,
         scale: it.scale * 0.9,
-        duration: 0.25,
+        duration: 0.22,
         ease: "power1.inOut",
       },
-      0.64
+      0.54
     );
   });
 
-  // 0.76-1.00: 見出しが浮かび上がる
-  tl.to(finalBlock, { autoAlpha: 1, y: 0, duration: 0.2, ease: "power2.out" }, 0.76);
-  tl.to({}, { duration: 0.04 }); // 最後に少し余韻
+  // 0.64-0.86: 見出しが浮かび上がる
+  tl.to(finalBlock, { autoAlpha: 1, y: 0, duration: 0.18, ease: "power2.out" }, 0.64);
+  tl.to({}, { duration: 0.14 }); // 読める余韻
 
   // 画像読み込み後に位置を再計算
   window.addEventListener("load", function () {
