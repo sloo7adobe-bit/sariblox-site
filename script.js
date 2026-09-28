@@ -226,3 +226,164 @@ const VIDEOS = [
     });
   }, 2000);
 })();
+
+/* ==========================================================
+   オープニング演出(スクロール連動)
+   頭のフタが開いて、動画や言葉が飛び出す
+   ========================================================== */
+(function () {
+  const intro = document.getElementById("intro");
+  const stage = document.getElementById("intro-stage");
+  const burst = document.getElementById("burst");
+  if (!intro || !stage || !burst) return;
+
+  const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const hasGsap = typeof window.gsap !== "undefined" && typeof window.ScrollTrigger !== "undefined";
+
+  if (reduce || !hasGsap) {
+    intro.classList.add("is-static");
+    return;
+  }
+
+  intro.classList.add("is-animated");
+  gsap.registerPlugin(ScrollTrigger);
+
+  // ---- 飛び出す要素を作る ----
+  function toId(v) {
+    const m =
+      v.match(/[?&]v=([A-Za-z0-9_-]{11})/) ||
+      v.match(/youtu\.be\/([A-Za-z0-9_-]{11})/) ||
+      v.match(/^([A-Za-z0-9_-]{11})$/);
+    return m ? m[1] : "";
+  }
+  const ids = (typeof VIDEOS !== "undefined" ? VIDEOS : []).map(toId).filter(Boolean).slice(0, 9);
+
+  // 位置は舞台の中心からの % (x: 幅, y: 高さ)
+  const thumbTargets = [
+    [-40, -34], [40, -32], [-46, 6], [46, 4], [-32, 38], [32, 36], [0, -44], [-16, 46], [18, 44],
+  ];
+  const words = ["カット", "テロップ", "効果音", "BGM", "サムネ", "企画", "ネタ", "テンポ", "ワクワク", "神編集"];
+  const wordTargets = [
+    [-24, -20], [24, -24], [-30, 20], [28, 20], [8, -38], [-8, 34], [38, -10], [-38, -8], [12, 22], [-14, -36],
+  ];
+  const shapeTargets = [
+    [-18, -30], [20, -14], [-34, 30], [34, 26], [4, -28], [-6, 44], [44, -22], [-44, 18], [26, 40], [-26, -40], [0, 30], [40, 14],
+  ];
+
+  const items = [];
+
+  ids.forEach(function (id, i) {
+    const t = thumbTargets[i % thumbTargets.length];
+    const el = document.createElement("div");
+    el.className = "burst-item burst-thumb";
+    el.innerHTML = '<img src="https://i.ytimg.com/vi/' + id + '/mqdefault.jpg" alt="" loading="eager" decoding="async" />';
+    burst.appendChild(el);
+    items.push({ el: el, tx: t[0], ty: t[1], rot: (i % 2 ? 1 : -1) * (6 + (i * 5) % 14), scale: 1, order: i * 0.045 + 0.02 });
+  });
+
+  words.forEach(function (w, i) {
+    const t = wordTargets[i % wordTargets.length];
+    const el = document.createElement("div");
+    el.className = "burst-item burst-word" + (i % 3 === 1 ? " white" : "");
+    el.textContent = w;
+    el.style.fontSize = "clamp(" + (18 + (i % 3) * 6) + "px, " + (3.2 + (i % 4) * 0.8) + "vw, " + (40 + (i % 3) * 10) + "px)";
+    burst.appendChild(el);
+    items.push({ el: el, tx: t[0], ty: t[1], rot: (i % 2 ? -1 : 1) * (4 + (i * 7) % 18), scale: 1, order: i * 0.04 + 0.01 });
+  });
+
+  shapeTargets.forEach(function (t, i) {
+    const el = document.createElement("div");
+    el.className = "burst-item " + ["burst-dot", "burst-ring", "burst-bar"][i % 3];
+    burst.appendChild(el);
+    items.push({ el: el, tx: t[0], ty: t[1], rot: (i * 37) % 180, scale: 0.8 + (i % 3) * 0.3, order: i * 0.03 });
+  });
+
+  const figure = document.getElementById("intro-figure");
+  const lid = intro.querySelector(".avatar-lid");
+  const inner = intro.querySelector(".head-inner");
+  const copy = document.getElementById("intro-copy");
+  const finalBlock = document.getElementById("intro-final");
+  const hint = document.getElementById("scroll-hint");
+  const glow = intro.querySelector(".intro-glow");
+
+  // 初期状態(中央配置は GSAP 側で管理する)
+  gsap.set(figure, { xPercent: -50, yPercent: -50 });
+  gsap.set(finalBlock, { autoAlpha: 0, y: 40 });
+  gsap.set(items.map(function (i) { return i.el; }), { xPercent: -50, yPercent: -50, x: 0, y: 0, scale: 0, opacity: 0, rotation: 0 });
+
+  // ---- タイムライン(スクロールに完全連動) ----
+  // 開発確認用: ?p=0.5 のように指定すると、その進行度で静止表示する
+  const debugP = new URLSearchParams(location.search).get("p");
+  const tl = gsap.timeline({
+    defaults: { ease: "none" },
+    paused: debugP !== null,
+    scrollTrigger:
+      debugP !== null
+        ? undefined
+        : {
+            trigger: intro,
+            start: "top top",
+            end: "+=260%",
+            pin: true,
+            scrub: 0.9,
+            anticipatePin: 1,
+            invalidateOnRefresh: true,
+          },
+  });
+
+  // 0.00-0.18: 名前とヒントが消え、少し寄る
+  tl.to([copy, hint], { autoAlpha: 0, y: -20, duration: 0.12 }, 0);
+  tl.to(figure, { scale: 1.08, yPercent: -48, duration: 0.3, ease: "power1.inOut" }, 0);
+
+  // 0.12-0.40: フタが「ぱかっ」と外れて、上へ飛んでいく
+  tl.to(lid, { y: "-4%", rotation: -3, duration: 0.05, ease: "power2.out" }, 0.12);
+  tl.to(lid, { y: "-38%", rotateX: -28, rotation: -9, duration: 0.14, ease: "power3.out" }, 0.17);
+  tl.to(lid, { y: "-140%", rotateX: -55, rotation: -16, autoAlpha: 0, duration: 0.22, ease: "power2.in" }, 0.31);
+  tl.to(inner, { opacity: 1, scaleX: 1, scaleY: 1.4, duration: 0.18, ease: "power2.out" }, 0.18);
+  tl.to(glow, { scale: 1.6, opacity: 1.4, duration: 0.5, ease: "power1.out" }, 0.2);
+
+  // 0.28-0.68: 中身が「どばっ」と飛び出す
+  items.forEach(function (it) {
+    tl.to(
+      it.el,
+      {
+        x: function () { return (stage.clientWidth * it.tx) / 100; },
+        y: function () { return (stage.clientHeight * it.ty) / 100; },
+        rotation: it.rot,
+        scale: it.scale,
+        opacity: 1,
+        duration: 0.32,
+        ease: "power3.out",
+      },
+      0.28 + it.order
+    );
+  });
+
+  // 0.62-0.82: 主役が引いて、飛び出したものは奥へ
+  tl.to(figure, { scale: 0.86, yPercent: -40, autoAlpha: 0.14, duration: 0.2, ease: "power2.inOut" }, 0.62);
+  tl.to(inner, { opacity: 0, duration: 0.1 }, 0.62);
+  items.forEach(function (it) {
+    tl.to(
+      it.el,
+      {
+        x: function () { return (stage.clientWidth * it.tx * 1.25) / 100; },
+        y: function () { return (stage.clientHeight * it.ty * 1.25) / 100; },
+        opacity: 0.22,
+        scale: it.scale * 0.9,
+        duration: 0.25,
+        ease: "power1.inOut",
+      },
+      0.64
+    );
+  });
+
+  // 0.76-1.00: 見出しが浮かび上がる
+  tl.to(finalBlock, { autoAlpha: 1, y: 0, duration: 0.2, ease: "power2.out" }, 0.76);
+  tl.to({}, { duration: 0.04 }); // 最後に少し余韻
+
+  // 画像読み込み後に位置を再計算
+  window.addEventListener("load", function () {
+    ScrollTrigger.refresh();
+    if (debugP !== null) tl.progress(parseFloat(debugP) || 0);
+  });
+})();

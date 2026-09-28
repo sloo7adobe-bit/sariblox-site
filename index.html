@@ -35,39 +35,47 @@
   </header>
 
   <main id="top">
-    <!-- HERO -->
-    <section class="hero">
-      <div class="hero-bg" aria-hidden="true">
-        <span class="blob blob-1"></span>
-        <span class="blob blob-2"></span>
-        <span class="blob blob-3"></span>
-      </div>
-      <div class="container hero-inner">
-        <p class="eyebrow">
-          <span class="dot" aria-hidden="true"></span>
-          現在募集中
-        </p>
-        <h1 class="hero-title">
-          <span class="hero-title-line">横動画の</span>
-          <span class="hero-title-line accent">編集者</span>
-          <span class="hero-title-line">募集</span>
-        </h1>
-        <p class="hero-lead">
-          ロブロックス実況チャンネル「サリーぶろっくす」の横動画を一緒に作ってくれる編集者を探しています。<br class="pc-only" />
-          在宅・リモート OK。まずは気軽に応募してください。
-        </p>
-        <div class="hero-actions">
-          <a href="#apply" class="btn btn-primary btn-lg">
-            応募する
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
-          </a>
-          <a href="#about" class="btn btn-ghost btn-lg">募集内容を見る</a>
+    <!-- INTRO (scroll-driven opening) -->
+    <section class="intro" id="intro" aria-label="オープニング">
+      <div class="intro-stage" id="intro-stage">
+        <div class="intro-glow" aria-hidden="true"></div>
+        <div class="intro-figure" id="intro-figure" aria-hidden="true">
+          <div class="head-inner"></div>
+          <img class="avatar-base" src="avatar-cut.webp" alt="" width="900" height="900" decoding="async" />
+          <img class="avatar-lid" src="avatar-cut.webp" alt="" width="900" height="900" decoding="async" />
         </div>
-        <ul class="hero-stats" aria-label="募集概要">
-          <li><span class="stat-num">21万人</span><span class="stat-label">チャンネル登録者</span></li>
-          <li><span class="stat-num">1.2億</span><span class="stat-label">総再生数</span></li>
-          <li><span class="stat-num">継続</span><span class="stat-label">長期歓迎</span></li>
-        </ul>
+        <div class="intro-fade" aria-hidden="true"></div>
+        <div class="burst" id="burst" aria-hidden="true"></div>
+        <div class="intro-copy" id="intro-copy">
+          <p class="intro-name">サリーぶろっくす</p>
+          <p class="intro-sub">YouTube 登録者 21万人 / 総再生 1.2億回</p>
+        </div>
+        <div class="intro-final" id="intro-final">
+          <p class="eyebrow">
+            <span class="dot" aria-hidden="true"></span>
+            現在募集中
+          </p>
+          <h1 class="hero-title">
+            <span class="hero-title-line">横動画の</span>
+            <span class="hero-title-line accent">編集者</span>
+            <span class="hero-title-line">募集</span>
+          </h1>
+          <p class="hero-lead">
+            ロブロックス実況チャンネル「サリーぶろっくす」の横動画を一緒に作ってくれる編集者を探しています。<br class="pc-only" />
+            在宅・リモート OK。まずは気軽に応募してください。
+          </p>
+          <div class="hero-actions">
+            <a href="#apply" class="btn btn-primary btn-lg">
+              応募する
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+            </a>
+            <a href="#about" class="btn btn-ghost btn-lg">募集内容を見る</a>
+          </div>
+        </div>
+        <div class="scroll-hint" id="scroll-hint" aria-hidden="true">
+          <span class="scroll-hint-line"></span>
+          <span class="scroll-hint-text">SCROLL</span>
+        </div>
       </div>
     </section>
 
@@ -251,6 +259,9 @@
     </div>
   </footer>
 
-  <script src="script.js"></script>
+  <div class="grain" aria-hidden="true"></div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+  <script src="script.js" defer></script>
 </body>
 </html>
