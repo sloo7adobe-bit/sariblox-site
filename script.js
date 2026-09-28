@@ -24,7 +24,7 @@ const CHANNEL = {
   // チャンネルアイコンの画像(空なら頭文字を表示)
   avatar: "avatar.jpg",
   subscribers: "21万人",
-  videos: "362",
+  videos: "",           // 空なら非表示
   views: "1.2億回",
 };
 
