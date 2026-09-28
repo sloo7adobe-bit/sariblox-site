@@ -263,6 +263,8 @@ p {
 
 .avatar-base {
   clip-path: inset(34.8% 0 0 0);
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 62%, rgba(0, 0, 0, 0.35) 82%, transparent 96%);
+  mask-image: linear-gradient(180deg, #000 0%, #000 62%, rgba(0, 0, 0, 0.35) 82%, transparent 96%);
 }
 
 .avatar-lid {
