@@ -269,29 +269,30 @@
 
         <div class="field">
           <label class="field-label" for="f-name"><span class="field-num">1</span>名前<span class="field-req">必須</span></label>
-          <input class="field-input" id="f-name" name="name" type="text" maxlength="60" placeholder="ニックネームで OK" autocomplete="nickname" required />
+          <input class="field-input" id="f-name" name="name" type="text" maxlength="60" placeholder="ニックネームでもOK" autocomplete="nickname" required />
         </div>
 
         <div class="field">
-          <label class="field-label" for="f-discord"><span class="field-num">2</span>Discord のユーザー名<span class="field-req">必須</span></label>
-          <input class="field-input" id="f-discord" name="discord" type="text" maxlength="60" placeholder="例: sari_blox" autocomplete="off" required />
-          <p class="field-help">Discord の左下に出ている、@ の後ろの名前です。こちらから連絡するときに使います。</p>
+          <label class="field-label" for="f-discord"><span class="field-num">2</span><span class="en-word">Discord</span> ユーザー名<span class="field-req">必須</span></label>
+          <input class="field-input" id="f-discord" name="discord" type="text" maxlength="60" placeholder="例: ytsari" autocomplete="off" required />
+          <p class="field-help"><span class="en-word">Discord</span> の左下に出ている、@ の後ろの名前です。こちらから連絡するときに使います。</p>
         </div>
 
         <div class="field">
-          <label class="field-label" for="f-video"><span class="field-num">3</span>自分が編集した動画<span class="field-req">1本以上</span></label>
+          <label class="field-label" for="f-video"><span class="field-num">3</span>過去に作った作品<span class="field-req">1本以上</span></label>
           <div class="video-add">
-            <input class="field-input" id="f-video" type="url" placeholder="YouTube の動画 URL を貼り付け" autocomplete="off" inputmode="url" />
+            <input class="field-input" id="f-video" type="url" placeholder="YouTubeの動画URLを貼り付け" autocomplete="off" inputmode="url" />
             <button type="button" class="btn btn-ghost btn-sm" id="f-video-add">追加</button>
           </div>
-          <p class="field-help">URL を貼ると下にサムネイルが出ます。最大 10 本まで。</p>
+          <p class="field-help">自分が編集したアピールできる動画を貼ってください。<br />※自分のチャンネルで出した動画もOK(最大 10 本)</p>
           <p class="field-error" id="f-video-error" hidden></p>
           <ul class="video-list" id="f-video-list" aria-live="polite"></ul>
         </div>
 
         <div class="field">
-          <label class="field-label" for="f-reason"><span class="field-num">4</span>応募した理由・一緒に目指したいこと<span class="field-req">必須</span></label>
-          <textarea class="field-input field-textarea" id="f-reason" name="reason" rows="5" maxlength="2000" placeholder="例: サリーぶろっくすの動画をよく見ていて、テンポの良い編集が得意です。登録者 50 万人を一緒に目指したいです。" required></textarea>
+          <label class="field-label" for="f-reason"><span class="field-num">4</span>応募した理由<span class="field-req">必須</span></label>
+          <p class="field-help field-help-top">どういうスタイルの編集ができるのか、1本だいたいどのくらいで終わるのか、何を意識して作っているのか、普段誰のチャンネルを見ているのか、を書いてください。</p>
+          <textarea class="field-input field-textarea" id="f-reason" name="reason" rows="5" maxlength="2000" placeholder="例: テンポ重視のカット編集が得意で、10分の動画なら2日ほどで仕上げます。普段は〇〇のチャンネルをよく見ています。" required></textarea>
         </div>
 
         <!-- ボット対策: 人は入力しない欄 -->
