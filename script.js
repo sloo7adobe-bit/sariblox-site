@@ -37,6 +37,26 @@
     return m ? m[1] : "";
   }
 
+  // ---- 応募済みチェック(1人1回) ----
+  const LS_KEY = "sb_applied";
+  function markApplied() {
+    try { localStorage.setItem(LS_KEY, String(Date.now())); } catch (e) {}
+    form.hidden = true;
+    done.hidden = false;
+  }
+  function isAppliedLocal() {
+    try { return !!localStorage.getItem(LS_KEY); } catch (e) { return false; }
+  }
+  if (isAppliedLocal()) {
+    form.hidden = true;
+    done.hidden = false;
+  } else {
+    fetch("/api/applied", { credentials: "same-origin" })
+      .then(function (r) { return r.json(); })
+      .then(function (j) { if (j && j.applied) markApplied(); })
+      .catch(function () {});
+  }
+
   // ---- 開閉 ----
   function openModal() {
     lastFocus = document.activeElement;
@@ -189,6 +209,7 @@
     fetch("/api/apply", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
+      credentials: "same-origin",
       body: JSON.stringify({
         name: name,
         discord: discord,
@@ -200,8 +221,11 @@
       .then(function (r) { return r.json().then(function (j) { return { status: r.status, body: j }; }); })
       .then(function (res) {
         if (res.body && res.body.ok) {
-          form.hidden = true;
-          done.hidden = false;
+          markApplied();
+          done.querySelector("[data-close]").focus();
+        } else if (res.body && res.body.duplicate) {
+          markApplied();
+          done.querySelector(".modal-lead").textContent = "この Discord ユーザー名(またはこの回線)からの応募はすでに受け付けています。応募は1人1回までです。";
           done.querySelector("[data-close]").focus();
         } else {
           setError((res.body && res.body.error) || "送信に失敗しました。時間をおいてもう一度お試しください。");
@@ -458,7 +482,7 @@ const SOCIAL = {
     [-24, -20], [24, -24], [-30, 20], [28, 20], [8, -38], [-8, 34], [38, -10], [-38, -8], [12, 22], [-14, -36],
   ];
   const shapeTargets = [
-    [-18, -30], [20, -14], [-34, 30], [34, 26], [4, -28], [-6, 44], [44, -22], [-44, 18], [26, 40], [-26, -40], [0, 30], [40, 14],
+    [-18, -30], [20, -14], [-34, 30], [34, 26], [4, -28], [-30, 44], [44, -22], [-44, 18], [30, 42], [-26, -40], [40, 14],
   ];
 
   const items = [];

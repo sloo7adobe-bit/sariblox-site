@@ -5,3 +5,6 @@ Thumbs.db
 .vercel
 .env*
 font/*.ttf
+node_modules
+.env.local
+.env*.local

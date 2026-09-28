@@ -1,0 +1,9 @@
+{
+  "name": "sariblox-site",
+  "private": true,
+  "version": "1.0.0",
+  "description": "サリーぶろっくす 横動画 編集者募集サイト",
+  "dependencies": {
+    "@vercel/blob": "^0.27.0"
+  }
+}
