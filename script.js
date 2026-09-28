@@ -28,7 +28,7 @@ const CHANNEL = {
   views: "1.2億回",
 };
 
-// 紹介したい横動画の YouTube URL または 動画ID を 6 本まで
+// 紹介したい横動画の YouTube URL または 動画ID を 9 本まで
 // 例: "https://www.youtube.com/watch?v=dQw4w9WgXcQ" または "dQw4w9WgXcQ"
 const VIDEOS = [
   "https://youtu.be/IbyUW3-2kks",
@@ -37,6 +37,9 @@ const VIDEOS = [
   "https://youtu.be/yNRXvwIkgrg",
   "https://youtu.be/A1kRe_BP4mM",
   "https://youtu.be/CymMygkEF6o",
+  "https://youtu.be/8jxV8h5b3Vg",
+  "https://www.youtube.com/watch?v=B2GK-L0xMGw",
+  "https://www.youtube.com/watch?v=dNiF_CisHyk",
 ];
 
 (function () {
@@ -108,7 +111,7 @@ const VIDEOS = [
   const hasAny = ids.some(Boolean);
 
   grid.innerHTML = ids
-    .slice(0, 6)
+    .slice(0, 9)
     .map(function (id, i) {
       if (!id) {
         return '<div class="video-item placeholder" aria-hidden="true">' + (hasAny ? "" : "動画 " + (i + 1)) + "</div>";
