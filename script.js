@@ -1,56 +1,25 @@
 /* ==========================================================
-   応募先の設定
-   ここの URL を書き換えるだけで応募ボタンが変わります。
-   空文字 "" のままにした項目のボタンは表示されません。
+   応募フォーム(モーダル)
+   送信内容は /api/apply 経由で Discord に届く
    ========================================================== */
-const CONFIG = {
-  // Google フォームの URL(例: "https://forms.gle/xxxxx")
-  formUrl: "",
-  // X(旧Twitter)のプロフィール URL(例: "https://x.com/sari_blox")
-  xUrl: "",
-  // 応募受付用メールアドレス(例: "apply@example.com")
-  email: "",
-  // Discord の招待 URL や ユーザー名(例: "https://discord.gg/xxxxx")
-  discordUrl: "",
-};
-
-/* ==========================================================
-   チャンネル情報と紹介動画
-   ========================================================== */
-const CHANNEL = {
-  name: "サリーぶろっくす",
-  // YouTube チャンネルの URL
-  url: "https://www.youtube.com/@サリーぶろっくす",
-  // チャンネルアイコンの画像(空なら頭文字を表示)
-  avatar: "avatar.jpg",
-  subscribers: "21万人",
-  videos: "",           // 空なら非表示
-  views: "1.2億回",
-};
-
-// 紹介したい横動画の YouTube URL または 動画ID を 9 本まで
-// 例: "https://www.youtube.com/watch?v=dQw4w9WgXcQ" または "dQw4w9WgXcQ"
-const VIDEOS = [
-  "https://youtu.be/IbyUW3-2kks",
-  "https://youtu.be/o1ZURH4VXEY",
-  "https://youtu.be/mQGbuXPaPak",
-  "https://youtu.be/yNRXvwIkgrg",
-  "https://youtu.be/A1kRe_BP4mM",
-  "https://youtu.be/CymMygkEF6o",
-  "https://youtu.be/8jxV8h5b3Vg",
-  "https://www.youtube.com/watch?v=B2GK-L0xMGw",
-  "https://www.youtube.com/watch?v=dNiF_CisHyk",
-];
-
 (function () {
-  const card = document.getElementById("channel-card");
-  const grid = document.getElementById("video-grid");
-  if (!card || !grid) return;
+  const modal = document.getElementById("apply-modal");
+  const form = document.getElementById("apply-form");
+  const done = document.getElementById("apply-done");
+  if (!modal || !form) return;
 
-  const ytIcon =
-    '<svg width="16" height="12" viewBox="0 0 24 17" fill="#fff" aria-hidden="true"><path d="M9.5 12.5v-8l7 4-7 4z"/></svg>';
-  const playIcon =
-    '<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>';
+  const nameEl = document.getElementById("f-name");
+  const discordEl = document.getElementById("f-discord");
+  const videoEl = document.getElementById("f-video");
+  const videoAdd = document.getElementById("f-video-add");
+  const videoErr = document.getElementById("f-video-error");
+  const videoList = document.getElementById("f-video-list");
+  const reasonEl = document.getElementById("f-reason");
+  const formErr = document.getElementById("f-form-error");
+  const submitBtn = document.getElementById("f-submit");
+
+  const videos = []; // { id, title }
+  let lastFocus = null;
 
   function esc(str) {
     return String(str).replace(/[&<>"']/g, function (c) {
@@ -58,47 +27,8 @@ const VIDEOS = [
     });
   }
 
-  // ---- チャンネルカード ----
-  const initial = esc((CHANNEL.name || "S").trim().charAt(0).toUpperCase());
-  const avatarHtml = CHANNEL.avatar
-    ? '<img src="' + esc(CHANNEL.avatar) + '" alt="' + esc(CHANNEL.name) + ' のアイコン" width="96" height="96" loading="lazy" />'
-    : '<span class="avatar-placeholder" aria-hidden="true">' + initial + "</span>";
-  const nameHtml = CHANNEL.url
-    ? '<a href="' + esc(CHANNEL.url) + '" target="_blank" rel="noopener noreferrer">' + esc(CHANNEL.name) + "</a>"
-    : esc(CHANNEL.name);
-  const stats = [
-    { num: CHANNEL.subscribers, lbl: "登録者" },
-    { num: CHANNEL.videos, lbl: "動画数" },
-    { num: CHANNEL.views, lbl: "総再生数" },
-  ].filter(function (s) {
-    return s.num;
-  });
-  const statsHtml = stats.length
-    ? '<ul class="channel-stats" aria-label="チャンネル実績">' +
-      stats
-        .map(function (s) {
-          return "<li><span class=\"num\">" + esc(s.num) + "</span><span class=\"lbl\">" + s.lbl + "</span></li>";
-        })
-        .join("") +
-      "</ul>"
-    : "";
-
-  card.innerHTML =
-    '<div class="channel-avatar">' +
-    avatarHtml +
-    '<span class="yt-badge" aria-hidden="true">' +
-    ytIcon +
-    "</span></div>" +
-    '<div class="channel-body"><p class="channel-name">' +
-    nameHtml +
-    "</p>" +
-    statsHtml +
-    "</div>";
-
-  // ---- 動画グリッド ----
   function toId(v) {
-    if (!v) return "";
-    v = v.trim();
+    v = String(v || "").trim();
     const m =
       v.match(/[?&]v=([A-Za-z0-9_-]{11})/) ||
       v.match(/youtu\.be\/([A-Za-z0-9_-]{11})/) ||
@@ -107,84 +37,184 @@ const VIDEOS = [
     return m ? m[1] : "";
   }
 
-  const ids = VIDEOS.map(toId);
-  const hasAny = ids.some(Boolean);
-
-  grid.innerHTML = ids
-    .slice(0, 9)
-    .map(function (id, i) {
-      if (!id) {
-        return '<div class="video-item placeholder" aria-hidden="true">' + (hasAny ? "" : "動画 " + (i + 1)) + "</div>";
+  // ---- 開閉 ----
+  function openModal() {
+    lastFocus = document.activeElement;
+    modal.hidden = false;
+    document.body.classList.add("modal-open");
+    requestAnimationFrame(function () {
+      modal.classList.add("is-open");
+      (form.hidden ? modal.querySelector("[data-close]") : nameEl).focus();
+    });
+  }
+  function closeModal() {
+    modal.classList.remove("is-open");
+    document.body.classList.remove("modal-open");
+    setTimeout(function () {
+      modal.hidden = true;
+      if (lastFocus && lastFocus.focus) lastFocus.focus();
+    }, 220);
+  }
+  document.querySelectorAll(".js-open-apply").forEach(function (b) {
+    b.addEventListener("click", function (e) {
+      e.preventDefault();
+      openModal();
+    });
+  });
+  modal.querySelectorAll("[data-close]").forEach(function (b) {
+    b.addEventListener("click", closeModal);
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape" && !modal.hidden) closeModal();
+  });
+  // 開発確認用: ?apply=1 でフォームを開いた状態にする(&demo=1 で見本の動画を追加)
+  const dbg = new URLSearchParams(location.search);
+  if (dbg.has("apply")) {
+    window.addEventListener("load", function () {
+      openModal();
+      if (dbg.has("demo")) {
+        nameEl.value = "たろう";
+        discordEl.value = "taro_edit";
+        videoEl.value = "https://youtu.be/IbyUW3-2kks";
+        addVideo();
+        reasonEl.value = "サリーぶろっくすの動画をよく見ています。テンポの良いカット編集が得意です。";
       }
-      return (
-        '<a class="video-item" href="https://www.youtube.com/watch?v=' +
-        id +
-        '" target="_blank" rel="noopener noreferrer" aria-label="動画 ' +
-        (i + 1) +
-        ' を YouTube で見る">' +
-        '<img src="https://i.ytimg.com/vi/' +
-        id +
-        '/hqdefault.jpg" alt="" loading="lazy" />' +
-        '<span class="play"><span>' +
-        playIcon +
-        "</span></span></a>"
-      );
-    })
-    .join("");
-})();
-
-(function () {
-  const actions = document.getElementById("apply-actions");
-  const note = document.getElementById("apply-note");
-  if (!actions) return;
-
-  const icons = {
-    form: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>',
-    x: '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.244 2H21.5l-7.5 8.57L22.8 22h-6.9l-5.4-7.06L4.3 22H1.04l8.02-9.17L1.2 2h7.08l4.88 6.45L18.244 2zm-1.21 18h1.8L7.05 3.9H5.12L17.03 20z"/></svg>',
-    mail: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 7L2 7"/></svg>',
-    discord: '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.3 4.4A19.8 19.8 0 0 0 15.4 3l-.2.4a18 18 0 0 1 4.5 1.5 15 15 0 0 0-15.4 0A18 18 0 0 1 8.8 3.4L8.6 3a19.8 19.8 0 0 0-4.9 1.5C.6 9.1-.2 13.7.2 18.2a20 20 0 0 0 6 3l1.3-2a12.8 12.8 0 0 1-2-1l.5-.4a14.3 14.3 0 0 0 12 0l.5.4-2 1 1.3 2a20 20 0 0 0 6-3c.5-5.2-.8-9.7-3.5-13.8zM8.7 15.4c-1.2 0-2.1-1.1-2.1-2.4s1-2.4 2.1-2.4 2.2 1.1 2.1 2.4-.9 2.4-2.1 2.4zm6.6 0c-1.2 0-2.1-1.1-2.1-2.4s1-2.4 2.1-2.4 2.2 1.1 2.1 2.4-.9 2.4-2.1 2.4z"/></svg>',
-  };
-
-  const buttons = [];
-
-  if (CONFIG.formUrl) {
-    buttons.push({ href: CONFIG.formUrl, label: "応募フォームを開く", icon: icons.form, primary: true, external: true });
-  }
-  if (CONFIG.xUrl) {
-    buttons.push({ href: CONFIG.xUrl, label: "X の DM で応募", icon: icons.x, primary: !CONFIG.formUrl, external: true });
-  }
-  if (CONFIG.discordUrl) {
-    buttons.push({ href: CONFIG.discordUrl, label: "Discord で応募", icon: icons.discord, primary: false, external: true });
-  }
-  if (CONFIG.email) {
-    const subject = encodeURIComponent("【編集者応募】");
-    const body = encodeURIComponent(
-      "■ 作例のURL:\n\n■ 使用ソフト:\n\n■ 週に対応できる本数:\n\n■ 自己紹介:\n"
-    );
-    buttons.push({
-      href: "mailto:" + CONFIG.email + "?subject=" + subject + "&body=" + body,
-      label: "メールで応募",
-      icon: icons.mail,
-      primary: buttons.length === 0,
-      external: false,
     });
   }
 
-  if (buttons.length === 0) {
-    actions.innerHTML = '<span class="apply-pending">応募受付を準備中です</span>';
-    if (note) note.textContent = "まもなく応募方法を公開します。";
-    return;
+  // ---- 動画の追加 ----
+  function showVideoError(msg) {
+    videoErr.textContent = msg;
+    videoErr.hidden = !msg;
   }
 
-  actions.innerHTML = buttons
-    .map(function (b) {
-      const cls = "btn btn-lg " + (b.primary ? "btn-primary" : "btn-ghost");
-      const target = b.external ? ' target="_blank" rel="noopener noreferrer"' : "";
-      return '<a class="' + cls + '" href="' + b.href + '"' + target + ">" + b.icon + b.label + "</a>";
-    })
-    .join("");
+  function renderVideos() {
+    videoList.innerHTML = videos
+      .map(function (v, i) {
+        return (
+          '<li class="video-card" data-id="' + v.id + '">' +
+          '<img class="video-card-thumb" src="https://i.ytimg.com/vi/' + v.id + '/mqdefault.jpg" alt="" loading="lazy" />' +
+          '<div class="video-card-body">' +
+          '<div class="video-card-title">' + (v.title ? esc(v.title) : "タイトルを読み込み中…") + "</div>" +
+          '<div class="video-card-meta">' + (v.author ? esc(v.author) : "YouTube") + "</div>" +
+          "</div>" +
+          '<button type="button" class="video-card-remove" data-remove="' + i + '" aria-label="この動画を削除">' +
+          '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>' +
+          "</button>" +
+          "</li>"
+        );
+      })
+      .join("");
+  }
 
-  if (note) note.textContent = "返信には数日いただく場合があります。";
+  function addVideo() {
+    const raw = videoEl.value;
+    const id = toId(raw);
+    if (!raw.trim()) return;
+    if (!id) {
+      showVideoError("YouTube の動画 URL を貼ってください(例: https://youtu.be/xxxxxxxxxxx)");
+      return;
+    }
+    if (videos.some(function (v) { return v.id === id; })) {
+      showVideoError("この動画はもう追加されています。");
+      return;
+    }
+    if (videos.length >= 10) {
+      showVideoError("追加できるのは 10 本までです。");
+      return;
+    }
+    showVideoError("");
+    const entry = { id: id, title: "", author: "" };
+    videos.push(entry);
+    renderVideos();
+    videoEl.value = "";
+    videoEl.focus();
+
+    fetch("/api/video?id=" + id)
+      .then(function (r) { return r.json(); })
+      .then(function (j) {
+        if (j && j.ok) {
+          entry.title = j.title || "動画";
+          entry.author = j.author || "";
+        } else {
+          entry.title = "動画(タイトル取得できず)";
+        }
+        renderVideos();
+      })
+      .catch(function () {
+        entry.title = "動画";
+        renderVideos();
+      });
+  }
+
+  videoAdd.addEventListener("click", addVideo);
+  videoEl.addEventListener("keydown", function (e) {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      addVideo();
+    }
+  });
+  // 貼り付けたら自動で追加
+  videoEl.addEventListener("paste", function () {
+    setTimeout(addVideo, 0);
+  });
+  videoList.addEventListener("click", function (e) {
+    const btn = e.target.closest("[data-remove]");
+    if (!btn) return;
+    videos.splice(parseInt(btn.getAttribute("data-remove"), 10), 1);
+    renderVideos();
+  });
+
+  // ---- 送信 ----
+  function setError(msg) {
+    formErr.textContent = msg;
+    formErr.hidden = !msg;
+  }
+
+  form.addEventListener("submit", function (e) {
+    e.preventDefault();
+    setError("");
+    const name = nameEl.value.trim();
+    const discord = discordEl.value.trim().replace(/^@/, "");
+    const reason = reasonEl.value.trim();
+
+    if (!name) { setError("名前を入れてください。"); nameEl.focus(); return; }
+    if (!discord) { setError("Discord のユーザー名を入れてください。"); discordEl.focus(); return; }
+    if (videos.length === 0) { setError("自分が編集した動画を 1 本以上追加してください。"); videoEl.focus(); return; }
+    if (reason.length < 5) { setError("応募した理由をもう少し書いてください。"); reasonEl.focus(); return; }
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = "送信中…";
+
+    fetch("/api/apply", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: name,
+        discord: discord,
+        reason: reason,
+        videos: videos.map(function (v) { return { id: v.id, title: v.title }; }),
+        website: form.elements.website ? form.elements.website.value : "",
+      }),
+    })
+      .then(function (r) { return r.json().then(function (j) { return { status: r.status, body: j }; }); })
+      .then(function (res) {
+        if (res.body && res.body.ok) {
+          form.hidden = true;
+          done.hidden = false;
+          done.querySelector("[data-close]").focus();
+        } else {
+          setError((res.body && res.body.error) || "送信に失敗しました。時間をおいてもう一度お試しください。");
+        }
+      })
+      .catch(function () {
+        setError("通信に失敗しました。電波のいいところでもう一度お試しください。");
+      })
+      .then(function () {
+        submitBtn.disabled = false;
+        submitBtn.textContent = "この内容で応募する";
+      });
+  });
 })();
 
 /* ---------- 年号 ---------- */

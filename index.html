@@ -31,7 +31,7 @@
         <a href="#videos">動画</a>
         <a href="#faq">FAQ</a>
       </nav>
-      <a href="#apply" class="btn btn-primary btn-sm">応募する</a>
+      <button type="button" class="btn btn-primary btn-sm js-open-apply">応募する</button>
     </div>
   </header>
 
@@ -70,10 +70,10 @@
             在宅・リモート OK。まずは気軽に応募してください。
           </p>
           <div class="hero-actions">
-            <a href="#apply" class="btn btn-primary btn-lg">
+            <button type="button" class="btn btn-primary btn-lg js-open-apply">
               応募する
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
-            </a>
+            </button>
             <a href="#about" class="btn btn-ghost btn-lg">募集内容を見る</a>
           </div>
         </div>
@@ -181,7 +181,7 @@
           <li class="step">
             <span class="step-num" aria-hidden="true">01</span>
             <h3>応募</h3>
-            <p>下の応募ボタンから、自分が編集した動画の URL と簡単な自己紹介を送ってください。</p>
+            <p>「応募する」ボタンからフォームを開いて、自分が編集した動画の URL と応募理由を送ってください。登録は不要です。</p>
           </li>
           <li class="step">
             <span class="step-num" aria-hidden="true">02</span>
@@ -250,17 +250,77 @@
         <div class="apply-box">
           <h2 class="apply-title">応募はこちら</h2>
           <p class="apply-lead">
-            以下の内容を添えて送ってください。<br />
-            <strong>自分が編集した動画の URL</strong>(YouTube など)、<strong>Premiere Pro の経験年数</strong>、<strong>週に対応できる本数</strong>、<strong>簡単な自己紹介</strong>
+            ログインや登録はいりません。名前と Discord のユーザー名、<strong>自分が編集した動画の URL</strong>、<strong>応募した理由</strong>を入れるだけです。所要時間は 3 分ほど。
           </p>
           <div class="apply-actions" id="apply-actions">
-            <!-- ボタンは script.js の CONFIG から生成されます -->
+            <button type="button" class="btn btn-primary btn-lg js-open-apply">
+              応募フォームを開く
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+            </button>
           </div>
-          <p class="apply-note" id="apply-note"></p>
+          <p class="apply-note" id="apply-note">送信後、数日以内にこちらから Discord でフレンド申請を送ります。</p>
         </div>
       </div>
     </section>
   </main>
+
+  <!-- 応募フォーム(モーダル) -->
+  <div class="modal" id="apply-modal" hidden>
+    <div class="modal-backdrop" data-close></div>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="apply-form-title">
+      <button type="button" class="modal-close" data-close aria-label="閉じる">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+      </button>
+
+      <form id="apply-form" novalidate>
+        <h2 class="modal-title" id="apply-form-title">応募フォーム</h2>
+        <p class="modal-lead">4つ入れるだけで送れます。登録やログインはいりません。</p>
+
+        <div class="field">
+          <label class="field-label" for="f-name"><span class="field-num">1</span>名前<span class="field-req">必須</span></label>
+          <input class="field-input" id="f-name" name="name" type="text" maxlength="60" placeholder="ニックネームで OK" autocomplete="nickname" required />
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="f-discord"><span class="field-num">2</span>Discord のユーザー名<span class="field-req">必須</span></label>
+          <input class="field-input" id="f-discord" name="discord" type="text" maxlength="60" placeholder="例: sari_blox" autocomplete="off" required />
+          <p class="field-help">Discord の左下に出ている、@ の後ろの名前です。こちらから連絡するときに使います。</p>
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="f-video"><span class="field-num">3</span>自分が編集した動画<span class="field-req">1本以上</span></label>
+          <div class="video-add">
+            <input class="field-input" id="f-video" type="url" placeholder="YouTube の動画 URL を貼り付け" autocomplete="off" inputmode="url" />
+            <button type="button" class="btn btn-ghost btn-sm" id="f-video-add">追加</button>
+          </div>
+          <p class="field-help">URL を貼ると下にサムネイルが出ます。最大 10 本まで。</p>
+          <p class="field-error" id="f-video-error" hidden></p>
+          <ul class="video-list" id="f-video-list" aria-live="polite"></ul>
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="f-reason"><span class="field-num">4</span>応募した理由・一緒に目指したいこと<span class="field-req">必須</span></label>
+          <textarea class="field-input field-textarea" id="f-reason" name="reason" rows="5" maxlength="2000" placeholder="例: サリーぶろっくすの動画をよく見ていて、テンポの良い編集が得意です。登録者 50 万人を一緒に目指したいです。" required></textarea>
+        </div>
+
+        <!-- ボット対策: 人は入力しない欄 -->
+        <input type="text" name="website" class="hp" tabindex="-1" autocomplete="off" aria-hidden="true" />
+
+        <p class="field-error" id="f-form-error" hidden></p>
+
+        <button type="submit" class="btn btn-primary btn-lg modal-submit" id="f-submit">この内容で応募する</button>
+      </form>
+
+      <div class="modal-done" id="apply-done" hidden>
+        <div class="done-mark" aria-hidden="true">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+        </div>
+        <h2 class="modal-title">応募を受け付けました</h2>
+        <p class="modal-lead">ありがとうございます。数日以内に、こちらから Discord でフレンド申請を送ります。<br />承認しておいてもらえると助かります。</p>
+        <button type="button" class="btn btn-ghost btn-lg" data-close>閉じる</button>
+      </div>
+    </div>
+  </div>
 
   <footer class="site-footer">
     <div class="container footer-inner">
