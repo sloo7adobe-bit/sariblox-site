@@ -217,6 +217,125 @@
   });
 })();
 
+/* ==========================================================
+   チャンネル情報と紹介動画
+   ========================================================== */
+const CHANNEL = {
+  name: "サリーぶろっくす",
+  // YouTube チャンネルの URL
+  url: "https://www.youtube.com/@サリーぶろっくす",
+  // チャンネルアイコンの画像(空なら頭文字を表示)
+  avatar: "avatar.jpg",
+  subscribers: "21万人",
+  videos: "",           // 空なら非表示
+  views: "1.2億回",
+};
+
+// 紹介したい横動画の YouTube URL または 動画ID を 9 本まで
+// 例: "https://www.youtube.com/watch?v=dQw4w9WgXcQ" または "dQw4w9WgXcQ"
+const VIDEOS = [
+  "https://youtu.be/IbyUW3-2kks",
+  "https://youtu.be/o1ZURH4VXEY",
+  "https://youtu.be/mQGbuXPaPak",
+  "https://youtu.be/yNRXvwIkgrg",
+  "https://youtu.be/A1kRe_BP4mM",
+  "https://youtu.be/CymMygkEF6o",
+  "https://youtu.be/8jxV8h5b3Vg",
+  "https://www.youtube.com/watch?v=B2GK-L0xMGw",
+  "https://www.youtube.com/watch?v=dNiF_CisHyk",
+];
+
+(function () {
+  const card = document.getElementById("channel-card");
+  const grid = document.getElementById("video-grid");
+  if (!card || !grid) return;
+
+  const ytIcon =
+    '<svg width="16" height="12" viewBox="0 0 24 17" fill="#fff" aria-hidden="true"><path d="M9.5 12.5v-8l7 4-7 4z"/></svg>';
+  const playIcon =
+    '<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>';
+
+  function esc(str) {
+    return String(str).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+
+  // ---- チャンネルカード ----
+  const initial = esc((CHANNEL.name || "S").trim().charAt(0).toUpperCase());
+  const avatarHtml = CHANNEL.avatar
+    ? '<img src="' + esc(CHANNEL.avatar) + '" alt="' + esc(CHANNEL.name) + ' のアイコン" width="96" height="96" loading="lazy" />'
+    : '<span class="avatar-placeholder" aria-hidden="true">' + initial + "</span>";
+  const nameHtml = CHANNEL.url
+    ? '<a href="' + esc(CHANNEL.url) + '" target="_blank" rel="noopener noreferrer">' + esc(CHANNEL.name) + "</a>"
+    : esc(CHANNEL.name);
+  const stats = [
+    { num: CHANNEL.subscribers, lbl: "登録者" },
+    { num: CHANNEL.videos, lbl: "動画数" },
+    { num: CHANNEL.views, lbl: "総再生数" },
+  ].filter(function (s) {
+    return s.num;
+  });
+  const statsHtml = stats.length
+    ? '<ul class="channel-stats" aria-label="チャンネル実績">' +
+      stats
+        .map(function (s) {
+          return "<li><span class=\"num\">" + esc(s.num) + "</span><span class=\"lbl\">" + s.lbl + "</span></li>";
+        })
+        .join("") +
+      "</ul>"
+    : "";
+
+  card.innerHTML =
+    '<div class="channel-avatar">' +
+    avatarHtml +
+    '<span class="yt-badge" aria-hidden="true">' +
+    ytIcon +
+    "</span></div>" +
+    '<div class="channel-body"><p class="channel-name">' +
+    nameHtml +
+    "</p>" +
+    statsHtml +
+    "</div>";
+
+  // ---- 動画グリッド ----
+  function toId(v) {
+    if (!v) return "";
+    v = v.trim();
+    const m =
+      v.match(/[?&]v=([A-Za-z0-9_-]{11})/) ||
+      v.match(/youtu\.be\/([A-Za-z0-9_-]{11})/) ||
+      v.match(/\/(?:shorts|embed|live)\/([A-Za-z0-9_-]{11})/) ||
+      v.match(/^([A-Za-z0-9_-]{11})$/);
+    return m ? m[1] : "";
+  }
+
+  const ids = VIDEOS.map(toId);
+  const hasAny = ids.some(Boolean);
+
+  grid.innerHTML = ids
+    .slice(0, 9)
+    .map(function (id, i) {
+      if (!id) {
+        return '<div class="video-item placeholder" aria-hidden="true">' + (hasAny ? "" : "動画 " + (i + 1)) + "</div>";
+      }
+      return (
+        '<a class="video-item" href="https://www.youtube.com/watch?v=' +
+        id +
+        '" target="_blank" rel="noopener noreferrer" aria-label="動画 ' +
+        (i + 1) +
+        ' を YouTube で見る">' +
+        '<img src="https://i.ytimg.com/vi/' +
+        id +
+        '/hqdefault.jpg" alt="" loading="lazy" />' +
+        '<span class="play"><span>' +
+        playIcon +
+        "</span></span></a>"
+      );
+    })
+    .join("");
+})();
+
 /* ---------- 年号 ---------- */
 (function () {
   const y = document.getElementById("year");
