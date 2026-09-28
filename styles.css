@@ -629,6 +629,45 @@ p {
   gap: 24px;
 }
 
+/* ---------- 募集内容(3項目) ---------- */
+.job-grid {
+  display: grid;
+  gap: 28px;
+}
+
+.job-label {
+  font-family: var(--font-hand);
+  font-size: 26px;
+  font-weight: 400;
+  text-align: center;
+  color: #fff;
+  text-shadow: 2px 2px 0 var(--blue-shadow), 4px 4px 0 rgba(42, 127, 212, 0.35);
+  margin-bottom: 12px;
+}
+
+.job-card {
+  padding: 24px 24px;
+  border-radius: 18px;
+  background: var(--paper);
+  border: 2px solid var(--ink);
+  box-shadow: 6px 6px 0 rgba(28, 28, 28, 0.85);
+  min-height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.job-card .list {
+  width: 100%;
+}
+
+.job-text {
+  font-family: var(--font-hand);
+  font-size: 22px;
+  text-align: center;
+  line-height: 1.5;
+}
+
 /* ---------- Cards(白い紙) ---------- */
 .card {
   padding: 34px 32px;
@@ -1225,6 +1264,11 @@ p {
 
   .video-grid {
     grid-template-columns: repeat(3, 1fr);
+  }
+
+  .job-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 32px;
   }
 }
 
