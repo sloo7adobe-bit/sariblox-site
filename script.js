@@ -342,9 +342,9 @@ const VIDEOS = [
    ========================================================== */
 const SOCIAL = {
   youtube: "https://www.youtube.com/@サリーぶろっくす",
-  tiktok: "",
-  x: "",
-  discord: "",
+  tiktok: "https://www.tiktok.com/@sariblox6767",
+  x: "https://x.com/YTsarii",
+  discord: "https://discord.gg/sari",
   email: "",
 };
 
