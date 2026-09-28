@@ -396,6 +396,7 @@ const VIDEOS = [
 
   if (reduce || !hasGsap) {
     intro.classList.add("is-static");
+    document.querySelectorAll(".js-scroll-intro").forEach(function (b) { b.classList.add("js-open-apply"); });
     return;
   }
 
@@ -545,6 +546,31 @@ const VIDEOS = [
   // 0.64-0.86: 見出しが浮かび上がる
   tl.to(finalBlock, { autoAlpha: 1, y: 0, duration: 0.18, ease: "power2.out" }, 0.64);
   tl.to({}, { duration: 0.14 }); // 読める余韻
+
+  // 最初の画面の「応募する」: 演出を最後まで再生しながら下へスクロールする
+  function scrollToIntroEnd() {
+    const st = tl.scrollTrigger;
+    if (!st) return;
+    const from = window.scrollY;
+    const to = st.end;
+    const dist = to - from;
+    if (dist <= 0) return;
+    const duration = 1700;
+    const startAt = performance.now();
+    function ease(t) { return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2; }
+    function frame(now) {
+      const t = Math.min(1, (now - startAt) / duration);
+      window.scrollTo(0, from + dist * ease(t));
+      if (t < 1) requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  }
+  document.querySelectorAll(".js-scroll-intro").forEach(function (b) {
+    b.addEventListener("click", function (e) {
+      e.preventDefault();
+      scrollToIntroEnd();
+    });
+  });
 
   // 画像読み込み後に位置を再計算
   window.addEventListener("load", function () {
