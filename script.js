@@ -557,11 +557,18 @@ const VIDEOS = [
     if (dist <= 0) return;
     const duration = 1700;
     const startAt = performance.now();
+    const root = document.documentElement;
+    const prevBehavior = root.style.scrollBehavior;
+    root.style.scrollBehavior = "auto"; // CSS の smooth scroll と干渉しないように一時的に切る
     function ease(t) { return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2; }
     function frame(now) {
       const t = Math.min(1, (now - startAt) / duration);
-      window.scrollTo(0, from + dist * ease(t));
-      if (t < 1) requestAnimationFrame(frame);
+      window.scrollTo({ top: from + dist * ease(t), left: 0, behavior: "instant" });
+      if (t < 1) {
+        requestAnimationFrame(frame);
+      } else {
+        root.style.scrollBehavior = prevBehavior;
+      }
     }
     requestAnimationFrame(frame);
   }
