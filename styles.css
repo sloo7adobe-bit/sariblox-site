@@ -2,6 +2,14 @@
    SARI - 横動画 編集者募集サイト
    ========================================================== */
 
+@font-face {
+  font-family: "Jiyucho";
+  src: url("font/jiyucho-subset.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   --bg: #0c0b07;
   --bg-alt: #12100a;
@@ -20,6 +28,7 @@
   --shadow: 0 10px 40px rgba(0, 0, 0, 0.35);
   --font-jp: "Noto Sans JP", system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-en: "Russo One", "Noto Sans JP", sans-serif;
+  --font-hand: "Jiyucho", "Noto Sans JP", sans-serif;
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
@@ -720,8 +729,11 @@ p {
 }
 
 .channel-name {
-  font-size: 22px;
-  font-weight: 900;
+  font-family: var(--font-hand);
+  font-size: 30px;
+  font-weight: 400;
+  line-height: 1.2;
+  margin-bottom: 10px;
 }
 
 .channel-name a {
@@ -746,17 +758,18 @@ p {
 }
 
 .channel-stats .num {
-  font-family: var(--font-en);
-  font-size: 30px;
+  font-family: var(--font-hand);
+  font-size: 36px;
   line-height: 1.1;
-  color: #fff;
+  color: var(--primary);
 }
 
 .channel-stats .lbl {
-  font-size: 11px;
-  letter-spacing: 0.18em;
+  font-family: var(--font-hand);
+  font-size: 14px;
+  letter-spacing: 0.1em;
   color: var(--muted);
-  margin-top: 4px;
+  margin-top: 2px;
 }
 
 .video-grid {
