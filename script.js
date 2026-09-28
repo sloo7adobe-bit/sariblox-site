@@ -18,25 +18,25 @@ const CONFIG = {
    チャンネル情報と紹介動画
    ========================================================== */
 const CHANNEL = {
-  name: "サリ",
-  // YouTube チャンネルの URL(例: "https://www.youtube.com/@xxxx")
-  url: "",
-  // チャンネルアイコンの画像 URL(空なら頭文字を表示)
-  avatar: "",
-  subscribers: "",   // 例: "12.3万"
-  videos: "",        // 例: "253"
-  views: "",         // 例: "3.7億"
+  name: "サリーぶろっくす",
+  // YouTube チャンネルの URL
+  url: "https://www.youtube.com/@サリーぶろっくす",
+  // チャンネルアイコンの画像(空なら頭文字を表示)
+  avatar: "avatar.jpg",
+  subscribers: "21万人",
+  videos: "362",
+  views: "1.2億回",
 };
 
 // 紹介したい横動画の YouTube URL または 動画ID を 6 本まで
 // 例: "https://www.youtube.com/watch?v=dQw4w9WgXcQ" または "dQw4w9WgXcQ"
 const VIDEOS = [
-  "",
-  "",
-  "",
-  "",
-  "",
-  "",
+  "https://youtu.be/IbyUW3-2kks",
+  "https://youtu.be/o1ZURH4VXEY",
+  "https://youtu.be/mQGbuXPaPak",
+  "https://youtu.be/yNRXvwIkgrg",
+  "https://youtu.be/A1kRe_BP4mM",
+  "https://youtu.be/CymMygkEF6o",
 ];
 
 (function () {
