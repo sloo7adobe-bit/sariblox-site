@@ -553,24 +553,22 @@ const VIDEOS = [
     if (!st) return;
     const from = window.scrollY;
     const to = st.end;
-    const dist = to - from;
-    if (dist <= 0) return;
-    const duration = 1700;
-    const startAt = performance.now();
+    if (to - from <= 0) return;
     const root = document.documentElement;
     const prevBehavior = root.style.scrollBehavior;
     root.style.scrollBehavior = "auto"; // CSS の smooth scroll と干渉しないように一時的に切る
-    function ease(t) { return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2; }
-    function frame(now) {
-      const t = Math.min(1, (now - startAt) / duration);
-      window.scrollTo({ top: from + dist * ease(t), left: 0, behavior: "instant" });
-      if (t < 1) {
-        requestAnimationFrame(frame);
-      } else {
+    const pos = { y: from };
+    gsap.to(pos, {
+      y: to,
+      duration: 1.7,
+      ease: "power2.inOut",
+      onUpdate: function () {
+        window.scrollTo({ top: pos.y, left: 0, behavior: "instant" });
+      },
+      onComplete: function () {
         root.style.scrollBehavior = prevBehavior;
-      }
-    }
-    requestAnimationFrame(frame);
+      },
+    });
   }
   document.querySelectorAll(".js-scroll-intro").forEach(function (b) {
     b.addEventListener("click", function (e) {
