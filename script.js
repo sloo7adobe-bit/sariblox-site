@@ -218,4 +218,11 @@ const VIDEOS = [
   targets.forEach(function (el) {
     io.observe(el);
   });
+
+  // 保険: 何らかの理由で監視が動かない環境でも 2 秒後には全て表示する
+  setTimeout(function () {
+    targets.forEach(function (el) {
+      el.classList.add("is-visible");
+    });
+  }, 2000);
 })();
