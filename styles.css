@@ -231,26 +231,15 @@ p {
   position: absolute;
   z-index: 1;
   left: 50%;
-  top: 50%;
-  width: min(72vh, 82vw);
-  height: min(72vh, 82vw);
-  transform: translate(-50%, -50%);
+  top: -3%;
+  width: min(120vh, 135vw, 1100px);
+  height: min(120vh, 135vw, 1100px);
+  transform: translateX(-50%);
   perspective: 1400px;
   will-change: transform;
 }
 
-.intro-fade {
-  position: absolute;
-  z-index: 2;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 42vh;
-  background: linear-gradient(180deg, rgba(12, 11, 7, 0) 0%, rgba(12, 11, 7, 0.85) 55%, var(--bg) 100%);
-  pointer-events: none;
-}
-
-.intro-figure img {
+.intro-figure img.me {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -258,31 +247,33 @@ p {
   object-fit: contain;
   user-select: none;
   -webkit-user-drag: none;
-  filter: drop-shadow(0 30px 60px rgba(0, 0, 0, 0.6));
 }
 
-.avatar-base {
-  clip-path: inset(34.8% 0 0 0);
-  -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 62%, rgba(0, 0, 0, 0.35) 82%, transparent 96%);
-  mask-image: linear-gradient(180deg, #000 0%, #000 62%, rgba(0, 0, 0, 0.35) 82%, transparent 96%);
+.me-open,
+.me-closed {
+  /* 下側のフェードは画像自体に焼き込み済み */
 }
 
-.avatar-lid {
-  clip-path: inset(0 0 65.2% 0);
-  transform-origin: 50% 34%;
-  will-change: transform;
+.me-open {
+  opacity: 0;
+}
+
+.me-lid {
+  transform-origin: 51% 24%;
+  will-change: transform, opacity;
+  filter: drop-shadow(0 20px 40px rgba(0, 0, 0, 0.5));
 }
 
 .head-inner {
   position: absolute;
-  left: 50%;
-  top: 34.8%;
-  width: 54%;
-  height: 14%;
+  left: 51%;
+  top: 26%;
+  width: 34%;
+  height: 9%;
   transform: translate(-50%, -50%) scaleX(0.2);
   border-radius: 50%;
   background: radial-gradient(ellipse at center, #fff7c2 0%, #facc15 35%, rgba(250, 204, 21, 0.2) 70%, transparent 100%);
-  filter: blur(6px);
+  filter: blur(8px);
   opacity: 0;
   pointer-events: none;
 }
@@ -297,7 +288,7 @@ p {
 .burst-item {
   position: absolute;
   left: 50%;
-  top: 44%;
+  top: 30%;
   transform: translate(-50%, -50%);
   will-change: transform, opacity;
   opacity: 0;
@@ -451,6 +442,15 @@ p {
 
 .intro.is-static .intro-figure {
   opacity: 0.22;
+}
+
+.intro.is-static .me-open {
+  opacity: 1;
+}
+
+.intro.is-static .me-closed,
+.intro.is-static .me-lid {
+  opacity: 0;
 }
 
 /* JS 有効時: 最終テキストは最初は隠す */

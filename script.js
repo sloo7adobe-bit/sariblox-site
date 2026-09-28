@@ -299,7 +299,9 @@ const VIDEOS = [
   });
 
   const figure = document.getElementById("intro-figure");
-  const lid = intro.querySelector(".avatar-lid");
+  const lid = intro.querySelector(".me-lid");
+  const closed = intro.querySelector(".me-closed");
+  const opened = intro.querySelector(".me-open");
   const inner = intro.querySelector(".head-inner");
   const copy = document.getElementById("intro-copy");
   const finalBlock = document.getElementById("intro-final");
@@ -307,7 +309,8 @@ const VIDEOS = [
   const glow = intro.querySelector(".intro-glow");
 
   // 初期状態(中央配置は GSAP 側で管理する)
-  gsap.set(figure, { xPercent: -50, yPercent: -50 });
+  gsap.set(figure, { xPercent: -50, yPercent: 0 });
+  gsap.set(opened, { opacity: 0 });
   gsap.set(finalBlock, { autoAlpha: 0, y: 40 });
   gsap.set(items.map(function (i) { return i.el; }), { xPercent: -50, yPercent: -50, x: 0, y: 0, scale: 0, opacity: 0, rotation: 0 });
 
@@ -333,13 +336,16 @@ const VIDEOS = [
 
   // 0.00-0.18: 名前とヒントが消え、少し寄る
   tl.to([copy, hint], { autoAlpha: 0, y: -20, duration: 0.12 }, 0);
-  tl.to(figure, { scale: 1.08, yPercent: -48, duration: 0.3, ease: "power1.inOut" }, 0);
+  tl.to(figure, { scale: 1.06, yPercent: 3, duration: 0.3, ease: "power1.inOut" }, 0);
 
-  // 0.12-0.40: フタが「ぱかっ」と外れて、上へ飛んでいく
-  tl.to(lid, { y: "-4%", rotation: -3, duration: 0.05, ease: "power2.out" }, 0.12);
-  tl.to(lid, { y: "-38%", rotateX: -28, rotation: -9, duration: 0.14, ease: "power3.out" }, 0.17);
-  tl.to(lid, { y: "-140%", rotateX: -55, rotation: -16, autoAlpha: 0, duration: 0.22, ease: "power2.in" }, 0.31);
-  tl.to(inner, { opacity: 1, scaleX: 1, scaleY: 1.4, duration: 0.18, ease: "power2.out" }, 0.18);
+  // 0.12-0.40: 髪のフタが「ぱかっ」と外れて上へ飛び、脳みそが現れる
+  tl.to(lid, { y: "-3%", rotation: -2, duration: 0.05, ease: "power2.out" }, 0.12);
+  tl.to(lid, { y: "-30%", rotateX: -30, rotation: -10, duration: 0.14, ease: "power3.out" }, 0.17);
+  tl.to(lid, { y: "-120%", rotateX: -60, rotation: -18, autoAlpha: 0, duration: 0.22, ease: "power2.in" }, 0.31);
+  tl.to(closed, { opacity: 0, duration: 0.07, ease: "power1.inOut" }, 0.13);
+  tl.to(opened, { opacity: 1, duration: 0.07, ease: "power1.inOut" }, 0.13);
+  tl.to(inner, { opacity: 0.75, scaleX: 1, scaleY: 1.3, duration: 0.12, ease: "power2.out" }, 0.15);
+  tl.to(inner, { opacity: 0, scaleY: 0.6, duration: 0.14, ease: "power1.in" }, 0.3);
   tl.to(glow, { scale: 1.6, opacity: 1.4, duration: 0.5, ease: "power1.out" }, 0.2);
 
   // 0.28-0.68: 中身が「どばっ」と飛び出す
@@ -360,8 +366,7 @@ const VIDEOS = [
   });
 
   // 0.62-0.82: 主役が引いて、飛び出したものは奥へ
-  tl.to(figure, { scale: 0.86, yPercent: -40, autoAlpha: 0.14, duration: 0.2, ease: "power2.inOut" }, 0.62);
-  tl.to(inner, { opacity: 0, duration: 0.1 }, 0.62);
+  tl.to(figure, { scale: 0.9, yPercent: 10, autoAlpha: 0.16, duration: 0.2, ease: "power2.inOut" }, 0.62);
   items.forEach(function (it) {
     tl.to(
       it.el,
