@@ -576,6 +576,12 @@ const VIDEOS = [
       scrollToIntroEnd();
     });
   });
+  // 開発確認用: ?go=1 で読み込み後にボタンを押したのと同じ動きをする
+  if (new URLSearchParams(location.search).has("go")) {
+    window.addEventListener("load", function () {
+      setTimeout(function () { ScrollTrigger.refresh(); scrollToIntroEnd(); }, 600);
+    });
+  }
 
   // 画像読み込み後に位置を再計算
   window.addEventListener("load", function () {
