@@ -452,7 +452,7 @@ p {
   width: 100%;
   max-width: 1000px;
   gap: 12px;
-  margin-bottom: 18px;
+  margin-top: 40px;
 }
 
 .intro-final .job-label {
@@ -486,7 +486,7 @@ p {
 }
 
 .intro-final .hero-actions {
-  margin-top: 18px;
+  margin-top: 24px;
 }
 
 .scroll-hint {
