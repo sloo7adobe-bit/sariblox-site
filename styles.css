@@ -318,43 +318,18 @@ p {
   pointer-events: none;
 }
 
-/* 足元の草(丘が2段、下に向かって空へ溶ける) */
+/* 足元の草(1つの丘。下に向かって空へゆっくり溶ける) */
 .grass-strip {
   position: absolute;
   z-index: 3;
   left: -6%;
   right: -6%;
   bottom: 0;
-  height: 22vh;
-  min-height: 130px;
+  height: 26vh;
+  min-height: 150px;
   pointer-events: none;
-  -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 45%, rgba(0, 0, 0, 0.55) 72%, transparent 100%);
-  mask-image: linear-gradient(180deg, #000 0%, #000 45%, rgba(0, 0, 0, 0.55) 72%, transparent 100%);
-}
-
-.grass-strip::before,
-.grass-strip::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  border-radius: 50% 50% 0 0 / 70% 70% 0 0;
-}
-
-/* 奥の丘(少し明るい) */
-.grass-strip::before {
-  top: 0;
-  left: -10%;
-  right: 20%;
-  background: linear-gradient(180deg, #9be06a 0%, #7fd24a 60%, #74c93a 100%);
-  opacity: 0.9;
-}
-
-/* 手前の丘 */
-.grass-strip::after {
-  top: 32%;
-  background: linear-gradient(180deg, var(--grass) 0%, #63b82f 55%, var(--grass-dark) 100%);
+  border-radius: 50% 50% 0 0 / 60% 60% 0 0;
+  background: linear-gradient(180deg, #7fd24a 0%, var(--grass) 30%, #62b52f 55%, rgba(98, 181, 47, 0.6) 75%, rgba(98, 181, 47, 0) 100%);
 }
 
 .burst {
