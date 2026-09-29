@@ -3,8 +3,14 @@
   "configurations": [
     {
       "name": "static-site",
-      "runtimeExecutable": "python",
-      "runtimeArgs": ["-m", "http.server", "5173"],
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "vercel",
+        "dev",
+        "--listen",
+        "5173",
+        "--yes"
+      ],
       "port": 5173
     }
   ]

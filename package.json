@@ -5,5 +5,8 @@
   "description": "サリーぶろっくす 横動画 編集者募集サイト",
   "dependencies": {
     "@vercel/blob": "^2.8.0"
+  },
+  "scripts": {
+    "local": "vercel dev --listen 5173 --yes"
   }
 }
