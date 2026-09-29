@@ -1115,6 +1115,70 @@ p {
   border-style: dashed;
 }
 
+/* ---------- 公認切り抜き ---------- */
+.clip-list {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 28px 40px;
+}
+
+.clip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 150px;
+  transition: transform 250ms var(--ease);
+}
+
+.clip:hover {
+  transform: translateY(-4px);
+}
+
+.clip-avatar {
+  position: relative;
+  width: 120px;
+  height: 120px;
+}
+
+.clip-avatar img {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid var(--ink);
+  background: #fff;
+  box-shadow: 5px 5px 0 rgba(28, 28, 28, 0.85);
+}
+
+.clip-avatar .yt-badge {
+  position: absolute;
+  right: 0;
+  bottom: 2px;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #ff0000;
+  display: grid;
+  place-items: center;
+  border: 2px solid var(--ink);
+}
+
+.clip-avatar .yt-badge svg {
+  width: 18px;
+  height: 13px;
+}
+
+.clip-name {
+  font-family: var(--font-hand);
+  font-size: 20px;
+  color: #fff;
+  text-align: center;
+  text-shadow: 1.5px 1.5px 0 var(--blue-shadow);
+  line-height: 1.3;
+}
+
 /* ---------- FAQ ---------- */
 .faq-list {
   display: grid;

@@ -396,6 +396,37 @@ const SOCIAL = {
   }
 })();
 
+/* ==========================================================
+   公認切り抜きチャンネル
+   name: 表示名 / url: チャンネル URL / icon: アイコン画像
+   ========================================================== */
+const CLIPS = [
+  { name: "サリー界隈TV", url: "https://www.youtube.com/@%E3%82%B5%E3%83%AA%E3%83%BC%E7%95%8C%E9%9A%88TV", icon: "clips/clip-1.jpg" },
+  { name: "YTジュニア", url: "https://www.youtube.com/@SariClipss", icon: "clips/clip-2.jpg" },
+];
+
+(function () {
+  const ul = document.getElementById("clip-list");
+  if (!ul) return;
+  function esc(str) {
+    return String(str).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+  const yt = '<svg viewBox="0 0 24 17" fill="#fff" aria-hidden="true"><path d="M9.5 12.5v-8l7 4-7 4z"/></svg>';
+  ul.innerHTML = CLIPS.filter(function (c) { return c.url; })
+    .map(function (c) {
+      return (
+        '<li><a class="clip" href="' + esc(c.url) + '" target="_blank" rel="noopener noreferrer">' +
+        '<span class="clip-avatar"><img src="' + esc(c.icon) + '" alt="" width="120" height="120" loading="lazy" />' +
+        '<span class="yt-badge" aria-hidden="true">' + yt + "</span></span>" +
+        '<span class="clip-name">' + esc(c.name) + "</span>" +
+        "</a></li>"
+      );
+    })
+    .join("");
+})();
+
 /* ---------- 年号 ---------- */
 (function () {
   const y = document.getElementById("year");
