@@ -510,12 +510,12 @@ p {
   /* 全体を少し下げて、ボタンが画面の真ん中あたりに来るようにする(カードは下に見えていてOK) */
   .intro-final {
     justify-content: flex-start;
-    padding: 30vh 16px 0;
+    padding: 21vh 16px 0;
   }
 
   .intro-final .job-grid {
-    gap: 6px;
-    margin-top: 16px;
+    gap: 5px;
+    margin-top: 12px;
     max-width: 420px;
   }
 
