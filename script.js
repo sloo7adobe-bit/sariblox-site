@@ -685,5 +685,8 @@ const CLIPS = [
   window.addEventListener("load", function () {
     ScrollTrigger.refresh();
     if (debugP !== null) tl.progress(parseFloat(debugP) || 0);
+    // 開発確認用: ?scroll=400 で読み込み後にその位置へ移動
+    const sc = new URLSearchParams(location.search).get("scroll");
+    if (sc !== null) setTimeout(function () { window.scrollTo({ top: parseInt(sc, 10) || 0, behavior: "instant" }); }, 400);
   });
 })();
