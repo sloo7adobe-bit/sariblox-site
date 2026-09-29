@@ -1,6 +1,10 @@
 /* ==========================================================
    管理画面で保存した内容の読み込み(無ければ初期値のまま)
    ========================================================== */
+// 再読み込みしたときに途中位置から始まらないように、必ず一番上から
+if ("scrollRestoration" in history) history.scrollRestoration = "manual";
+if (!location.hash && !location.search) window.scrollTo(0, 0);
+
 const CONTENT_READY = (function () {
   const timeout = new Promise(function (r) { setTimeout(function () { r(null); }, 900); });
   const req = fetch("/api/content", { cache: "no-store" })
@@ -616,6 +620,17 @@ CONTENT_READY.then(function (content) {
             scrub: 0.7,
             anticipatePin: 1,
             invalidateOnRefresh: true,
+            // 一番上まで戻ったら、途中の状態が残らないように必ず最初の状態にする
+            onLeaveBack: function () {
+              gsap.killTweensOf(tl);
+              tl.progress(0);
+            },
+            onUpdate: function (self) {
+              if (self.scroll() <= 1 && tl.progress() > 0) {
+                gsap.killTweensOf(tl);
+                tl.progress(0);
+              }
+            },
           },
   });
 
@@ -716,9 +731,14 @@ CONTENT_READY.then(function (content) {
     });
   }
 
-  // 画像読み込み後に位置を再計算
-  window.addEventListener("load", function () {
+  // 画像読み込み後に位置を再計算(すでに読み込み済みなら今すぐ)
+  function afterLoad(fn) {
+    if (document.readyState === "complete") setTimeout(fn, 0);
+    else window.addEventListener("load", fn);
+  }
+  afterLoad(function () {
     ScrollTrigger.refresh();
+    if (window.scrollY <= 1) { gsap.killTweensOf(tl); tl.progress(0); }
     if (debugP !== null) tl.progress(parseFloat(debugP) || 0);
     // 開発確認用: ?scroll=400 で読み込み後にその位置へ移動
     const sc = new URLSearchParams(location.search).get("scroll");
