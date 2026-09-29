@@ -1917,13 +1917,35 @@ body.modal-open {
 
 /* ---------- 管理者モード ---------- */
 body.is-admin,
-body.is-admin a,
-body.is-admin button,
-body.is-admin .btn,
-body.is-admin summary {
+body.is-admin * {
   cursor: url("hammer.png") 28 28, auto;
   cursor: -webkit-image-set(url("hammer.png") 1x, url("hammer@2x.png") 2x) 28 28, auto;
   cursor: image-set(url("hammer.png") 1x, url("hammer@2x.png") 2x) 28 28, auto;
+}
+
+/* 押せるものの上では、振り上げて光るハンマーに */
+body.is-admin a,
+body.is-admin a *,
+body.is-admin button,
+body.is-admin button *,
+body.is-admin .btn,
+body.is-admin summary,
+body.is-admin label,
+body.is-admin input[type="checkbox"],
+body.is-admin .chip,
+body.is-admin .st-btn,
+body.is-admin .app-video,
+body.is-admin .video-item,
+body.is-admin .clip,
+body.is-admin .social-btn {
+  cursor: url("hammer-up.png") 4 28, pointer;
+  cursor: -webkit-image-set(url("hammer-up.png") 1x, url("hammer-up@2x.png") 2x) 4 28, pointer;
+  cursor: image-set(url("hammer-up.png") 1x, url("hammer-up@2x.png") 2x) 4 28, pointer;
+}
+
+body.is-admin input:not([type="checkbox"]),
+body.is-admin textarea {
+  cursor: text;
 }
 
 .admin-badge {
