@@ -1,4 +1,13 @@
 {
   "cleanUrls": true,
-  "trailingSlash": false
+  "trailingSlash": false,
+  "functions": {
+    "api/page.js": {
+      "includeFiles": "private/**"
+    }
+  },
+  "rewrites": [
+    { "source": "/admin", "destination": "/api/page?p=admin" },
+    { "source": "/applicants", "destination": "/api/page?p=applicants" }
+  ]
 }

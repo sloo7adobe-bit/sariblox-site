@@ -1,5 +1,5 @@
 .agents
 .claude
 node_modules
-font/*.ttf
+public/font/*.ttf
 .git
