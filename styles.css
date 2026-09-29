@@ -1915,7 +1915,9 @@ body.is-admin a,
 body.is-admin button,
 body.is-admin .btn,
 body.is-admin summary {
-  cursor: url("hammer.png") 6 26, auto;
+  cursor: url("hammer.png") 28 28, auto;
+  cursor: -webkit-image-set(url("hammer.png") 1x, url("hammer@2x.png") 2x) 28 28, auto;
+  cursor: image-set(url("hammer.png") 1x, url("hammer@2x.png") 2x) 28 28, auto;
 }
 
 .admin-badge {
