@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>管理画面 | サリーぶろっくす</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="icon" href="favicon.ico" sizes="any" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="admin.css" />
+</head>
+<body class="admin-body is-admin">
+  <header class="admin-top">
+    <div class="admin-top-inner">
+      <span class="admin-brand">🔨 管理者モード</span>
+      <nav class="admin-nav">
+        <a href="/" target="_blank" rel="noopener">サイトを見る</a>
+        <a href="/count" target="_blank" rel="noopener">アクセス数</a>
+        <button type="button" class="linklike" id="logout">ログアウト</button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="admin-wrap" id="main" hidden>
+    <!-- アクセス数 -->
+    <section class="admin-card">
+      <h2 class="admin-h2">アクセス数</h2>
+      <div class="stat-row">
+        <div class="stat"><div class="stat-num" id="s-total">…</div><div class="stat-lbl">合計</div></div>
+        <div class="stat"><div class="stat-num" id="s-today">…</div><div class="stat-lbl">今日</div></div>
+        <div class="stat"><div class="stat-num" id="s-yesterday">…</div><div class="stat-lbl">昨日</div></div>
+      </div>
+      <div class="admin-actions">
+        <button type="button" class="btn btn-ghost btn-sm" id="reset-count">アクセス数をゼロにリセット</button>
+        <span class="admin-msg" id="reset-msg"></span>
+      </div>
+    </section>
+
+    <!-- 募集の状態 -->
+    <section class="admin-card">
+      <h2 class="admin-h2">募集の状態</h2>
+      <label class="toggle"><input type="checkbox" id="c-recruiting" /> <span>募集中(オフにすると「募集は終了しました」と表示され、応募できなくなります)</span></label>
+    </section>
+
+    <!-- 見出し -->
+    <section class="admin-card">
+      <h2 class="admin-h2">最後の画面の見出し</h2>
+      <div class="row3">
+        <input class="field-input" id="c-h0" placeholder="運命の" />
+        <input class="field-input accent-input" id="c-h1" placeholder="編集者(黄色)" />
+        <input class="field-input" id="c-h2" placeholder="募集" />
+      </div>
+    </section>
+
+    <!-- 3枚のカード -->
+    <section class="admin-card">
+      <h2 class="admin-h2">3枚のカード</h2>
+      <p class="admin-help">1 行 = 1 項目。カードごとに 6 行まで。</p>
+      <div class="row3 cards-edit" id="cards"></div>
+    </section>
+
+    <!-- 動画 -->
+    <section class="admin-card">
+      <h2 class="admin-h2">こんな動画を作っています</h2>
+      <p class="admin-help">YouTube の動画 URL を 1 行に 1 本(12 本まで)。上から順に並びます。</p>
+      <textarea class="field-input field-textarea" id="c-videos" rows="10"></textarea>
+    </section>
+
+    <!-- 切り抜き -->
+    <section class="admin-card">
+      <h2 class="admin-h2">公認切り抜き</h2>
+      <p class="admin-help">1 行に「名前, チャンネル URL」。アイコンは保存時に YouTube から自動で取ります。</p>
+      <textarea class="field-input field-textarea" id="c-clips" rows="5" placeholder="サリー界隈TV, https://www.youtube.com/@..."></textarea>
+    </section>
+
+    <!-- SNS -->
+    <section class="admin-card">
+      <h2 class="admin-h2">フッターの SNS</h2>
+      <div class="grid2">
+        <label>YouTube<input class="field-input" id="c-youtube" /></label>
+        <label>TikTok<input class="field-input" id="c-tiktok" /></label>
+        <label>X<input class="field-input" id="c-x" /></label>
+        <label>Discord<input class="field-input" id="c-discord" /></label>
+        <label>メール(空なら非表示)<input class="field-input" id="c-email" /></label>
+      </div>
+    </section>
+
+    <div class="admin-save">
+      <button type="button" class="btn btn-primary btn-lg" id="save">この内容でサイトを更新</button>
+      <span class="admin-msg" id="save-msg"></span>
+    </div>
+
+    <!-- パスワード -->
+    <section class="admin-card">
+      <h2 class="admin-h2">パスワード変更</h2>
+      <div class="grid2">
+        <label>今のパスワード<input class="field-input" id="p-cur" type="password" autocomplete="current-password" /></label>
+        <label>新しいパスワード<input class="field-input" id="p-new" type="password" autocomplete="new-password" /></label>
+      </div>
+      <div class="admin-actions">
+        <button type="button" class="btn btn-ghost btn-sm" id="pw-change">変更する</button>
+        <span class="admin-msg" id="pw-msg"></span>
+      </div>
+    </section>
+  </main>
+
+  <script src="admin.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,42 @@
+/* 管理画面・ログイン画面 */
+.admin-body { min-height: 100vh; }
+.login-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px 16px; position: relative; }
+.login-card { width: 100%; max-width: 420px; background: #fff; border: 2px solid var(--ink); border-radius: 22px; box-shadow: 8px 8px 0 rgba(28,28,28,.85); padding: 34px 28px 26px; text-align: center; }
+.login-hammer { font-size: 54px; line-height: 1; margin-bottom: 6px; animation: swing 1.6s ease-in-out infinite; transform-origin: 70% 80%; }
+@keyframes swing { 0%,100% { transform: rotate(-12deg); } 50% { transform: rotate(18deg); } }
+.admin-h1 { font-family: var(--font-hand); font-size: 30px; font-weight: 400; margin-bottom: 4px; }
+.admin-lead { color: var(--ink-soft); font-size: 14px; margin-bottom: 20px; }
+.login-card form { text-align: left; }
+.admin-back { display: inline-block; margin-top: 18px; font-size: 14px; color: var(--ink-soft); text-decoration: underline; }
+
+.admin-top { position: sticky; top: 0; z-index: 50; background: var(--ink); color: #fff; }
+.admin-top-inner { max-width: 960px; margin: 0 auto; padding: 0 20px; height: 56px; display: flex; align-items: center; justify-content: space-between; }
+.admin-brand { font-family: var(--font-hand); font-size: 20px; color: var(--yellow); }
+.admin-nav { display: flex; gap: 18px; font-size: 14px; }
+.admin-nav a, .admin-nav .linklike { color: #fff; background: none; border: 0; font: inherit; cursor: pointer; text-decoration: underline; padding: 0; }
+
+.admin-wrap { max-width: 960px; margin: 0 auto; padding: 28px 20px 80px; position: relative; display: grid; gap: 18px; }
+.admin-card { background: #fff; border: 2px solid var(--ink); border-radius: 18px; box-shadow: 6px 6px 0 rgba(28,28,28,.85); padding: 22px 22px 20px; }
+.admin-h2 { font-family: var(--font-hand); font-size: 24px; font-weight: 400; margin-bottom: 12px; }
+.admin-help { font-size: 13px; color: var(--ink-soft); margin: -4px 0 10px; }
+.stat-row { display: flex; gap: 14px; flex-wrap: wrap; }
+.stat { flex: 1; min-width: 120px; background: #f3f7ff; border: 2px solid var(--ink); border-radius: 14px; padding: 14px; text-align: center; }
+.stat-num { font-family: var(--font-hand); font-size: 36px; line-height: 1.1; color: var(--blue-shadow); }
+.stat-lbl { font-family: var(--font-hand); font-size: 14px; margin-top: 2px; }
+.admin-actions { display: flex; align-items: center; gap: 14px; margin-top: 14px; flex-wrap: wrap; }
+.admin-msg { font-size: 14px; font-weight: 700; }
+.admin-msg.ok { color: #1a8f3c; }
+.admin-msg.ng { color: #d0303f; }
+.toggle { display: flex; align-items: flex-start; gap: 10px; font-size: 15px; cursor: pointer; }
+.toggle input { width: 22px; height: 22px; margin-top: 4px; accent-color: var(--yellow); }
+.row3 { display: grid; gap: 12px; }
+.grid2 { display: grid; gap: 12px; }
+.grid2 label { display: block; font-size: 13px; font-weight: 700; }
+.grid2 .field-input { margin-top: 4px; font-weight: 400; }
+.accent-input { background: #fff6bf; }
+.card-edit { display: grid; gap: 8px; }
+.admin-save { position: sticky; bottom: 14px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; background: rgba(255,255,255,.85); backdrop-filter: blur(6px); border: 2px solid var(--ink); border-radius: 999px; padding: 10px 14px; box-shadow: 4px 4px 0 rgba(28,28,28,.85); }
+@media (min-width: 720px) {
+  .row3 { grid-template-columns: repeat(3, 1fr); }
+  .grid2 { grid-template-columns: repeat(2, 1fr); }
+}

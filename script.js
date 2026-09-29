@@ -1,4 +1,25 @@
 /* ==========================================================
+   管理画面で保存した内容の読み込み(無ければ初期値のまま)
+   ========================================================== */
+const CONTENT_READY = (function () {
+  const timeout = new Promise(function (r) { setTimeout(function () { r(null); }, 1500); });
+  const req = fetch("/api/content", { cache: "no-store" })
+    .then(function (r) { return r.json(); })
+    .then(function (j) { return j && j.ok ? j.content : null; })
+    .catch(function () { return null; });
+  return Promise.race([req, timeout]).then(function (c) {
+    window.SITE_CONTENT = c || null;
+    return c || null;
+  });
+})();
+
+function esc(str) {
+  return String(str == null ? "" : str).replace(/[&<>"']/g, function (c) {
+    return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+  });
+}
+
+/* ==========================================================
    応募フォーム(モーダル)
    送信内容は /api/apply 経由で Discord に届く
    ========================================================== */
@@ -269,10 +290,11 @@ const VIDEOS = [
   "https://www.youtube.com/watch?v=dNiF_CisHyk",
 ];
 
-(function () {
+CONTENT_READY.then(function (content) {
   const card = document.getElementById("channel-card");
   const grid = document.getElementById("video-grid");
   if (!grid) return;
+  const VIDEO_LIST = content && content.videos && content.videos.length ? content.videos : VIDEOS;
 
   const ytIcon =
     '<svg width="16" height="12" viewBox="0 0 24 17" fill="#fff" aria-hidden="true"><path d="M9.5 12.5v-8l7 4-7 4z"/></svg>';
@@ -334,11 +356,11 @@ const VIDEOS = [
     return m ? m[1] : "";
   }
 
-  const ids = VIDEOS.map(toId);
+  const ids = VIDEO_LIST.map(toId);
   const hasAny = ids.some(Boolean);
 
   grid.innerHTML = ids
-    .slice(0, 9)
+    .slice(0, 12)
     .map(function (id, i) {
       if (!id) {
         return '<div class="video-item placeholder" aria-hidden="true">' + (hasAny ? "" : "動画 " + (i + 1)) + "</div>";
@@ -358,7 +380,7 @@ const VIDEOS = [
       );
     })
     .join("");
-})();
+});
 
 /* ==========================================================
    フッターの SNS リンクとメール
@@ -372,9 +394,10 @@ const SOCIAL = {
   email: "",
 };
 
-(function () {
+CONTENT_READY.then(function (content) {
   const ul = document.getElementById("social-links");
   if (!ul) return;
+  const SOC = content && content.social ? content.social : SOCIAL;
   const icons = {
     youtube: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.6 12 3.6 12 3.6s-7.5 0-9.4.5A3 3 0 0 0 .5 6.2 31 31 0 0 0 0 12a31 31 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1c1.9.5 9.4.5 9.4.5s7.5 0 9.4-.5a3 3 0 0 0 2.1-2.1A31 31 0 0 0 24 12a31 31 0 0 0-.5-5.8zM9.6 15.6V8.4l6.3 3.6-6.3 3.6z"/></svg>',
     tiktok: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16.6 5.8A4.3 4.3 0 0 1 15.5 3h-3.1v12.4a2.6 2.6 0 1 1-2.6-2.6c.3 0 .5 0 .8.1V9.7a5.7 5.7 0 1 0 4.9 5.7V9.1a7.4 7.4 0 0 0 4.3 1.4V7.4a4.3 4.3 0 0 1-3.2-1.6z"/></svg>',
@@ -383,18 +406,18 @@ const SOCIAL = {
   };
   const labels = { youtube: "YouTube", tiktok: "TikTok", x: "X", discord: "Discord" };
   ul.innerHTML = ["youtube", "tiktok", "x", "discord"]
-    .filter(function (k) { return SOCIAL[k]; })
+    .filter(function (k) { return SOC[k]; })
     .map(function (k) {
-      return '<li><a class="social-btn" href="' + SOCIAL[k] + '" target="_blank" rel="noopener noreferrer" aria-label="' + labels[k] + '">' + icons[k] + "</a></li>";
+      return '<li><a class="social-btn" href="' + esc(SOC[k]) + '" target="_blank" rel="noopener noreferrer" aria-label="' + labels[k] + '">' + icons[k] + "</a></li>";
     })
     .join("");
   const mail = document.getElementById("footer-mail");
-  if (mail && SOCIAL.email) {
-    mail.href = "mailto:" + SOCIAL.email;
-    document.getElementById("footer-mail-text").textContent = SOCIAL.email;
+  if (mail && SOC.email) {
+    mail.href = "mailto:" + SOC.email;
+    document.getElementById("footer-mail-text").textContent = SOC.email;
     mail.hidden = false;
   }
-})();
+});
 
 /* ==========================================================
    公認切り抜きチャンネル
@@ -405,16 +428,12 @@ const CLIPS = [
   { name: "YTジュニア", url: "https://www.youtube.com/@SariClipss", icon: "clips/clip-2.jpg" },
 ];
 
-(function () {
+CONTENT_READY.then(function (content) {
   const ul = document.getElementById("clip-list");
   if (!ul) return;
-  function esc(str) {
-    return String(str).replace(/[&<>"']/g, function (c) {
-      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
-    });
-  }
+  const CLIP_LIST = content && content.clips && content.clips.length ? content.clips : CLIPS;
   const yt = '<svg viewBox="0 0 24 17" fill="#fff" aria-hidden="true"><path d="M9.5 12.5v-8l7 4-7 4z"/></svg>';
-  ul.innerHTML = CLIPS.filter(function (c) { return c.url; })
+  ul.innerHTML = CLIP_LIST.filter(function (c) { return c.url; })
     .map(function (c) {
       return (
         '<li><a class="clip" href="' + esc(c.url) + '" target="_blank" rel="noopener noreferrer">' +
@@ -425,7 +444,7 @@ const CLIPS = [
       );
     })
     .join("");
-})();
+});
 
 /* ---------- アクセス数の記録(/count で確認できる) ---------- */
 (function () {
@@ -486,11 +505,12 @@ const CLIPS = [
    オープニング演出(スクロール連動)
    頭のフタが開いて、動画や言葉が飛び出す
    ========================================================== */
-(function () {
+CONTENT_READY.then(function (content) {
   const intro = document.getElementById("intro");
   const stage = document.getElementById("intro-stage");
   const burst = document.getElementById("burst");
   if (!intro || !stage || !burst) return;
+  const VIDEO_LIST = content && content.videos && content.videos.length ? content.videos : VIDEOS;
   // 開発確認用: ?nointro=1 でオープニングを外して本文だけ表示
   if (new URLSearchParams(location.search).has("nointro")) {
     intro.remove();
@@ -517,7 +537,7 @@ const CLIPS = [
       v.match(/^([A-Za-z0-9_-]{11})$/);
     return m ? m[1] : "";
   }
-  const ids = (typeof VIDEOS !== "undefined" ? VIDEOS : []).map(toId).filter(Boolean).slice(0, 9);
+  const ids = VIDEO_LIST.map(toId).filter(Boolean).slice(0, 9);
 
   // 位置は舞台の中心からの % (x: 幅, y: 高さ)
   const thumbTargets = [
@@ -703,5 +723,83 @@ const CLIPS = [
     // 開発確認用: ?scroll=400 で読み込み後にその位置へ移動
     const sc = new URLSearchParams(location.search).get("scroll");
     if (sc !== null) setTimeout(function () { window.scrollTo({ top: parseInt(sc, 10) || 0, behavior: "instant" }); }, 400);
+  });
+});
+
+
+/* ==========================================================
+   見出し・カード・募集状態の反映(管理画面で保存した内容)
+   ========================================================== */
+CONTENT_READY.then(function (content) {
+  if (!content) return;
+  // 見出し
+  if (content.headline && content.headline.some(Boolean)) {
+    const spans = document.querySelectorAll(".hero-title .hero-title-line");
+    content.headline.forEach(function (t, i) {
+      if (spans[i] && t) spans[i].textContent = t;
+    });
+  }
+  // カード
+  if (content.cards && content.cards.length) {
+    const html = content.cards
+      .filter(function (c) { return c && (c.label || (c.lines && c.lines.length)); })
+      .map(function (c) {
+        return (
+          '<div class="job-item"><h3 class="job-label">' + esc(c.label) + "</h3>" +
+          '<div class="job-card"><ul class="list">' +
+          (c.lines || []).map(function (l) { return "<li>" + esc(l) + "</li>"; }).join("") +
+          "</ul></div></div>"
+        );
+      })
+      .join("");
+    document.querySelectorAll(".job-grid").forEach(function (g) { g.innerHTML = html; });
+  }
+  // 募集終了
+  if (content.recruiting === false) {
+    document.body.classList.add("is-closed");
+    document.querySelectorAll(".js-open-apply, .js-scroll-intro").forEach(function (b) {
+      b.textContent = "募集は終了しました";
+      b.classList.add("is-disabled");
+      b.setAttribute("aria-disabled", "true");
+    });
+    const form = document.getElementById("apply-form");
+    const done = document.getElementById("apply-done");
+    if (form && done) {
+      form.hidden = true;
+      done.hidden = false;
+      done.querySelector(".modal-title").textContent = "募集は終了しました";
+      done.querySelector(".modal-lead").textContent = "たくさんのご応募ありがとうございました。次回の募集はサリーの配信や SNS でお知らせします。";
+    }
+  }
+});
+
+/* ==========================================================
+   管理者モード(ログイン中だけ): ハンマーカーソルとバッジ
+   ========================================================== */
+(function () {
+  const isAdmin = document.cookie.split(";").some(function (c) { return c.trim().indexOf("sb_admin=1") === 0; });
+  if (!isAdmin) return;
+  document.body.classList.add("is-admin");
+  const badge = document.createElement("div");
+  badge.className = "admin-badge";
+  badge.innerHTML =
+    '<span class="admin-badge-icon" aria-hidden="true">🔨</span>' +
+    '<span class="admin-badge-text">管理者モード</span>' +
+    '<a href="/admin">編集</a><a href="/count">アクセス数</a>' +
+    '<button type="button" id="admin-logout">ログアウト</button>';
+  document.body.appendChild(badge);
+  document.getElementById("admin-logout").addEventListener("click", function () {
+    fetch("/api/auth", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "logout" }) })
+      .then(function () { location.reload(); });
+  });
+  // クリックでハンマーが振り下ろされる演出
+  document.addEventListener("pointerdown", function (e) {
+    const fx = document.createElement("span");
+    fx.className = "admin-hit";
+    fx.style.left = e.clientX + "px";
+    fx.style.top = e.clientY + "px";
+    fx.textContent = "💥";
+    document.body.appendChild(fx);
+    setTimeout(function () { fx.remove(); }, 500);
   });
 })();

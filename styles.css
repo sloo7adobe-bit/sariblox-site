@@ -1893,3 +1893,106 @@ body.modal-open {
     padding: 40px 40px 32px;
   }
 }
+
+
+/* ---------- 募集終了 ---------- */
+.btn.is-disabled {
+  background: #d9d9d9;
+  color: #555;
+  cursor: not-allowed;
+  box-shadow: 3px 3px 0 #777;
+  border-color: #777;
+}
+
+.btn.is-disabled:hover {
+  transform: none;
+  box-shadow: 3px 3px 0 #777;
+}
+
+/* ---------- 管理者モード ---------- */
+body.is-admin,
+body.is-admin a,
+body.is-admin button,
+body.is-admin .btn,
+body.is-admin summary {
+  cursor: url("hammer.png") 6 26, auto;
+}
+
+.admin-badge {
+  position: fixed;
+  right: 14px;
+  bottom: 14px;
+  z-index: 300;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px 8px 10px;
+  border-radius: 999px;
+  background: var(--ink);
+  color: #fff;
+  border: 2px solid var(--yellow);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.admin-badge-icon {
+  font-size: 20px;
+  display: inline-block;
+  animation: adminSwing 1.6s ease-in-out infinite;
+  transform-origin: 70% 80%;
+}
+
+@keyframes adminSwing {
+  0%, 100% { transform: rotate(-12deg); }
+  50% { transform: rotate(18deg); }
+}
+
+.admin-badge-text {
+  font-family: var(--font-hand);
+  font-size: 15px;
+  color: var(--yellow);
+}
+
+.admin-badge a,
+.admin-badge button {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.12);
+  border: 0;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font: inherit;
+  font-size: 12px;
+  cursor: inherit;
+}
+
+.admin-badge a:hover,
+.admin-badge button:hover {
+  background: var(--yellow);
+  color: var(--ink);
+}
+
+.admin-hit {
+  position: fixed;
+  z-index: 299;
+  pointer-events: none;
+  font-size: 26px;
+  transform: translate(-50%, -50%) scale(0.4);
+  animation: adminHit 500ms ease-out forwards;
+}
+
+@keyframes adminHit {
+  0% { opacity: 1; transform: translate(-50%, -50%) scale(0.4); }
+  60% { opacity: 1; transform: translate(-50%, -60%) scale(1.2); }
+  100% { opacity: 0; transform: translate(-50%, -90%) scale(1); }
+}
+
+@media (max-width: 639px) {
+  .admin-badge {
+    right: 10px;
+    bottom: 10px;
+    gap: 6px;
+    font-size: 12px;
+  }
+  .admin-badge-text { display: none; }
+}

@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ログイン | サリーぶろっくす</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="icon" href="favicon.ico" sizes="any" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="admin.css" />
+</head>
+<body class="admin-body">
+  <main class="login-wrap">
+    <div class="login-card">
+      <div class="login-hammer" aria-hidden="true">🔨</div>
+      <h1 class="admin-h1" id="title">管理者ログイン</h1>
+      <p class="admin-lead" id="lead">パスワードを入力してください。</p>
+      <form id="form" autocomplete="off">
+        <label class="field-label" for="pw">パスワード</label>
+        <input class="field-input" id="pw" type="password" autocomplete="current-password" required />
+        <div id="confirm-wrap" hidden>
+          <label class="field-label" for="pw2" style="margin-top:14px">もう一度</label>
+          <input class="field-input" id="pw2" type="password" autocomplete="new-password" />
+        </div>
+        <p class="field-error" id="err" hidden></p>
+        <button type="submit" class="btn btn-primary btn-lg" id="submit" style="width:100%;margin-top:18px">ログイン</button>
+      </form>
+      <a class="admin-back" href="/">← サイトに戻る</a>
+    </div>
+  </main>
+  <script>
+    (function () {
+      var form = document.getElementById("form"), pw = document.getElementById("pw"), pw2 = document.getElementById("pw2");
+      var err = document.getElementById("err"), submit = document.getElementById("submit");
+      var mode = "login";
+      function showErr(m) { err.textContent = m; err.hidden = !m; }
+      fetch("/api/auth", { credentials: "same-origin" }).then(function (r) { return r.json(); }).then(function (j) {
+        if (j.loggedIn) { location.href = "/admin"; return; }
+        if (!j.setup) {
+          mode = "setup";
+          document.getElementById("title").textContent = "はじめての設定";
+          document.getElementById("lead").textContent = "管理者パスワードを決めてください(6 文字以上)。あとで変更できます。";
+          document.getElementById("confirm-wrap").hidden = false;
+          submit.textContent = "このパスワードにする";
+          pw.autocomplete = "new-password";
+        }
+      }).catch(function () { showErr("接続できませんでした。"); });
+      form.addEventListener("submit", function (e) {
+        e.preventDefault(); showErr("");
+        if (mode === "setup" && pw.value !== pw2.value) { showErr("2 つのパスワードが一致しません。"); return; }
+        submit.disabled = true;
+        fetch("/api/auth", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: mode, password: pw.value }) })
+          .then(function (r) { return r.json(); })
+          .then(function (j) { if (j.ok) { location.href = "/admin"; } else { showErr(j.error || "失敗しました。"); submit.disabled = false; } })
+          .catch(function () { showErr("通信に失敗しました。"); submit.disabled = false; });
+      });
+    })();
+  </script>
+</body>
+</html>
