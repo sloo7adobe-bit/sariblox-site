@@ -1116,6 +1116,19 @@ p {
 }
 
 /* ---------- 公認切り抜き ---------- */
+#videos {
+  padding-bottom: 40px;
+}
+
+#clips {
+  padding-top: 24px;
+  padding-bottom: 72px;
+}
+
+#clips .section-title {
+  margin-bottom: 28px;
+}
+
 .clip-list {
   display: flex;
   flex-wrap: wrap;
