@@ -549,6 +549,13 @@ p {
   visibility: hidden;
 }
 
+/* JS 有効時: 中央ぞろえの transform は GSAP 側が持つ(CSS と二重にならないように) */
+.intro.is-animated .intro-figure,
+.intro.is-animated .intro-copy,
+.intro.is-animated .scroll-hint {
+  transform: none;
+}
+
 /* ---------- Hero text (intro の最後に出るもの) ---------- */
 .eyebrow {
   display: inline-flex;

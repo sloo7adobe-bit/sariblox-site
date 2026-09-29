@@ -524,8 +524,8 @@ const SOCIAL = {
   const glow = intro.querySelector(".intro-glow");
 
   // 初期状態(中央配置は GSAP 側で管理する)
-  gsap.set(figure, { xPercent: -50, yPercent: 0 });
-  gsap.set([copy, hint], { xPercent: -50, x: 0 }); // 中央ぞろえは GSAP 側で管理(iPhone でずれるのを防ぐ)
+  gsap.set(figure, { xPercent: -50, x: 0, yPercent: 0, y: 0 });
+  gsap.set([copy, hint], { xPercent: -50, x: 0, y: 0 }); // 中央ぞろえは GSAP 側で管理(iPhone でずれるのを防ぐ)
   gsap.set(opened, { opacity: 0, clipPath: "inset(28.5% 0 0 0)" }); // フタが上がるまで中身は隠す
   gsap.set(lid, { opacity: 0 }); // 最初は1枚の写真だけを見せる(フタは動く瞬間に出す)
   gsap.set(finalBlock, { autoAlpha: 0, y: 40 });
