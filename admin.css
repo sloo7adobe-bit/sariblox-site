@@ -40,3 +40,45 @@
   .row3 { grid-template-columns: repeat(3, 1fr); }
   .grid2 { grid-template-columns: repeat(2, 1fr); }
 }
+
+/* ---------- 応募者一覧 ---------- */
+.admin-nav a.is-current { color: var(--yellow); text-decoration: none; }
+.app-wrap { max-width: 1120px; }
+.app-toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.app-filters { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { font: inherit; font-size: 13px; font-weight: 700; padding: 6px 12px; border-radius: 999px; border: 2px solid var(--ink); background: #fff; cursor: pointer; }
+.chip b { font-weight: 700; margin-left: 2px; }
+.chip.is-on { background: var(--ink); color: #fff; }
+.chip-star.is-on { background: #f5b800; color: var(--ink); }
+.chip-hired.is-on { background: #2ecc71; color: var(--ink); }
+.chip-pass.is-on { background: #9aa3ad; color: #fff; }
+.app-search { flex: 1; min-width: 200px; max-width: 360px; padding: 8px 12px; font-size: 14px; }
+.app-list { display: grid; gap: 16px; }
+.app-card { background: #fff; border: 2px solid var(--ink); border-radius: 18px; box-shadow: 6px 6px 0 rgba(28,28,28,.85); padding: 16px 18px 14px; border-left-width: 10px; }
+.app-card.st-new { border-left-color: var(--blue-shadow); }
+.app-card.st-star { border-left-color: #f5b800; }
+.app-card.st-hired { border-left-color: #2ecc71; }
+.app-card.st-pass { border-left-color: #9aa3ad; opacity: .75; }
+.app-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; }
+.app-who { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.app-name { font-family: var(--font-hand); font-size: 24px; }
+.app-discord { display: inline-flex; align-items: center; gap: 6px; font: inherit; font-size: 13px; font-weight: 700; padding: 4px 10px; border-radius: 999px; border: 2px solid #5865f2; color: #5865f2; background: #eef0ff; cursor: pointer; }
+.app-discord.copied { background: #5865f2; color: #fff; }
+.app-discord.copied::after { content: " コピーしました"; }
+.app-meta { font-size: 12px; color: var(--muted); }
+.app-status { display: flex; gap: 6px; flex-wrap: wrap; }
+.st-btn { font: inherit; font-size: 12px; font-weight: 700; padding: 5px 10px; border-radius: 999px; border: 2px solid transparent; background: #eef1f4; cursor: pointer; color: var(--ink-soft); }
+.st-btn.is-on.st-new { background: var(--blue-shadow); color: #fff; }
+.st-btn.is-on.st-star { background: #f5b800; color: var(--ink); }
+.st-btn.is-on.st-hired { background: #2ecc71; color: var(--ink); }
+.st-btn.is-on.st-pass { background: #9aa3ad; color: #fff; }
+.app-videos { display: flex; gap: 12px; overflow-x: auto; padding: 12px 0 8px; scroll-snap-type: x proximity; }
+.app-video { flex: 0 0 200px; scroll-snap-align: start; text-decoration: none; color: var(--ink); }
+.app-video img { width: 200px; aspect-ratio: 16/9; object-fit: cover; border-radius: 10px; border: 2px solid var(--ink); display: block; background: #ddd; transition: transform 150ms; }
+.app-video:hover img { transform: translateY(-2px); }
+.app-video-title { display: block; font-size: 12.5px; font-weight: 700; line-height: 1.35; margin-top: 6px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.app-video-author { display: block; font-size: 11px; color: var(--muted); }
+.app-reason { font-size: 14.5px; line-height: 1.8; white-space: normal; background: #f6fbff; border-radius: 12px; padding: 10px 14px; margin-top: 4px; }
+.app-foot { display: flex; gap: 10px; align-items: center; margin-top: 10px; }
+.app-memo { flex: 1; padding: 7px 12px; font-size: 13px; }
+.app-del { font: inherit; font-size: 12px; background: none; border: 0; color: #d0303f; text-decoration: underline; cursor: pointer; }

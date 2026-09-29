@@ -805,7 +805,7 @@ CONTENT_READY.then(function (content) {
   badge.innerHTML =
     '<span class="admin-badge-icon" aria-hidden="true">🔨</span>' +
     '<span class="admin-badge-text">管理者モード</span>' +
-    '<a href="/admin">編集</a><a href="/count">アクセス数</a>' +
+    '<a href="/applicants">応募者</a><a href="/admin">編集</a><a href="/count">アクセス数</a>' +
     '<button type="button" id="admin-logout">ログアウト</button>';
   document.body.appendChild(badge);
   document.getElementById("admin-logout").addEventListener("click", function () {

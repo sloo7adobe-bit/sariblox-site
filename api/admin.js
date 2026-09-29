@@ -122,5 +122,60 @@ module.exports = async function handler(req, res) {
     return;
   }
 
+  if (action === "list-applicants") {
+    const { list } = require("@vercel/blob");
+    const paths = [];
+    let cursor;
+    do {
+      const page = await list({ prefix: "applications/", limit: 1000, cursor });
+      page.blobs.forEach((b) => paths.push(b.pathname));
+      cursor = page.hasMore ? page.cursor : undefined;
+    } while (cursor);
+    paths.sort().reverse(); // 新しい順
+    const items = [];
+    for (let i = 0; i < paths.length; i += 20) {
+      const chunk = await Promise.all(paths.slice(i, i + 20).map((p) => S.readJson(p, null)));
+      chunk.forEach((x) => x && items.push(x));
+    }
+    res.status(200).json({ ok: true, items });
+    return;
+  }
+
+  if (action === "update-applicant") {
+    const id = clean(body.id, 40);
+    if (!/^\d{10,16}-[0-9a-f]{6}$/.test(id)) {
+      res.status(400).json({ ok: false, error: "id が不正です" });
+      return;
+    }
+    const path = "applications/" + id + ".json";
+    const rec = await S.readJson(path, null);
+    if (!rec) {
+      res.status(404).json({ ok: false, error: "見つかりません" });
+      return;
+    }
+    if (body.status !== undefined) {
+      const st = clean(body.status, 20);
+      if (["new", "star", "hired", "pass"].includes(st)) rec.status = st;
+    }
+    if (body.memo !== undefined) rec.memo = clean(body.memo, 500);
+    rec.updatedAt = new Date().toISOString();
+    await S.writeJson(path, rec);
+    res.status(200).json({ ok: true, item: rec });
+    return;
+  }
+
+  if (action === "delete-applicant") {
+    const id = clean(body.id, 40);
+    if (!/^\d{10,16}-[0-9a-f]{6}$/.test(id)) {
+      res.status(400).json({ ok: false, error: "id が不正です" });
+      return;
+    }
+    const { del, list } = require("@vercel/blob");
+    const page = await list({ prefix: "applications/" + id + ".json", limit: 1 });
+    if (page.blobs.length) await del(page.blobs.map((b) => b.url));
+    res.status(200).json({ ok: true });
+    return;
+  }
+
   res.status(400).json({ ok: false, error: "不明な操作です。" });
 };

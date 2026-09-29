@@ -4,6 +4,7 @@
 
 const crypto = require("crypto");
 const { put, head } = require("@vercel/blob");
+const S = require("../lib/store");
 
 const YT_ID = /^[A-Za-z0-9_-]{11}$/;
 const IP_WINDOW_MS = 24 * 60 * 60 * 1000; // 同じ回線からは 24 時間に 1 回
@@ -154,12 +155,33 @@ module.exports = async function handler(req, res) {
   // タイトルが無いものはこちらで取得
   await Promise.all(
     videos.map(async (v) => {
-      if (!v.title) {
-        const info = await fetchTitle(v.id);
-        if (info) v.title = info.title;
+      const info = await fetchTitle(v.id);
+      if (info) {
+        if (!v.title) v.title = info.title;
+        v.author = info.author;
       }
     })
   );
+
+  // ---- 管理画面用に応募内容を保存(Discord への送信に失敗しても残る) ----
+  const appId = Date.now() + "-" + crypto.randomBytes(3).toString("hex");
+  if (hasBlob) {
+    try {
+      await S.writeJson("applications/" + appId + ".json", {
+        id: appId,
+        name,
+        discord: discordRaw,
+        reason,
+        videos,
+        at: new Date().toISOString(),
+        device: /Mobi|Android|iPhone|iPad/i.test(String(req.headers["user-agent"] || "")) ? "スマホ" : "PC",
+        status: "new",
+        memo: "",
+      });
+    } catch (e) {
+      console.error("save application failed", e);
+    }
+  }
 
   const videoLines = videos
     .map((v, i) => `${i + 1}. [${v.title || "動画"}](https://www.youtube.com/watch?v=${v.id})`)
@@ -205,13 +227,18 @@ module.exports = async function handler(req, res) {
     if (!r.ok) {
       const t = await r.text();
       console.error("discord webhook failed", r.status, t);
-      res.status(502).json({ ok: false, error: "送信に失敗しました。時間をおいてもう一度お試しください。" });
-      return;
+      if (!hasBlob) {
+        res.status(502).json({ ok: false, error: "送信に失敗しました。時間をおいてもう一度お試しください。" });
+        return;
+      }
+      // 保存はできているので応募としては受け付ける
     }
   } catch (e) {
     console.error(e);
-    res.status(502).json({ ok: false, error: "送信に失敗しました。時間をおいてもう一度お試しください。" });
-    return;
+    if (!hasBlob) {
+      res.status(502).json({ ok: false, error: "送信に失敗しました。時間をおいてもう一度お試しください。" });
+      return;
+    }
   }
 
   // ---- 記録(以後は同じ人を弾く) ----
