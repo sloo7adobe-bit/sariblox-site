@@ -503,16 +503,20 @@ p {
 
 /* スマホ: 最後の画面は見出しとボタンだけ、カードはその下のセクションへ */
 @media (max-width: 639px) {
-  .intro-final .job-grid-pc {
+  .job-section {
     display: none;
   }
 
-  .job-section {
-    display: block;
+  /* 全体を少し下げて、ボタンが画面の真ん中あたりに来るようにする(カードは下に見えていてOK) */
+  .intro-final {
+    justify-content: flex-start;
+    padding: 30vh 16px 0;
   }
 
-  .intro-final {
-    padding: 28px 16px 12vh;
+  .intro-final .job-grid {
+    gap: 6px;
+    margin-top: 16px;
+    max-width: 420px;
   }
 
   .intro-final .hero-title {
