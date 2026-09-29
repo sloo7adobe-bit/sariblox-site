@@ -240,6 +240,7 @@ p {
   height: calc(100vh - 64px);
   height: calc(100svh - 64px);
   overflow: hidden;
+  background: transparent; /* 空は body 側の1枚のグラデーションだけにして、境目の線を出さない */
 }
 
 .intro-stage {
@@ -308,14 +309,7 @@ p {
 }
 
 .intro-fade {
-  position: absolute;
-  z-index: 2;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 30vh;
-  background: linear-gradient(180deg, rgba(185, 230, 255, 0) 0%, rgba(185, 230, 255, 0.85) 70%, var(--sky-light) 100%);
-  pointer-events: none;
+  display: none; /* 写真の下側は画像自体に溶け込みを焼き込んであるので不要 */
 }
 
 /* 足元の草(1つの丘。下に向かって空へゆっくり溶ける) */
