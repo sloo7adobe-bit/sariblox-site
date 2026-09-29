@@ -489,8 +489,28 @@ p {
   margin-top: 24px;
 }
 
-/* スマホ: 最後の画面が縦に長くなりすぎないように詰める */
+/* 募集内容(スマホ用セクション) */
+.job-section {
+  display: none;
+  position: relative;
+  padding: 36px 0 24px;
+}
+
+.job-grid-sp {
+  max-width: 460px;
+  margin: 0 auto;
+}
+
+/* スマホ: 最後の画面は見出しとボタンだけ、カードはその下のセクションへ */
 @media (max-width: 639px) {
+  .intro-final .job-grid-pc {
+    display: none;
+  }
+
+  .job-section {
+    display: block;
+  }
+
   .intro-final {
     padding: 28px 16px 12vh;
   }
@@ -508,34 +528,32 @@ p {
     font-size: 18px;
   }
 
-  .intro-final .job-grid {
-    gap: 6px;
-    margin-top: 18px;
-    max-width: 420px;
+  .job-grid {
+    gap: 10px;
   }
 
-  .intro-final .job-label {
+  .job-label {
     font-size: 16px;
     margin-bottom: 3px;
   }
 
-  .intro-final .job-card {
+  .job-card {
     padding: 8px 12px;
     border-radius: 12px;
     box-shadow: 3px 3px 0 rgba(28, 28, 28, 0.85);
   }
 
-  .intro-final .job-card .list li {
+  .job-card .list li {
     font-size: 13px;
     line-height: 1.5;
     padding-left: 16px;
   }
 
-  .intro-final .job-card .list li + li {
+  .job-card .list li + li {
     margin-top: 2px;
   }
 
-  .intro-final .job-card .list li::before {
+  .job-card .list li::before {
     width: 7px;
     height: 7px;
     top: 0.55em;
