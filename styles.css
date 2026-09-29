@@ -1292,6 +1292,32 @@ p {
   pointer-events: none;
 }
 
+/* オープニングの雲: スマホでは小さく上に寄せて、髪と重ならないようにする */
+.cloud-intro-l {
+  left: 4%;
+  top: 6%;
+  width: 110px;
+}
+
+.cloud-intro-r {
+  right: 4%;
+  top: 3%;
+  width: 90px;
+}
+
+@media (min-width: 900px) {
+  .cloud-intro-l {
+    top: 14%;
+    width: 180px;
+  }
+
+  .cloud-intro-r {
+    right: 6%;
+    top: 22%;
+    width: 140px;
+  }
+}
+
 /* ---------- Reveal on scroll ---------- */
 .reveal {
   opacity: 0;
