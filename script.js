@@ -621,15 +621,10 @@ CONTENT_READY.then(function (content) {
             anticipatePin: 1,
             invalidateOnRefresh: true,
             // 一番上まで戻ったら、途中の状態が残らないように必ず最初の状態にする
-            onLeaveBack: function () {
-              gsap.killTweensOf(tl);
-              tl.progress(0);
-            },
-            onUpdate: function (self) {
-              if (self.scroll() <= 1 && tl.progress() > 0) {
-                gsap.killTweensOf(tl);
-                tl.progress(0);
-              }
+            onLeaveBack: function (self) {
+              const t = self.getTween && self.getTween();
+              if (t) t.progress(1); // 追従アニメを最後まで進めて、確実に最初の状態にする
+              else tl.progress(0);
             },
           },
   });
@@ -738,7 +733,10 @@ CONTENT_READY.then(function (content) {
   }
   afterLoad(function () {
     ScrollTrigger.refresh();
-    if (window.scrollY <= 1) { gsap.killTweensOf(tl); tl.progress(0); }
+    if (window.scrollY <= 1 && tl.scrollTrigger) {
+      const t = tl.scrollTrigger.getTween && tl.scrollTrigger.getTween();
+      if (t) t.progress(1);
+    }
     if (debugP !== null) tl.progress(parseFloat(debugP) || 0);
     // 開発確認用: ?scroll=400 で読み込み後にその位置へ移動
     const sc = new URLSearchParams(location.search).get("scroll");
