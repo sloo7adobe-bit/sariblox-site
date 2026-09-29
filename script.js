@@ -2,7 +2,7 @@
    管理画面で保存した内容の読み込み(無ければ初期値のまま)
    ========================================================== */
 const CONTENT_READY = (function () {
-  const timeout = new Promise(function (r) { setTimeout(function () { r(null); }, 1500); });
+  const timeout = new Promise(function (r) { setTimeout(function () { r(null); }, 900); });
   const req = fetch("/api/content", { cache: "no-store" })
     .then(function (r) { return r.json(); })
     .then(function (j) { return j && j.ok ? j.content : null; })

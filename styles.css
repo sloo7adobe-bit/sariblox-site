@@ -612,10 +612,16 @@ p {
   opacity: 0;
 }
 
-/* JS 有効時: 最終テキストは最初は隠す */
+/* JS 有効時: 最終テキストは読み込み直後から隠しておく(一瞬見えるのを防ぐ) */
+html.js .intro-final,
 .intro.is-animated .intro-final {
   opacity: 0;
   visibility: hidden;
+}
+
+.intro.is-static .intro-final {
+  opacity: 1;
+  visibility: visible;
 }
 
 /* JS 有効時: 中央ぞろえの transform は GSAP 側が持つ(CSS と二重にならないように) */
