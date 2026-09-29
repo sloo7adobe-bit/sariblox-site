@@ -489,6 +489,59 @@ p {
   margin-top: 24px;
 }
 
+/* スマホ: 最後の画面が縦に長くなりすぎないように詰める */
+@media (max-width: 639px) {
+  .intro-final {
+    padding: 28px 16px 12vh;
+  }
+
+  .intro-final .hero-title {
+    font-size: clamp(32px, 9.5vw, 40px);
+  }
+
+  .intro-final .hero-actions {
+    margin-top: 12px;
+  }
+
+  .intro-final .hero-actions .btn-lg {
+    padding: 11px 26px;
+    font-size: 18px;
+  }
+
+  .intro-final .job-grid {
+    gap: 6px;
+    margin-top: 18px;
+    max-width: 420px;
+  }
+
+  .intro-final .job-label {
+    font-size: 16px;
+    margin-bottom: 3px;
+  }
+
+  .intro-final .job-card {
+    padding: 8px 12px;
+    border-radius: 12px;
+    box-shadow: 3px 3px 0 rgba(28, 28, 28, 0.85);
+  }
+
+  .intro-final .job-card .list li {
+    font-size: 13px;
+    line-height: 1.5;
+    padding-left: 16px;
+  }
+
+  .intro-final .job-card .list li + li {
+    margin-top: 2px;
+  }
+
+  .intro-final .job-card .list li::before {
+    width: 7px;
+    height: 7px;
+    top: 0.55em;
+  }
+}
+
 .scroll-hint {
   position: absolute;
   z-index: 4;
