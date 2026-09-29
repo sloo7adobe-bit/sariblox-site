@@ -427,6 +427,21 @@ const CLIPS = [
     .join("");
 })();
 
+/* ---------- アクセス数の記録(/count で確認できる) ---------- */
+(function () {
+  if (navigator.webdriver) return;
+  const q = new URLSearchParams(location.search);
+  if (q.has("p") || q.has("nointro") || q.has("apply") || q.has("scroll") || q.has("go")) return; // 確認用の表示は数えない
+  if (location.hostname === "localhost" || location.hostname === "127.0.0.1") return;
+  try {
+    if (navigator.sendBeacon) {
+      navigator.sendBeacon("/api/hit", new Blob([""], { type: "text/plain" }));
+    } else {
+      fetch("/api/hit", { method: "POST", keepalive: true }).catch(function () {});
+    }
+  } catch (e) {}
+})();
+
 /* ---------- 年号 ---------- */
 (function () {
   const y = document.getElementById("year");

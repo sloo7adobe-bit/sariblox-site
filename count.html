@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>アクセス数 | サリーぶろっくす</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="icon" href="favicon.ico" sizes="any" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    .count-wrap { max-width: 720px; margin: 0 auto; padding: 48px 20px 80px; position: relative; }
+    .count-title { font-family: var(--font-hand); font-size: 40px; color: #fff; text-shadow: 2px 2px 0 var(--blue-shadow), 4px 4px 0 rgba(42,127,212,.35); margin-bottom: 24px; text-align: center; }
+    .count-grid { display: grid; gap: 16px; grid-template-columns: repeat(2, 1fr); }
+    .count-card { background: #fff; border: 2px solid var(--ink); border-radius: 18px; box-shadow: 6px 6px 0 rgba(28,28,28,.85); padding: 22px 20px; text-align: center; }
+    .count-card.big { grid-column: 1 / -1; padding: 32px 20px; }
+    .count-num { font-family: var(--font-hand); font-size: 44px; line-height: 1.1; color: var(--blue-shadow); }
+    .count-card.big .count-num { font-size: 72px; }
+    .count-lbl { font-family: var(--font-hand); font-size: 16px; margin-top: 6px; }
+    .count-days { margin-top: 24px; background: #fff; border: 2px solid var(--ink); border-radius: 18px; box-shadow: 6px 6px 0 rgba(28,28,28,.85); padding: 20px; }
+    .count-days h2 { font-family: var(--font-hand); font-size: 22px; font-weight: 400; margin-bottom: 12px; }
+    .bar-row { display: grid; grid-template-columns: 96px 1fr 48px; align-items: center; gap: 10px; font-size: 14px; padding: 4px 0; }
+    .bar { height: 14px; border-radius: 7px; background: var(--yellow); border: 1.5px solid var(--ink); min-width: 2px; }
+    .bar-row .n { text-align: right; font-weight: 700; }
+    .count-note { margin-top: 16px; font-size: 13px; color: var(--ink-soft); text-align: center; }
+    .count-back { display: inline-block; margin-top: 20px; font-family: var(--font-hand); font-size: 18px; color: #fff; text-shadow: 1.5px 1.5px 0 var(--blue-shadow); }
+  </style>
+</head>
+<body>
+  <main class="count-wrap">
+    <h1 class="count-title">アクセス数</h1>
+    <div class="count-grid">
+      <div class="count-card big"><div class="count-num" id="total">…</div><div class="count-lbl">合計アクセス</div></div>
+      <div class="count-card"><div class="count-num" id="today">…</div><div class="count-lbl">今日</div></div>
+      <div class="count-card"><div class="count-num" id="yesterday">…</div><div class="count-lbl">昨日</div></div>
+      <div class="count-card"><div class="count-num" id="mobile">…</div><div class="count-lbl">スマホ</div></div>
+      <div class="count-card"><div class="count-num" id="desktop">…</div><div class="count-lbl">パソコン</div></div>
+    </div>
+    <div class="count-days">
+      <h2>直近 14 日</h2>
+      <div id="days"></div>
+    </div>
+    <p class="count-note" id="note">集計中…</p>
+    <div style="text-align:center"><a class="count-back" href="/">← サイトに戻る</a></div>
+  </main>
+  <script>
+    (function () {
+      function n(v) { return Number(v || 0).toLocaleString("ja-JP"); }
+      fetch("/api/count?t=" + Date.now())
+        .then(function (r) { return r.json(); })
+        .then(function (j) {
+          if (!j || !j.ok) throw new Error();
+          ["total", "today", "yesterday", "mobile", "desktop"].forEach(function (k) {
+            document.getElementById(k).textContent = n(j[k]);
+          });
+          var max = Math.max.apply(null, j.last14.map(function (d) { return d.count; }).concat([1]));
+          document.getElementById("days").innerHTML = j.last14.map(function (d) {
+            var w = Math.round((d.count / max) * 100);
+            return '<div class="bar-row"><span>' + d.day.slice(5).replace("-", "/") + '</span><div class="bar" style="width:' + w + '%"></div><span class="n">' + n(d.count) + "</span></div>";
+          }).join("");
+          document.getElementById("note").textContent = "日本時間で集計。更新: " + new Date(j.updatedAt).toLocaleString("ja-JP") + "(ボットのアクセスは除外)";
+        })
+        .catch(function () {
+          document.getElementById("note").textContent = "集計に失敗しました。少し待って再読み込みしてください。";
+        });
+    })();
+  </script>
+</body>
+</html>
