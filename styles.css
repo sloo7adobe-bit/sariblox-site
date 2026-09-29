@@ -509,8 +509,8 @@ p {
 
   /* 全体を少し下げて、ボタンが画面の真ん中あたりに来るようにする(カードは下に見えていてOK) */
   .intro-final {
-    justify-content: flex-start;
-    padding: 21vh 16px 0;
+    justify-content: center;
+    padding: 12vh 16px 2vh; /* 上に余白を足して全体をやや下寄せ、画面が低くても中央寄せで収まる */
   }
 
   .intro-final .job-grid {
