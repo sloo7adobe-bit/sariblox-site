@@ -361,6 +361,106 @@ p {
   border-radius: 4px;
 }
 
+/* 頭から飛び出して、見出しのまわりに並ぶループ動画 */
+.burst-clip {
+  width: var(--clip-w, 150px);
+  aspect-ratio: 16 / 9;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #000;
+  border: 4px solid #fff;
+  outline: 2px solid var(--ink);
+  box-shadow: 4px 4px 0 var(--ink);
+}
+
+.burst-clip video,
+.marquee-tile video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* 狭い画面: 見出しの上を左右に流れるループ動画の列 */
+.clip-marquee {
+  display: none;
+}
+
+.intro.has-marquee .clip-marquee {
+  display: block;
+  flex: 0 0 auto;
+  width: 100vw;
+  margin-bottom: 10px;
+  pointer-events: none;
+}
+
+.marquee-row {
+  overflow: hidden;
+  padding: 7px 0 9px;
+}
+
+.marquee-track {
+  display: flex;
+  gap: 10px;
+  width: max-content;
+  padding: 0 10px;
+  animation: marqueeDrift 40s linear infinite alternate;
+  will-change: transform;
+}
+
+.marquee-track.is-reverse {
+  animation-direction: alternate-reverse;
+}
+
+@keyframes marqueeDrift {
+  from { transform: translateX(0); }
+  to { transform: translateX(calc(100vw - 100%)); }
+}
+
+.marquee-tile {
+  flex: 0 0 auto;
+  width: clamp(128px, 36vw, 200px);
+  aspect-ratio: 16 / 9;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #000;
+  border: 3px solid #fff;
+  outline: 2px solid var(--ink);
+  box-shadow: 3px 3px 0 var(--ink);
+}
+
+.marquee-tile:nth-child(odd) {
+  transform: rotate(-1.5deg);
+}
+
+.marquee-tile:nth-child(even) {
+  transform: rotate(1.5deg);
+}
+
+.intro.has-marquee .intro-final {
+  padding-top: 0;
+  padding-bottom: 2vh;
+}
+
+/* 広い画面: 動画がまわりに並ぶぶん、中央のかたまりを少しコンパクトに */
+.intro.has-ring .intro-final {
+  padding-bottom: 0;
+}
+
+.intro.has-ring .intro-final .job-grid {
+  max-width: 820px;
+  margin-top: 28px;
+  gap: 16px;
+}
+
+.intro.has-ring .intro-final .job-card {
+  padding: 12px 14px;
+}
+
+.intro.has-ring .intro-final .job-card .list li {
+  font-size: 13px;
+}
+
 .burst-word {
   font-family: var(--font-hand);
   color: #fff;
@@ -505,6 +605,10 @@ p {
   .intro-final {
     justify-content: center;
     padding: 12vh 16px 2vh; /* 上に余白を足して全体をやや下寄せ、画面が低くても中央寄せで収まる */
+  }
+
+  .intro.has-marquee .intro-final {
+    padding: 1vh 16px 2vh; /* 上はループ動画の列が入るので余白はいらない */
   }
 
   .intro-final .job-grid {
@@ -1102,50 +1206,6 @@ html.js .intro-final,
   place-items: center;
 }
 
-/* ループ動画のグリッド(編集の見本を GIF のように並べる) */
-.video-grid.is-clips {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 12px;
-}
-
-.video-grid.is-clips .video-item {
-  flex: 0 0 calc((100% - 12px) / 2);
-  border-width: 3px;
-  box-shadow: 3px 3px 0 rgba(28, 28, 28, 0.85);
-  cursor: default;
-}
-
-.video-grid.is-clips .video-item:hover {
-  transform: translate(-2px, -2px);
-}
-
-@media (min-width: 900px) {
-  .video-grid.is-clips {
-    gap: 22px;
-  }
-
-  .video-grid.is-clips .video-item {
-    flex-basis: calc((100% - 44px) / 3);
-    border-width: 5px;
-    box-shadow: 5px 5px 0 rgba(28, 28, 28, 0.85);
-  }
-}
-
-
-.video-item .play span {
-  display: grid;
-  place-items: center;
-  width: 52px;
-  height: 36px;
-  border-radius: 10px;
-  background: #ff0000;
-  border: 2px solid var(--ink);
-  color: #fff;
-  transition: transform 250ms var(--ease);
-}
-
 .video-item:hover .play span {
   transform: scale(1.1);
 }
@@ -1164,7 +1224,7 @@ html.js .intro-final,
 }
 
 #clips {
-  padding-top: 24px;
+  padding-top: 64px;
   padding-bottom: 72px;
 }
 
@@ -1622,8 +1682,17 @@ html.js .intro-final,
   }
 
   .dot,
-  .scroll-hint-line {
+  .scroll-hint-line,
+  .marquee-track {
     animation: none;
+  }
+
+  .intro.has-marquee .clip-marquee {
+    pointer-events: auto;
+  }
+
+  .marquee-row {
+    overflow-x: auto;
   }
 
   .reveal {

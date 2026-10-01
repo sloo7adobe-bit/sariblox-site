@@ -17,6 +17,16 @@ const CONTENT_READY = (function () {
   });
 })();
 
+// ループ動画(編集の見本)の一覧。無ければ空
+const LOOPS_READY = (function () {
+  const timeout = new Promise(function (r) { setTimeout(function () { r([]); }, 900); });
+  const req = fetch("loops/manifest.json", { cache: "no-cache" })
+    .then(function (r) { return r.ok ? r.json() : null; })
+    .then(function (m) { return m && m.clips ? m.clips : []; })
+    .catch(function () { return []; });
+  return Promise.race([req, timeout]);
+})();
+
 function esc(str) {
   return String(str == null ? "" : str).replace(/[&<>"']/g, function (c) {
     return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
@@ -267,19 +277,8 @@ function esc(str) {
 })();
 
 /* ==========================================================
-   チャンネル情報と紹介動画
+   オープニングで飛び出すサムネイル用の動画(ループ動画が無いときに使う)
    ========================================================== */
-const CHANNEL = {
-  name: "サリーぶろっくす",
-  // YouTube チャンネルの URL
-  url: "https://www.youtube.com/@サリーぶろっくす",
-  // チャンネルアイコンの画像(空なら頭文字を表示)
-  avatar: "avatar.jpg",
-  subscribers: "21万人",
-  videos: "",           // 空なら非表示
-  views: "1.2億回",
-};
-
 // 紹介したい横動画の YouTube URL または 動画ID を 9 本まで
 // 例: "https://www.youtube.com/watch?v=dQw4w9WgXcQ" または "dQw4w9WgXcQ"
 const VIDEOS = [
@@ -293,158 +292,6 @@ const VIDEOS = [
   "https://www.youtube.com/watch?v=B2GK-L0xMGw",
   "https://www.youtube.com/watch?v=dNiF_CisHyk",
 ];
-
-CONTENT_READY.then(function (content) {
-  const card = document.getElementById("channel-card");
-  const grid = document.getElementById("video-grid");
-  if (!grid) return;
-  const VIDEO_LIST = content && content.videos && content.videos.length ? content.videos : VIDEOS;
-
-  const ytIcon =
-    '<svg width="16" height="12" viewBox="0 0 24 17" fill="#fff" aria-hidden="true"><path d="M9.5 12.5v-8l7 4-7 4z"/></svg>';
-  const playIcon =
-    '<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>';
-
-  function esc(str) {
-    return String(str).replace(/[&<>"']/g, function (c) {
-      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
-    });
-  }
-
-  // ---- チャンネルカード ----
-  const initial = esc((CHANNEL.name || "S").trim().charAt(0).toUpperCase());
-  const avatarHtml = CHANNEL.avatar
-    ? '<img src="' + esc(CHANNEL.avatar) + '" alt="' + esc(CHANNEL.name) + ' のアイコン" width="96" height="96" loading="lazy" />'
-    : '<span class="avatar-placeholder" aria-hidden="true">' + initial + "</span>";
-  const nameHtml = CHANNEL.url
-    ? '<a href="' + esc(CHANNEL.url) + '" target="_blank" rel="noopener noreferrer">' + esc(CHANNEL.name) + "</a>"
-    : esc(CHANNEL.name);
-  const stats = [
-    { num: CHANNEL.subscribers, lbl: "登録者" },
-    { num: CHANNEL.videos, lbl: "動画数" },
-    { num: CHANNEL.views, lbl: "総再生数" },
-  ].filter(function (s) {
-    return s.num;
-  });
-  const statsHtml = stats.length
-    ? '<ul class="channel-stats" aria-label="チャンネル実績">' +
-      stats
-        .map(function (s) {
-          return "<li><span class=\"num\">" + esc(s.num) + "</span><span class=\"lbl\">" + s.lbl + "</span></li>";
-        })
-        .join("") +
-      "</ul>"
-    : "";
-
-  if (card) card.innerHTML =
-    '<div class="channel-avatar">' +
-    avatarHtml +
-    '<span class="yt-badge" aria-hidden="true">' +
-    ytIcon +
-    "</span></div>" +
-    '<div class="channel-body"><p class="channel-name">' +
-    nameHtml +
-    "</p>" +
-    statsHtml +
-    "</div>";
-
-  // ---- 動画グリッド ----
-  function toId(v) {
-    if (!v) return "";
-    v = v.trim();
-    const m =
-      v.match(/[?&]v=([A-Za-z0-9_-]{11})/) ||
-      v.match(/youtu\.be\/([A-Za-z0-9_-]{11})/) ||
-      v.match(/\/(?:shorts|embed|live)\/([A-Za-z0-9_-]{11})/) ||
-      v.match(/^([A-Za-z0-9_-]{11})$/);
-    return m ? m[1] : "";
-  }
-
-  const ids = VIDEO_LIST.map(toId);
-  const hasAny = ids.some(Boolean);
-
-  // ---- YouTube のサムネイルを並べる(ループ動画が無いときの表示) ----
-  function renderThumbs() {
-    grid.classList.remove("is-clips");
-    grid.innerHTML = ids
-      .slice(0, 12)
-      .map(function (id, i) {
-        if (!id) {
-          return '<div class="video-item placeholder" aria-hidden="true">' + (hasAny ? "" : "動画 " + (i + 1)) + "</div>";
-        }
-        return (
-          '<a class="video-item" data-id="' + id + '" href="https://www.youtube.com/watch?v=' +
-          id +
-          '" target="_blank" rel="noopener noreferrer" aria-label="動画 ' +
-          (i + 1) +
-          ' を YouTube で見る">' +
-          '<img src="https://i.ytimg.com/vi/' +
-          id +
-          '/hqdefault.jpg" alt="" loading="lazy" />' +
-          '<span class="play"><span>' +
-          playIcon +
-          "</span></span></a>"
-        );
-      })
-      .join("");
-  }
-
-  // ---- ループ動画を GIF のように並べる(編集の見本) ----
-  function renderClips(clips) {
-    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    grid.classList.add("is-clips");
-    grid.innerHTML = "";
-    const vids = clips.map(function (c) {
-      const tile = document.createElement("div");
-      tile.className = "video-item is-clip";
-      const v = document.createElement("video");
-      v.muted = true;
-      v.defaultMuted = true;
-      v.loop = true;
-      v.playsInline = true;
-      v.setAttribute("muted", "");
-      v.setAttribute("playsinline", "");
-      v.setAttribute("aria-hidden", "true");
-      v.preload = "none";
-      v.disablePictureInPicture = true;
-      if (c.poster) v.poster = c.poster;
-      v.src = c.src;
-      tile.appendChild(v);
-      grid.appendChild(tile);
-      if (reduce) {
-        // 動きを減らす設定の人には自動再生しない(マウスを乗せる・タップしたときだけ)
-        tile.addEventListener("mouseenter", function () { v.play().catch(function () {}); });
-        tile.addEventListener("mouseleave", function () { v.pause(); });
-        tile.addEventListener("click", function () { if (v.paused) v.play().catch(function () {}); else v.pause(); });
-      }
-      return v;
-    });
-    if (reduce) return;
-    if (!("IntersectionObserver" in window)) {
-      vids.forEach(function (v) { v.play().catch(function () {}); });
-      return;
-    }
-    // 画面に見えている間だけ再生する(通信量と電池の節約)
-    const io = new IntersectionObserver(
-      function (entries) {
-        entries.forEach(function (e) {
-          if (e.isIntersecting) e.target.play().catch(function () {});
-          else e.target.pause();
-        });
-      },
-      { rootMargin: "120px 0px", threshold: 0.1 }
-    );
-    vids.forEach(function (v) { io.observe(v); });
-  }
-
-  fetch("loops/manifest.json", { cache: "no-cache" })
-    .then(function (r) { return r.ok ? r.json() : null; })
-    .then(function (m) {
-      if (m && m.clips && m.clips.length) renderClips(m.clips);
-      else renderThumbs();
-    })
-    .catch(renderThumbs);
-});
 
 /* ==========================================================
    フッターの SNS リンクとメール
@@ -569,7 +416,9 @@ CONTENT_READY.then(function (content) {
    オープニング演出(スクロール連動)
    頭のフタが開いて、動画や言葉が飛び出す
    ========================================================== */
-CONTENT_READY.then(function (content) {
+Promise.all([CONTENT_READY, LOOPS_READY]).then(function (res) {
+  const content = res[0];
+  const clips = res[1] || [];
   const intro = document.getElementById("intro");
   const stage = document.getElementById("intro-stage");
   const burst = document.getElementById("burst");
@@ -583,14 +432,94 @@ CONTENT_READY.then(function (content) {
 
   const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const hasGsap = typeof window.gsap !== "undefined" && typeof window.ScrollTrigger !== "undefined";
+  const animated = !reduce && hasGsap;
 
-  if (reduce || !hasGsap) {
+  // ---- ループ動画の見せ方 ----
+  //  広い画面: 最後の画面のまわりに、頭から飛び出した動画がぐるっと並ぶ(ring)
+  //  狭い画面: 見出しの上を、動画の列が左右にゆっくり流れる(marquee)
+  const ringMode = animated && clips.length > 0 && window.matchMedia("(min-width: 1200px)").matches;
+  const marqueeMode = clips.length > 0 && !ringMode;
+
+  const clipTiles = []; // { el, v, inView }
+  let clipsActive = false;
+  function makeClipVideo(c) {
+    const v = document.createElement("video");
+    v.muted = true;
+    v.defaultMuted = true;
+    v.loop = true;
+    v.playsInline = true;
+    v.setAttribute("muted", "");
+    v.setAttribute("playsinline", "");
+    v.setAttribute("aria-hidden", "true");
+    v.preload = "none";
+    v.disablePictureInPicture = true;
+    if (c.poster) v.poster = c.poster;
+    v.src = c.src;
+    return v;
+  }
+  function syncClips() {
+    clipTiles.forEach(function (c) {
+      const want = clipsActive && c.inView;
+      if (want && c.v.paused) c.v.play().catch(function () {});
+      else if (!want && !c.v.paused) c.v.pause();
+    });
+  }
+  const clipIO =
+    "IntersectionObserver" in window
+      ? new IntersectionObserver(
+          function (entries) {
+            entries.forEach(function (e) {
+              const c = clipTiles.find(function (x) { return x.el === e.target; });
+              if (c) c.inView = e.isIntersecting;
+            });
+            syncClips();
+          },
+          { threshold: 0.05 }
+        )
+      : null;
+  function registerClip(el, v) {
+    const c = { el: el, v: v, inView: !clipIO };
+    clipTiles.push(c);
+    if (clipIO) clipIO.observe(el);
+  }
+
+  if (marqueeMode) {
+    const box = document.getElementById("clip-marquee");
+    if (box) {
+      intro.classList.add("has-marquee");
+      const rows = stage.clientHeight >= 720 && clips.length >= 6 ? 2 : 1; // 画面が低いときは 1 列にして、カードがはみ出さないようにする
+      const per = Math.ceil(clips.length / rows);
+      for (let r = 0; r < rows; r++) {
+        const row = document.createElement("div");
+        row.className = "marquee-row";
+        const track = document.createElement("div");
+        track.className = "marquee-track" + (r % 2 ? " is-reverse" : "");
+        const part = clips.slice(r * per, (r + 1) * per);
+        track.style.animationDuration = Math.max(18, part.length * 4.5) + "s";
+        part.forEach(function (c) {
+          const tile = document.createElement("div");
+          tile.className = "marquee-tile";
+          const v = makeClipVideo(c);
+          tile.appendChild(v);
+          track.appendChild(tile);
+          registerClip(tile, v);
+        });
+        row.appendChild(track);
+        box.appendChild(row);
+      }
+    }
+  }
+
+  if (!animated) {
     intro.classList.add("is-static");
     document.querySelectorAll(".js-scroll-intro").forEach(function (b) { b.classList.add("js-open-apply"); });
+    clipsActive = !reduce; // 動きを減らす設定の人には自動再生しない
+    syncClips();
     return;
   }
 
   intro.classList.add("is-animated");
+  if (ringMode) intro.classList.add("has-ring");
   gsap.registerPlugin(ScrollTrigger);
 
   // ---- 飛び出す要素を作る ----
@@ -603,7 +532,7 @@ CONTENT_READY.then(function (content) {
   }
   const ids = VIDEO_LIST.map(toId).filter(Boolean).slice(0, 9);
 
-  // 位置は舞台の中心からの % (x: 幅, y: 高さ)
+  // 位置は頭の位置(舞台の上から 30%)からの % (x: 幅, y: 高さ)
   const thumbTargets = [
     [-40, -34], [40, -32], [-46, 6], [46, 4], [-32, 38], [32, 36], [0, -44], [-16, 46], [18, 44],
   ];
@@ -615,16 +544,68 @@ CONTENT_READY.then(function (content) {
     [-18, -30], [20, -14], [-34, 30], [34, 26], [4, -28], [-30, 44], [44, -22], [-44, 18], [30, 42], [-26, -40], [40, 14],
   ];
 
+  // ループ動画を、中央の見出しとカードを囲むように並べる位置(舞台の中心からの %)
+  function ringLayout(n) {
+    const sideEach = n >= 16 ? 3 : n >= 8 ? 2 : n >= 5 ? 1 : 0;
+    const rest = n - sideEach * 2;
+    const top = Math.ceil(rest / 2);
+    const bottom = rest - top;
+    const pos = [];
+    // arc: 中央に近いほど外側(上の段は上、下の段は下)へ少しふくらませて、見出しやカードから離す
+    function row(count, y, arc) {
+      for (let i = 0; i < count; i++) {
+        const x = count === 1 ? 0 : -40 + (80 * i) / (count - 1);
+        pos.push([x, y + arc * (1 - Math.abs(x) / 40) + (i % 2 ? 0.8 : -0.8)]);
+      }
+    }
+    row(top, -37, -3);
+    const sideY = sideEach === 3 ? [-17, 3.5, 24] : sideEach === 2 ? [-12, 13] : [1];
+    for (let i = 0; i < sideEach; i++) {
+      pos.push([-42, sideY[i]]);
+      pos.push([42, sideY[i] + 1.5]);
+    }
+    row(bottom, 39, 1);
+    return { pos: pos, maxRow: Math.max(top, bottom, 1) };
+  }
+
   const items = [];
 
-  ids.forEach(function (id, i) {
-    const t = thumbTargets[i % thumbTargets.length];
-    const el = document.createElement("div");
-    el.className = "burst-item burst-thumb";
-    el.innerHTML = '<img src="https://i.ytimg.com/vi/' + id + '/mqdefault.jpg" alt="" loading="eager" decoding="async" />';
-    burst.appendChild(el);
-    items.push({ el: el, tx: t[0], ty: t[1], rot: (i % 2 ? 1 : -1) * (6 + (i * 5) % 14), scale: 1, order: i * 0.045 + 0.02 });
-  });
+  if (ringMode) {
+    const layout = ringLayout(clips.length);
+    const setClipW = function () {
+      const w = stage.clientWidth;
+      // 本数が少ないときは 1 枚を大きめに
+      const frac = clips.length <= 12 ? 0.13 : 0.115;
+      const size = Math.min(Math.max(w * frac, 120), 230, (w * 0.86) / layout.maxRow - 16);
+      burst.style.setProperty("--clip-w", Math.round(size) + "px");
+    };
+    setClipW();
+    window.addEventListener("resize", setClipW);
+    clips.forEach(function (c, i) {
+      const t = layout.pos[i];
+      const el = document.createElement("div");
+      el.className = "burst-item burst-clip";
+      const v = makeClipVideo(c);
+      el.appendChild(v);
+      burst.appendChild(el);
+      registerClip(el, v);
+      // 舞台の中心基準 → 頭の位置(上から 30%)基準に直すため y に 20 を足す
+      items.push({ el: el, tx: t[0], ty: t[1] + 20, rot: (i % 2 ? 1 : -1) * (2 + ((i * 5) % 5)), scale: 1, order: (i % 9) * 0.035 + 0.02, keep: true });
+    });
+  } else {
+    // ループ動画があるときは、その 1 コマ目を飛び出すサムネイルに使う。無ければ YouTube のサムネイル
+    const thumbs = clips.length
+      ? clips.slice(0, 9).map(function (c) { return c.poster; }).filter(Boolean)
+      : ids.map(function (id) { return "https://i.ytimg.com/vi/" + id + "/mqdefault.jpg"; });
+    thumbs.forEach(function (src, i) {
+      const t = thumbTargets[i % thumbTargets.length];
+      const el = document.createElement("div");
+      el.className = "burst-item burst-thumb";
+      el.innerHTML = '<img src="' + esc(src) + '" alt="" loading="eager" decoding="async" />';
+      burst.appendChild(el);
+      items.push({ el: el, tx: t[0], ty: t[1], rot: (i % 2 ? 1 : -1) * (6 + (i * 5) % 14), scale: 1, order: i * 0.045 + 0.02 });
+    });
+  }
 
   words.forEach(function (w, i) {
     const t = wordTargets[i % wordTargets.length];
@@ -732,12 +713,13 @@ CONTENT_READY.then(function (content) {
   // 0.52-0.70: 主役が引いて、飛び出したものは奥へ
   tl.to(figure, { scale: 0.92, yPercent: 8, autoAlpha: 0.16, duration: 0.18, ease: "power2.inOut" }, 0.52);
   items.forEach(function (it) {
+    if (it.keep) return; // ループ動画は見出しのまわりに残す
     tl.to(
       it.el,
       {
         x: function () { return (stage.clientWidth * it.tx * 1.25) / 100; },
         y: function () { return (stage.clientHeight * it.ty * 1.25) / 100; },
-        opacity: 0.2,
+        opacity: ringMode ? 0 : 0.2, // 動画が並ぶときは、言葉や飾りは消して画面をすっきりさせる
         scale: it.scale * 0.9,
         duration: 0.22,
         ease: "power1.inOut",
@@ -746,9 +728,26 @@ CONTENT_READY.then(function (content) {
     );
   });
 
+  // ループ動画が並ぶときは、雲の飾りを消して動画とかぶらないようにする
+  if (clips.length) {
+    tl.to(intro.querySelectorAll(".cloud-deco"), { autoAlpha: 0, duration: 0.12 }, ringMode ? 0.16 : 0.6);
+  }
+
   // 0.64-0.86: 見出しが浮かび上がる
   tl.to(finalBlock, { autoAlpha: 1, y: 0, duration: 0.18, ease: "power2.out" }, 0.64);
   tl.to({}, { duration: 0.14 }); // 読める余韻
+
+  // ループ動画は、画面に出ている間だけ再生する
+  if (clipTiles.length) {
+    const activeAt = ringMode ? 0.14 : 0.62;
+    gsap.ticker.add(function () {
+      const a = tl.progress() >= activeAt;
+      if (a !== clipsActive) {
+        clipsActive = a;
+        syncClips();
+      }
+    });
+  }
 
   // 最初の画面の「応募する」: 演出を最後まで再生しながら下へスクロールする
   function scrollToIntroEnd() {
