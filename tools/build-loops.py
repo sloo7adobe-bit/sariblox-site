@@ -33,17 +33,47 @@ def run(cmd):
     return subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", errors="ignore")
 
 
+def probe_duration(path):
+    r = run(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", path])
+    try:
+        return float(r.stdout.strip())
+    except ValueError:
+        return 0.0
+
+
+def black_trim(path, duration):
+    """先頭と末尾の真っ黒なコマを見つけて、(開始秒, 終了秒) を返す。ループ時に黒く点滅するのを防ぐ"""
+    r = run(["ffmpeg", "-hide_banner", "-i", path, "-vf", "blackdetect=d=0.01:pix_th=0.10", "-an", "-f", "null", "-"])
+    start, end = 0.0, duration
+    for m in re.finditer(r"black_start:([0-9.]+) black_end:([0-9.]+)", r.stderr):
+        bs, be = float(m.group(1)), float(m.group(2))
+        if bs <= 0.02:
+            start = max(start, be)
+        elif be >= duration - 0.05:
+            end = min(end, bs)
+    if end - start < 0.3:  # ほぼ全部が黒い動画は切らない
+        return 0.0, duration
+    return start, end
+
+
 def main():
     os.makedirs(SRC, exist_ok=True)
     os.makedirs(OUT, exist_ok=True)
-    files = sorted((f for f in os.listdir(SRC) if f.lower().endswith(EXTS)), key=sort_key)
+    # 0 バイトのファイル(書き出し途中の一時ファイルなど)は無視する
+    files = sorted(
+        (f for f in os.listdir(SRC) if f.lower().endswith(EXTS) and os.path.getsize(os.path.join(SRC, f)) > 0),
+        key=sort_key,
+    )
     clips, keep, total = [], {"manifest.json"}, 0
     for i, f in enumerate(files, 1):
         src = os.path.join(SRC, f)
         name = f"clip-{i:02d}"
         mp4, jpg = os.path.join(OUT, name + ".mp4"), os.path.join(OUT, name + ".jpg")
+        dur = probe_duration(src)
+        t0, t1 = black_trim(src, dur) if dur else (0.0, MAX_SECONDS)
+        length = min(MAX_SECONDS, max(0.3, t1 - t0))
         r = run([
-            "ffmpeg", "-y", "-loglevel", "error", "-i", src, "-t", str(MAX_SECONDS), "-an",
+            "ffmpeg", "-y", "-loglevel", "error", "-i", src, "-ss", f"{t0:.3f}", "-t", f"{length:.3f}", "-an",
             "-vf", f"scale={WIDTH}:-2:flags=lanczos,fps=30",
             "-c:v", "libx264", "-preset", "slow", "-crf", CRF, "-profile:v", "main",
             "-pix_fmt", "yuv420p", "-movflags", "+faststart", mp4,
