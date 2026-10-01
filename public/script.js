@@ -18,14 +18,15 @@ const CONTENT_READY = (function () {
 })();
 
 // ループ動画(編集の見本)の一覧。無ければ空
-const LOOPS_READY = (function () {
-  const timeout = new Promise(function (r) { setTimeout(function () { r([]); }, 900); });
-  const req = fetch("loops/manifest.json", { cache: "no-cache" })
-    .then(function (r) { return r.ok ? r.json() : null; })
-    .then(function (m) { return m && m.clips ? m.clips : []; })
-    .catch(function () { return []; });
-  return Promise.race([req, timeout]);
-})();
+//  LOOPS_READY: 最初の表示を待たせないよう 0.9 秒で見切る / LOOPS_REQ: 遅れて届いた一覧も使えるように残しておく
+const LOOPS_REQ = fetch("loops/manifest.json", { cache: "no-cache" })
+  .then(function (r) { return r.ok ? r.json() : null; })
+  .then(function (m) { return m && m.clips ? m.clips : []; })
+  .catch(function () { return []; });
+const LOOPS_READY = Promise.race([
+  LOOPS_REQ,
+  new Promise(function (r) { setTimeout(function () { r([]); }, 900); }),
+]);
 
 function esc(str) {
   return String(str == null ? "" : str).replace(/[&<>"']/g, function (c) {
@@ -422,6 +423,7 @@ CONTENT_READY.then(function (content) {
 /* ==========================================================
    オープニング演出(スクロール連動)
    頭のフタが開いて、動画や言葉が飛び出す
+   → 最後の画面: 空に見出しとボタン、丘の上にテレビ 1 台と立て看板
    ========================================================== */
 Promise.all([CONTENT_READY, LOOPS_READY]).then(function (res) {
   const content = res[0];
@@ -431,118 +433,418 @@ Promise.all([CONTENT_READY, LOOPS_READY]).then(function (res) {
   const burst = document.getElementById("burst");
   if (!intro || !stage || !burst) return;
   const VIDEO_LIST = content && content.videos && content.videos.length ? content.videos : VIDEOS;
+  const qs = new URLSearchParams(location.search);
   // 開発確認用: ?nointro=1 でオープニングを外して本文だけ表示
-  if (new URLSearchParams(location.search).has("nointro")) {
+  if (qs.has("nointro")) {
     intro.remove();
     return;
   }
 
-  const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const reduceMQ = window.matchMedia("(prefers-reduced-motion: reduce)");
+  const reduce = reduceMQ.matches;
   const hasGsap = typeof window.gsap !== "undefined" && typeof window.ScrollTrigger !== "undefined";
   const animated = !reduce && hasGsap;
 
-  // ---- ループ動画の見せ方 ----
-  //  最後の画面の下、緑の草の上を、大きめの動画が行進するように横へ流れていく(parade)
-  const parade = document.getElementById("clip-parade");
-  const paradeMode = clips.length > 0 && !!parade;
+  // ---- 編集サンプル: 丘の上のテレビ 1 台 + 静止サムネイルの棚 ----
+  //  位置が動くものは 1 つも無い。再生するのは常に 1 本だけ(テレビの中)。
+  const AUTO_ADVANCE = true; // false にすると 1 本目がループするだけ(ほかはサムネイルで選ぶ)
+  const CLIP_TAG = (content && content.clipTag) || "こんな編集がほしい!";
+  const fin = document.getElementById("intro-final");
+  const titleEl = fin.querySelector(".hero-title");
+  const actionsEl = fin.querySelector(".hero-actions");
+  const scene = document.getElementById("scene");
+  const board = fin.querySelector(".job-grid");
+  const unit = document.getElementById("clip-parade");
+  const reel = document.getElementById("clip-reel");
+  const grass = intro.querySelector(".grass-strip");
+  const sideMQ = window.matchMedia("(min-width: 960px) and (min-aspect-ratio: 5/4)");
+  const fineMQ = window.matchMedia("(hover: hover) and (pointer: fine)");
 
-  const clipTiles = []; // { el, v, inView }
-  let clipsActive = false;
-  function makeClipVideo(c) {
-    const v = document.createElement("video");
-    v.muted = true;
-    v.defaultMuted = true;
-    v.loop = true;
-    v.playsInline = true;
-    v.setAttribute("muted", "");
-    v.setAttribute("playsinline", "");
-    v.setAttribute("aria-hidden", "true");
-    v.preload = "none";
-    v.disablePictureInPicture = true;
-    if (c.poster) v.poster = c.poster;
-    v.src = c.src;
-    return v;
+  const show = {
+    clips: [], index: 0,
+    auto: AUTO_ADVANCE && !reduce, // 自動で次の見本へ進むか(一度でも操作されたら、その訪問中はずっと止める)
+    userPaused: false,             // 一時停止ボタンで止めている
+    needTap: reduce,               // 動きを減らす設定: 押されるまで再生しない
+    blocked: false,                // 端末に自動再生を断られた(省電力モードなど)
+    finalOn: false, inView: true, held: false,
+    loops: 0, need: 1, last: 0,
+  };
+  let tv = null, posterEl = null, videoEl = null, toggleBtn = null, countEl = null, thumbs = [], warm = null, tvIO = null;
+
+  function autoOK() { return show.auto && show.clips.length > 1; }
+  function applyLoop() {
+    // 決めた回数ぶんループしたら loop を外す → 最後まで再生すると ended が来て、次の見本へパッと切り替わる
+    if (videoEl) videoEl.loop = !(autoOK() && show.loops >= show.need - 1);
   }
-  function syncClips() {
-    clipTiles.forEach(function (c) {
-      const want = clipsActive && c.inView;
-      if (want && c.v.paused) c.v.play().catch(function () {});
-      else if (!want && !c.v.paused) c.v.pause();
+  function render() {
+    if (!tv) return;
+    const stopped = show.userPaused || show.needTap || show.blocked;
+    tv.classList.toggle("is-paused", stopped);
+    toggleBtn.setAttribute("aria-label", stopped ? "再生" : "一時停止");
+  }
+  function sync() {
+    if (!videoEl) return;
+    const want = show.finalOn && show.inView && !document.hidden && !show.userPaused && !show.needTap;
+    if (want && videoEl.paused) {
+      const p = videoEl.play();
+      if (p && p.catch) p.catch(function () { if (videoEl.paused && show.finalOn && !document.hidden) { show.blocked = true; render(); } });
+    } else if (!want && !videoEl.paused) {
+      videoEl.pause();
+    }
+    render();
+  }
+  function warmNext() {
+    // 次の 1 本だけ先に読み込んでおく(通信量を節約する設定のときはやらない)
+    if (!autoOK()) return;
+    const conn = navigator.connection;
+    if (conn && conn.saveData) return;
+    const nx = show.clips[(show.index + 1) % show.clips.length];
+    if (warm && warm.getAttribute("src") === nx.src) return;
+    warm = document.createElement("video");
+    warm.muted = true;
+    warm.preload = "auto";
+    warm.src = nx.src;
+  }
+  function select(i, byUser) {
+    const n = show.clips.length;
+    if (!n) return;
+    i = ((i % n) + n) % n;
+    show.index = i;
+    show.loops = 0;
+    show.last = 0;
+    show.need = 1;
+    show.blocked = false;
+    if (byUser) { show.auto = false; show.userPaused = false; show.needTap = false; }
+    const c = show.clips[i];
+    tv.classList.remove("has-frame");
+    if (c.poster) posterEl.src = c.poster; else posterEl.removeAttribute("src");
+    videoEl.loop = true;
+    videoEl.src = c.src; // preload="none" なので、再生するまで読み込まれない
+    thumbs.forEach(function (t, k) {
+      if (k === i) t.setAttribute("aria-current", "true");
+      else t.removeAttribute("aria-current");
+    });
+    countEl.textContent = i + 1 + " / " + n;
+    // 選ばれたサムネイルが棚の見えている範囲の外なら、棚の位置をパッと合わせる(なめらかには動かさない)
+    const t = thumbs[i];
+    if (t && reel.scrollWidth > reel.clientWidth + 1) {
+      const l = t.offsetLeft; // .reel は position: relative なので、棚の中での位置になる
+      if (l < reel.scrollLeft || l + t.offsetWidth > reel.scrollLeft + reel.clientWidth) reel.scrollLeft = Math.max(0, l - 3);
+    }
+    sync();
+  }
+
+  function buildShowcase(list) {
+    // 開発確認用: ?clips=4 や ?clips=18 で本数を変えて試す(0 で「見本なし」)
+    const forced = parseInt(qs.get("clips"), 10);
+    if (!isNaN(forced) && list.length) {
+      const src = list;
+      list = [];
+      for (let i = 0; i < forced; i++) list.push(src[i % src.length]);
+    }
+    show.clips = list;
+    unit.textContent = "";
+    reel.textContent = "";
+    thumbs = [];
+    if (tvIO) { tvIO.disconnect(); tvIO = null; }
+    tv = posterEl = videoEl = toggleBtn = countEl = null;
+    intro.classList.toggle("has-show", list.length > 0);
+    intro.classList.toggle("has-reel", list.length > 1);
+    if (!list.length) return;
+
+    const arrow = function (d) {
+      return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="' + d + '"/></svg>';
+    };
+    tv = document.createElement("div");
+    tv.className = "tv";
+    tv.innerHTML =
+      '<span class="tv-tag"></span>' +
+      '<div class="tv-screen">' +
+      '<img class="tv-poster" alt="" decoding="async" />' +
+      '<video class="tv-video" muted playsinline preload="none" tabindex="-1" aria-hidden="true" disablepictureinpicture></video>' +
+      '<button type="button" class="tv-toggle" aria-label="一時停止"></button>' +
+      '<span class="tv-count" aria-hidden="true"></span>' +
+      "</div>" +
+      '<button type="button" class="tv-nav tv-prev" aria-label="前の編集サンプル">' + arrow("m15 5-7 7 7 7") + "</button>" +
+      '<button type="button" class="tv-nav tv-next" aria-label="次の編集サンプル">' + arrow("m9 5 7 7-7 7") + "</button>";
+    unit.appendChild(tv);
+    tv.querySelector(".tv-tag").textContent = CLIP_TAG;
+    posterEl = tv.querySelector(".tv-poster");
+    videoEl = tv.querySelector(".tv-video");
+    toggleBtn = tv.querySelector(".tv-toggle");
+    countEl = tv.querySelector(".tv-count");
+    videoEl.muted = true;
+    videoEl.defaultMuted = true;
+    videoEl.playsInline = true;
+
+    videoEl.addEventListener("loadedmetadata", function () {
+      // 1 本あたり 5 秒以上は見せる: 2 秒の見本は 3 回、7 秒の見本は 1 回
+      show.need = Math.max(1, Math.min(3, Math.ceil(5 / (videoEl.duration || 5))));
+      applyLoop();
+    });
+    videoEl.addEventListener("playing", function () {
+      tv.classList.add("has-frame");
+      show.blocked = false;
+      render();
+      warmNext();
+    });
+    videoEl.addEventListener("timeupdate", function () {
+      if (videoEl.currentTime + 0.3 < show.last) { show.loops++; applyLoop(); } // 頭に戻った = 1 回ループした
+      show.last = videoEl.currentTime;
+    });
+    videoEl.addEventListener("ended", function () {
+      if (autoOK() && !show.held) { select(show.index + 1, false); return; }
+      videoEl.currentTime = 0; // マウスを乗せている間・フォーカス中は同じ見本を見せ続ける
+      show.last = 0;
+      applyLoop();
+      sync();
+    });
+
+    toggleBtn.addEventListener("click", function () {
+      if (show.userPaused || show.needTap || show.blocked) { show.userPaused = false; show.needTap = false; show.blocked = false; }
+      else show.userPaused = true;
+      show.auto = false; // 一度さわったら、自動で次へは進めない
+      applyLoop();
+      sync();
+    });
+    tv.querySelector(".tv-prev").addEventListener("click", function () { select(show.index - 1, true); });
+    tv.querySelector(".tv-next").addEventListener("click", function () { select(show.index + 1, true); });
+
+    list.forEach(function (c, i) {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "reel-thumb";
+      b.setAttribute("aria-label", "編集サンプル " + (i + 1) + " を再生");
+      b.innerHTML = '<img src="' + esc(c.poster || "") + '" alt="" loading="lazy" decoding="async" />';
+      b.addEventListener("click", function () { select(i, true); });
+      reel.appendChild(b);
+      thumbs.push(b);
+    });
+
+    if ("IntersectionObserver" in window) {
+      tvIO = new IntersectionObserver(function (es) {
+        show.inView = es[es.length - 1].intersectionRatio >= 0.5;
+        sync();
+      }, { threshold: [0, 0.5, 1] });
+      tvIO.observe(tv);
+    }
+    select(0, false);
+  }
+
+  // マウスを乗せている間・キーボードで操作している間は、自動で次へ進めない
+  [unit, reel].forEach(function (el) {
+    el.addEventListener("pointerenter", function (e) { if (e.pointerType === "mouse") show.held = true; });
+    el.addEventListener("pointerleave", function () { show.held = false; });
+    el.addEventListener("focusin", function () { show.held = true; });
+    el.addEventListener("focusout", function () { show.held = false; });
+    el.addEventListener("keydown", function (e) {
+      if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+      if (show.clips.length < 2) return;
+      e.preventDefault();
+      const onThumb = thumbs.indexOf(document.activeElement) >= 0;
+      select(show.index + (e.key === "ArrowRight" ? 1 : -1), true);
+      if (onThumb && thumbs[show.index]) thumbs[show.index].focus({ preventScroll: true });
+    });
+  });
+  document.addEventListener("visibilitychange", sync);
+  const onReduceChange = function () {
+    if (!reduceMQ.matches) return;
+    show.auto = false; // 途中で「動きを減らす」に変わったら、すぐ止める
+    show.needTap = true;
+    applyLoop();
+    sync();
+  };
+  if (reduceMQ.addEventListener) reduceMQ.addEventListener("change", onReduceChange);
+  else if (reduceMQ.addListener) reduceMQ.addListener(onReduceChange);
+
+  // ---- 最後の画面の割り付け ----
+  //  見出し・ボタン・看板の文字は絶対に削らない。縮むのは すき間 → テレビ の順。
+  //  位置は offsetTop / offsetHeight だけで測る(GSAP の transform の影響を受けない)。
+  const ruler = document.createElement("div"); // 舞台 1 画面ぶんの高さと、最初の丘の高さ(26vh / 最低150px)を測るものさし
+  ruler.setAttribute("aria-hidden", "true");
+  ruler.style.cssText = "position:absolute;left:0;top:0;width:1px;height:calc(100vh - 64px);height:calc(100svh - 64px);visibility:hidden;pointer-events:none";
+  const ruler2 = document.createElement("div");
+  ruler2.style.cssText = "position:absolute;left:0;top:0;width:1px;height:26vh;min-height:150px;visibility:hidden;pointer-events:none";
+  ruler.appendChild(ruler2);
+  document.body.appendChild(ruler);
+
+  let grassH = 0, hillR0 = 0, hillR1 = 0, overD = 0, lastSizes = "";
+  let tl = null, st = null, shiftA = null, shiftB = null;
+  const END_T = 0.96; // 最後の画面が出そろう時刻(ここまでの長さは今までと同じ)
+
+  function topIn(el, root) {
+    let y = 0;
+    while (el && el !== root) { y += el.offsetTop; el = el.offsetParent; }
+    return y;
+  }
+  function sizesKey() {
+    return [stage.clientWidth, ruler.offsetHeight, titleEl.offsetHeight, board.offsetWidth, board.offsetHeight, show.clips.length].join("x");
+  }
+
+  function layoutFinal() {
+    const W = stage.clientWidth;
+    const H = ruler.offsetHeight;
+    const N = show.clips.length;
+    const side = sideMQ.matches;
+    const cs = getComputedStyle(fin);
+    const padT = parseFloat(cs.paddingTop) || 0;
+    const padB = parseFloat(cs.paddingBottom) || 0;
+    const padX = parseFloat(cs.paddingLeft) || 0;
+    const gapRail = parseFloat(getComputedStyle(reel).marginTop) || 0;
+    const colW = Math.min(side ? 1120 : 560, W - padX * 2);
+    const frame = side ? 18 : 12; // テレビの白ふち + 黒ふち(上下の合計)
+    const gapCol = 32;
+    const g = side ? 10 : 8;
+    const thumbMax = Math.max(64, Math.min(112, Math.round(H * 0.135)));
+
+    function thumbFor(RW) {
+      // 入りきるなら全部見せる(マウス 64px / タッチ 72px まで縮める)。入りきらないときだけ「k 枚 + 半分」で続きを見せる
+      let w = Math.floor((RW - 6 - (N - 1) * g) / N);
+      let over = false;
+      if (w >= (side ? 64 : 72)) w = Math.min(w, thumbMax);
+      else {
+        const minW = side ? 88 : 80;
+        const k = Math.max(1, Math.floor((RW - 6 - minW / 2) / (minW + g)));
+        w = Math.floor((RW - 6 - k * g) / (k + 0.5));
+        over = true;
+      }
+      return { w: w, over: over, h: Math.round((w * 9) / 16) + 10 }; // 10 = 棚の上下の余白
+    }
+
+    function fit(railOn) {
+      const head = titleEl.offsetHeight + (parseFloat(getComputedStyle(actionsEl).marginTop) || 0) + actionsEl.offsetHeight;
+      const boardH = board.offsetHeight;
+      const boardW = board.offsetWidth;
+      const gapBoard = side ? 0 : parseFloat(getComputedStyle(board).marginTop) || 0;
+      if (!N) return { tvH: 0, rail: null, over: padT + head + boardH + padB - H, railOn: false };
+      const maxTvW = side ? Math.min(640, Math.max(W * 0.4, boardW + 40), colW - gapCol - boardW - frame) : Math.min(640, colW - frame);
+      const rail = N > 1 && railOn ? thumbFor(side ? Math.min(colW, maxTvW + frame + gapCol + boardW) : colW) : null;
+      const railH = rail ? rail.h + gapRail : 0;
+      const floor = side ? 170 : 130;
+      const free = side
+        ? H - padT - padB - head - frame - railH
+        : H - padT - padB - head - frame - railH - gapBoard - boardH;
+      const tvH = Math.max(floor, Math.min(free, (maxTvW * 9) / 16));
+      const sceneH = side ? Math.max(tvH + frame, boardH) + railH : tvH + frame + railH + gapBoard + boardH;
+      return { tvH: tvH, rail: rail, free: free, over: padT + head + sceneH + padB - H, railOn: !!rail, boardW: boardW };
+    }
+
+    function choose() {
+      let r = fit(true);
+      // 棚を入れるとテレビが小さくなりすぎるときは、棚をやめてテレビに前へ / 次へボタンを出す
+      if (N > 1 && (r.over > 0.5 || r.free < (side ? 170 : 150))) r = fit(false);
+      return r;
+    }
+
+    intro.classList.remove("is-tallhead");
+    let r = choose();
+    // 背の高いスマホ: 余った高さを見出しに回して 2 行で大きくする
+    if (!side && W < 640 && N && -r.over >= 96) {
+      intro.classList.add("is-tallhead");
+      const r2 = choose();
+      if (r2.over <= -16 && r2.railOn === r.railOn && r2.tvH >= r.tvH - 0.5) r = r2;
+      else { intro.classList.remove("is-tallhead"); r = choose(); }
+    }
+
+    if (r.over > 0.5 && N) {
+      // どう詰めても 1 画面に入らない(横向きのスマホ・管理画面の文章が長い など):
+      // 無理に縮めず、テレビは見やすい大きさのままにして、入りきらないぶんはスクロールの続きで見せる
+      const maxTvW = side ? Math.min(640, Math.max(W * 0.4, r.boardW + 40), colW - gapCol - r.boardW - frame) : Math.min(640, colW - frame);
+      r = { tvH: Math.max(side ? 170 : 130, Math.min((maxTvW * 9) / 16, window.innerHeight * 0.62)), railOn: N > 1, boardW: r.boardW };
+      r.rail = N > 1 ? thumbFor(side ? Math.min(colW, maxTvW + frame + gapCol + r.boardW) : colW) : null;
+    }
+
+    const tvW = Math.round((r.tvH * 16) / 9);
+    intro.style.setProperty("--tv-w", tvW + "px");
+    intro.classList.toggle("is-norail", N > 1 && !r.railOn);
+    let overflow = false;
+    if (r.rail) {
+      // 横並びのときは、実際の幅(テレビ + 看板)でもう一度サムネイルの幅を出す。高さの予算は超えない
+      const real = side ? thumbFor(Math.min(colW, tvW + frame + gapCol + r.boardW)) : r.rail;
+      intro.style.setProperty("--thumb-w", (real.h <= r.rail.h ? real.w : Math.min(real.w, r.rail.w)) + "px");
+      overflow = real.over;
+    }
+    reel.classList.toggle("is-overflow", overflow);
+    const noRail = N > 1 && !r.railOn;
+    intro.classList.toggle("has-count", N > 1 && (noRail || overflow));
+    intro.classList.toggle("has-nav", N > 1 && (noRail || (overflow && fineMQ.matches)));
+
+    // 入りきらないぶん(px)。固定中は、演出のあとのスクロールで中身を上へ送って見せる(静的表示ではそのまま下へ続く)
+    overD = Math.max(0, Math.round(scene.offsetTop + scene.offsetHeight + padB - H));
+    if (shiftA) {
+      const d = Math.max(0.001, (END_T * overD) / (window.innerHeight * 1.3)); // 1px スクロール = 1px 送り
+      shiftA.duration(d);
+      shiftB.duration(d);
+    }
+
+    // 丘の線は、テレビ(と看板)の後ろを通す。文字やふちに線が触れない高さにする
+    const anchor = N ? tv : board;
+    const k = N && !side ? 0.45 : 0.5;
+    grassH = Math.max(0, Math.round(stage.clientHeight - (topIn(anchor, stage) + k * anchor.offsetHeight)));
+    hillR0 = Math.round(ruler2.offsetHeight * 0.6);              // 最初の画面の丘の丸み(今までと同じ形)
+    hillR1 = Math.round(Math.min(grassH * 0.6, side ? 150 : 72)); // 最後の画面の丘の丸み(高くなってもドームにしない)
+    intro.style.setProperty("--grass-h", grassH + "px");
+    intro.style.setProperty("--hill-r0", hillR0 + "px");
+    intro.style.setProperty("--hill-r1", hillR1 + "px");
+    lastSizes = sizesKey();
+  }
+
+  function relayout() {
+    if (st) ScrollTrigger.refresh(); // refreshInit で layoutFinal が走り、タイムラインの数値も読み直される
+    else {
+      layoutFinal();
+      if (tl) {
+        const t = tl.time();
+        tl.progress(0).invalidate().time(t);
+      }
+    }
+  }
+  let relayoutTimer = 0;
+  function relayoutSoon() {
+    clearTimeout(relayoutTimer);
+    relayoutTimer = setTimeout(function () { if (sizesKey() !== lastSizes) relayout(); }, 150);
+  }
+
+  // 最後の画面の「応募する」が見えている間だけ、ヘッダーのボタンを白にする
+  const heroCta = actionsEl.querySelector(".js-open-apply");
+  let ctaInView = true;
+  function syncCta() { document.body.classList.toggle("cta-on", show.finalOn && ctaInView); }
+  if (heroCta && "IntersectionObserver" in window) {
+    new IntersectionObserver(function (es) { ctaInView = es[es.length - 1].isIntersecting; syncCta(); }, { rootMargin: "-64px 0px 0px 0px" }).observe(heroCta);
+  }
+  function setFinal(on) {
+    if (on === show.finalOn) return;
+    show.finalOn = on;
+    intro.classList.toggle("is-final", on);
+    syncCta();
+    sync();
+  }
+
+  const debugP = qs.get("p");
+
+  buildShowcase(clips);
+  // 一覧の読み込みが 0.9 秒より遅れても、届いた時点でテレビを作る(今までは黙って出なかった)
+  if (!clips.length) {
+    LOOPS_REQ.then(function (late) {
+      if (!late || !late.length || show.clips.length) return;
+      buildShowcase(late);
+      relayout();
     });
   }
-  const clipIO =
-    "IntersectionObserver" in window
-      ? new IntersectionObserver(
-          function (entries) {
-            entries.forEach(function (e) {
-              const c = clipTiles.find(function (x) { return x.el === e.target; });
-              if (c) c.inView = e.isIntersecting;
-            });
-            syncClips();
-          },
-          { threshold: 0.05 }
-        )
-      : null;
-  function registerClip(el, v) {
-    const c = { el: el, v: v, inView: !clipIO };
-    clipTiles.push(c);
-    if (clipIO) clipIO.observe(el);
+  if ("ResizeObserver" in window) {
+    const ro = new ResizeObserver(relayoutSoon); // 管理画面の文章が後から届いて高さが変わったとき
+    ro.observe(titleEl);
+    ro.observe(board);
   }
-
-  // 動画の大きさを、画面の空きに合わせて決める(見出し・ボタン・カードの下に収まる最大サイズ)
-  let paradeH = 0;
-  function layoutParade() {
-    if (!paradeMode) return;
-    const fin = document.getElementById("intro-final");
-    const title = fin.querySelector(".hero-title");
-    const grid = fin.querySelector(".job-grid");
-    const H = stage.clientHeight;
-    const W = stage.clientWidth;
-    const contentH = grid.getBoundingClientRect().bottom - title.getBoundingClientRect().top;
-    const small = W < 640; // スマホは余白を詰めて、そのぶん動画を大きくする
-    const free = H - contentH - (small ? 36 : 60); // 上の余白 + 見出しとの間 + 下の余白
-    let th = Math.max(84, Math.min(free - (small ? 18 : 34), H * 0.3, 270));
-    let tw = Math.min((th * 16) / 9, W * 0.72);
-    th = (tw * 9) / 16;
-    paradeH = Math.round(th + (small ? 26 : 40));
-    intro.style.setProperty("--tile-w", Math.round(tw) + "px");
-    intro.style.setProperty("--parade-h", paradeH + "px");
-  }
-
-  if (paradeMode) {
-    intro.classList.add("has-parade");
-    const track = document.createElement("div");
-    track.className = "parade-track";
-    // 途切れずに流れ続けるよう、同じ並びを 2 回入れる(動きを減らす設定のときは 1 回だけ)
-    const copies = reduce ? 1 : 2;
-    for (let k = 0; k < copies; k++) {
-      clips.forEach(function (c, i) {
-        const tile = document.createElement("div");
-        tile.className = "parade-tile";
-        tile.style.setProperty("--r", ((i % 2 ? 1 : -1) * (2 + ((i * 3) % 3))) + "deg");
-        tile.style.setProperty("--dy", (i % 2 ? 10 : -6) + "px");
-        const bob = document.createElement("div");
-        bob.className = "parade-bob";
-        bob.style.animationDelay = -(i * 0.37) + "s";
-        const v = makeClipVideo(c);
-        bob.appendChild(v);
-        tile.appendChild(bob);
-        track.appendChild(tile);
-        registerClip(tile, v);
-      });
-    }
-    track.style.animationDuration = Math.max(24, clips.length * 6) + "s";
-    parade.appendChild(track);
-    layoutParade();
-    window.addEventListener("resize", layoutParade);
-    if (document.fonts && document.fonts.ready) document.fonts.ready.then(layoutParade);
-  }
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(relayoutSoon);
 
   if (!animated) {
     intro.classList.add("is-static");
     document.querySelectorAll(".js-scroll-intro").forEach(function (b) { b.classList.add("js-open-apply"); });
-    clipsActive = !reduce; // 動きを減らす設定の人には自動再生しない
-    syncClips();
+    layoutFinal();
+    setFinal(true); // 動きを減らす設定の人には自動再生しない(show.needTap)。押せば再生できる
+    window.addEventListener("resize", relayoutSoon);
+    window.addEventListener("load", layoutFinal);
     return;
   }
 
@@ -575,8 +877,8 @@ Promise.all([CONTENT_READY, LOOPS_READY]).then(function (res) {
 
   {
     // 頭から飛び出すのは YouTube 動画のサムネイル(管理画面の動画一覧)
-    const thumbs = ids.map(function (id) { return "https://i.ytimg.com/vi/" + id + "/mqdefault.jpg"; });
-    thumbs.forEach(function (src, i) {
+    const thumbSrcs = ids.map(function (id) { return "https://i.ytimg.com/vi/" + id + "/mqdefault.jpg"; });
+    thumbSrcs.forEach(function (src, i) {
       const t = thumbTargets[i % thumbTargets.length];
       const el = document.createElement("div");
       el.className = "burst-item burst-thumb";
@@ -609,9 +911,9 @@ Promise.all([CONTENT_READY, LOOPS_READY]).then(function (res) {
   const opened = intro.querySelector(".me-open");
   const inner = intro.querySelector(".head-inner");
   const copy = document.getElementById("intro-copy");
-  const finalBlock = document.getElementById("intro-final");
   const hint = document.getElementById("scroll-hint");
   const glow = intro.querySelector(".intro-glow");
+  const clouds = intro.querySelectorAll(".cloud-deco");
 
   // 初期状態(中央配置は GSAP 側で管理する)
   gsap.set(figure, { xPercent: -50, x: 0, yPercent: 0, y: 0 });
@@ -619,14 +921,17 @@ Promise.all([CONTENT_READY, LOOPS_READY]).then(function (res) {
   gsap.set(inner, { xPercent: -50, yPercent: -50, x: 0, y: 0, scaleX: 0.2, scaleY: 1, autoAlpha: 0 }); // 中央ぞろえは GSAP 側で管理(iPhone でずれるのを防ぐ)
   gsap.set(opened, { opacity: 0, clipPath: "inset(28.5% 0 0 0)" }); // フタが上がるまで中身は隠す
   gsap.set(lid, { opacity: 0 }); // 最初は1枚の写真だけを見せる(フタは動く瞬間に出す)
-  gsap.set(finalBlock, { autoAlpha: 0, y: 40 });
+  gsap.set(fin, { autoAlpha: 0, y: 0 });
+  gsap.set([titleEl, actionsEl, scene], { autoAlpha: 0, y: 16 }); // 最後の画面は 見出し → ボタン → 丘の一式 の順に出す
   gsap.set(items.map(function (i) { return i.el; }), { xPercent: -50, yPercent: -50, x: 0, y: 0, scale: 0, opacity: 0, rotation: 0 });
+
+  // 最後の画面の割り付けを先に決める(丘の高さをタイムラインが読む)
+  layoutFinal();
 
   // ---- タイムライン(スクロールに完全連動) ----
   // 開発確認用: ?p=0.5 のように指定すると、その進行度で静止表示する
-  const debugP = new URLSearchParams(location.search).get("p");
   if (debugP !== null) document.documentElement.style.scrollBehavior = "auto";
-  const tl = gsap.timeline({
+  tl = gsap.timeline({
     defaults: { ease: "none" },
     paused: debugP !== null,
     scrollTrigger:
@@ -635,7 +940,7 @@ Promise.all([CONTENT_READY, LOOPS_READY]).then(function (res) {
         : {
             trigger: intro,
             start: "top 64px", // 固定ヘッダーの下に貼り付ける(頭が隠れないように)
-            end: "+=130%",
+            end: function () { return "+=" + Math.round(window.innerHeight * 1.3 + overD); }, // 今までと同じ 130% + 入りきらないぶん
             pin: true,
             scrub: 0.7,
             anticipatePin: 1,
@@ -648,6 +953,7 @@ Promise.all([CONTENT_READY, LOOPS_READY]).then(function (res) {
             },
           },
   });
+  st = tl.scrollTrigger || null;
 
   // 0.00-0.10: 名前とヒントが消え、少し寄る
   tl.to([copy, hint], { autoAlpha: 0, y: -16, duration: 0.08 }, 0);
@@ -689,55 +995,63 @@ Promise.all([CONTENT_READY, LOOPS_READY]).then(function (res) {
     );
   });
 
-  // 0.52-0.70: 主役が引いて、飛び出したものは奥へ
-  tl.to(figure, { scale: 0.92, yPercent: 8, autoAlpha: 0.16, duration: 0.18, ease: "power2.inOut" }, 0.52);
+  // 0.50-0.62: 主役も、飛び出したものも、光も、すっかり消える(最後の画面には半透明のものを残さない)
+  tl.to(figure, { scale: 0.92, yPercent: 8, autoAlpha: 0, duration: 0.12, ease: "power2.in" }, 0.5);
   items.forEach(function (it) {
     tl.to(
       it.el,
       {
         x: function () { return (stage.clientWidth * it.tx * 1.25) / 100; },
         y: function () { return (stage.clientHeight * it.ty * 1.25) / 100; },
-        opacity: 0.2,
+        autoAlpha: 0,
         scale: it.scale * 0.9,
-        duration: 0.22,
-        ease: "power1.inOut",
+        duration: 0.12,
+        ease: "power1.in",
       },
-      0.54
+      0.5
     );
   });
+  tl.to(glow, { autoAlpha: 0, duration: 0.12 }, 0.5);
+  tl.set(burst, { autoAlpha: 0 }, 0.62);
 
-  // ループ動画の行進: 草が少し高くなって、その上に下からせり上がってくる
-  if (paradeMode) {
-    const grass = intro.querySelector(".grass-strip");
-    gsap.set(parade, { autoAlpha: 0, yPercent: 70 });
-    if (grass) tl.to(grass, { height: function () { return paradeH + 64; }, duration: 0.2, ease: "power2.inOut" }, 0.5);
-    tl.to(parade, { autoAlpha: 1, yPercent: 0, duration: 0.2, ease: "power3.out" }, 0.62);
-    // スマホでは見出しが上まで来るので、雲の飾りは消して重ならないようにする
-    if (stage.clientWidth < 900) tl.to(intro.querySelectorAll(".cloud-deco"), { autoAlpha: 0, duration: 0.1 }, 0.56);
-  }
+  // 0.50-0.68: 丘が高くなる(線はテレビの後ろへ)。丸みも一緒に変えて、最初の丘の形はそのまま
+  tl.to(grass, { height: function () { return grassH; }, minHeight: 0, duration: 0.18, ease: "power2.inOut" }, 0.5);
+  tl.to(grass, { "--hill-r": function () { return hillR1 + "px"; }, duration: 0.18, ease: "power2.inOut" }, 0.5);
+  // 雲: 広い画面(1440px 以上)だけ上のすみへ。それより狭い画面では消す(見出しに近すぎるため)
+  tl.to(
+    clouds,
+    {
+      autoAlpha: function () { return stage.clientWidth >= 1440 ? 1 : 0; },
+      y: function (i) { return -stage.clientHeight * (i === 0 ? 0.06 : 0.07); },
+      duration: 0.12,
+      ease: "power1.inOut",
+    },
+    0.5
+  );
 
-  // 0.64-0.86: 見出しが浮かび上がる
-  tl.to(finalBlock, { autoAlpha: 1, y: 0, duration: 0.18, ease: "power2.out" }, 0.64);
-  tl.to({}, { duration: 0.14 }); // 読める余韻
+  // 0.62-0.82: 見出し → ボタン → 丘の一式(テレビ・棚・看板は 1 つのかたまりで)
+  tl.set(fin, { autoAlpha: 1 }, 0.62);
+  tl.to(titleEl, { autoAlpha: 1, y: 0, duration: 0.1, ease: "power2.out" }, 0.62);
+  tl.to(actionsEl, { autoAlpha: 1, y: 0, duration: 0.1, ease: "power2.out" }, 0.66);
+  tl.to(scene, { autoAlpha: 1, y: 0, duration: 0.12, ease: "power2.out" }, 0.7);
+  tl.to({}, { duration: 0.14 }, 0.82); // 読める余韻(ここまでの長さ 0.96 は今までと同じ)
 
-  // ループ動画は、画面に出ている間だけ再生する
-  if (clipTiles.length) {
-    const activeAt = 0.6;
-    gsap.ticker.add(function () {
-      const a = tl.progress() >= activeAt;
-      if (a !== clipsActive) {
-        clipsActive = a;
-        syncClips();
-      }
-    });
-  }
+  // 0.96 以降: 1 画面に入りきらないときだけ、スクロールの続きで中身を上へ送る(丘の線も一緒に上がる)。入りきるときは何も起きない
+  shiftA = tl.to(fin, { y: function () { return -overD; }, duration: 0.001 }, END_T);
+  shiftB = tl.to(grass, { height: function () { return grassH + overD; }, duration: 0.001 }, END_T);
+  layoutFinal(); // 送りの長さを反映
+
+  // テレビは、最後の画面に着いている間だけ再生する
+  gsap.ticker.add(function () { setFinal(tl.time() >= 0.82); });
+
+  ScrollTrigger.addEventListener("refreshInit", layoutFinal); // 画面サイズが変わるたび、再計算の直前に割り付け直す
+  if (!st) window.addEventListener("resize", relayoutSoon);
 
   // 最初の画面の「応募する」: 演出を最後まで再生しながら下へスクロールする
   function scrollToIntroEnd() {
-    const st = tl.scrollTrigger;
     if (!st) return;
     const from = window.scrollY;
-    const to = st.end;
+    const to = st.start + (st.end - st.start) * (END_T / tl.duration()); // 最後の画面が出そろう位置まで
     if (to - from <= 0) return;
     const root = document.documentElement;
     const prevBehavior = root.style.scrollBehavior;
@@ -762,7 +1076,7 @@ Promise.all([CONTENT_READY, LOOPS_READY]).then(function (res) {
     });
   });
   // 開発確認用: ?go=1 で読み込み後にボタンを押したのと同じ動きをする
-  if (new URLSearchParams(location.search).has("go")) {
+  if (qs.has("go")) {
     window.addEventListener("load", function () {
       setTimeout(function () { ScrollTrigger.refresh(); scrollToIntroEnd(); }, 600);
     });
@@ -774,16 +1088,14 @@ Promise.all([CONTENT_READY, LOOPS_READY]).then(function (res) {
     else window.addEventListener("load", fn);
   }
   afterLoad(function () {
-    layoutParade();
-    tl.invalidate();
-    ScrollTrigger.refresh();
-    if (window.scrollY <= 1 && tl.scrollTrigger) {
-      const t = tl.scrollTrigger.getTween && tl.scrollTrigger.getTween();
+    relayout();
+    if (window.scrollY <= 1 && st) {
+      const t = st.getTween && st.getTween();
       if (t) t.progress(1);
     }
-    if (debugP !== null) tl.progress(parseFloat(debugP) || 0);
+    if (debugP !== null) tl.time((parseFloat(debugP) || 0) * END_T); // ?p=1 = 最後の画面(1 より大きい値で、入りきらないぶんの送りも確認できる)
     // 開発確認用: ?scroll=400 で読み込み後にその位置へ移動
-    const sc = new URLSearchParams(location.search).get("scroll");
+    const sc = qs.get("scroll");
     if (sc !== null) setTimeout(function () { window.scrollTo({ top: parseInt(sc, 10) || 0, behavior: "instant" }); }, 400);
   });
 });
