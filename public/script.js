@@ -342,6 +342,13 @@ const CLIPS = [
 CONTENT_READY.then(function (content) {
   const ul = document.getElementById("clip-list");
   if (!ul) return;
+  // 管理画面で「表示する」にしたときだけ出す(初期状態は非表示)
+  if (!content || content.showClips !== true) return;
+  const section = document.getElementById("clips");
+  const navLink = document.getElementById("nav-clips");
+  if (section) section.hidden = false;
+  if (navLink) navLink.hidden = false;
+  document.body.classList.add("has-clips");
   const CLIP_LIST = content && content.clips && content.clips.length ? content.clips : CLIPS;
   const yt = '<svg viewBox="0 0 24 17" fill="#fff" aria-hidden="true"><path d="M9.5 12.5v-8l7 4-7 4z"/></svg>';
   ul.innerHTML = CLIP_LIST.filter(function (c) { return c.url; })

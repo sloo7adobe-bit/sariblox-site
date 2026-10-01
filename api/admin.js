@@ -48,6 +48,7 @@ function sanitizeContent(input) {
   input = input || {};
   const out = {};
   out.recruiting = input.recruiting !== false;
+  out.showClips = input.showClips === true; // 公認切り抜きセクションを表示するか
   const h = Array.isArray(input.headline) ? input.headline : [];
   out.headline = [clean(h[0], 20), clean(h[1], 20), clean(h[2], 20)];
   const cards = Array.isArray(input.cards) ? input.cards.slice(0, 3) : [];

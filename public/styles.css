@@ -2138,3 +2138,20 @@ body.is-admin textarea {
   }
   .admin-badge-text { display: none; }
 }
+
+
+/* ---------- 公認切り抜きを非表示にしているとき ----------
+   オープニングの草とフッターの草が直接つながるので、丘を 2 つ重ねず 1 枚の草原にする */
+body:not(.has-clips) .grass-strip {
+  background: linear-gradient(180deg, #7fd24a 0%, var(--grass) 35%, #62b52f 100%);
+}
+
+body:not(.has-clips) .site-footer {
+  padding-top: 48px;
+}
+
+body:not(.has-clips) .site-footer::before {
+  top: 0;
+  border-radius: 0;
+  background: linear-gradient(180deg, #62b52f 0%, var(--grass-dark) 100%);
+}

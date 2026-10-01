@@ -3,6 +3,7 @@
   const $ = function (id) { return document.getElementById(id); };
   const DEFAULTS = {
     recruiting: true,
+    showClips: false,
     headline: ["運命の", "編集者", "募集"],
     cards: [
       { label: "理想", lines: ["編集者より右手大親友🤝", "サリーの動画・配信を見てる"] },
@@ -55,10 +56,17 @@
     });
   }
 
+  function syncShowClips() {
+    $("c-showclips-text").textContent = $("c-showclips").checked ? "サイトに表示する" : "サイトに表示しない";
+  }
+  $("c-showclips").addEventListener("change", syncShowClips);
+
   // ---- フォームに反映 ----
   function fill(c, isDefault) {
     const d = DEFAULTS;
     $("c-recruiting").checked = c.recruiting !== false;
+    $("c-showclips").checked = c.showClips === true;
+    syncShowClips();
     const h = c.headline && c.headline.length ? c.headline : d.headline;
     $("c-h0").value = h[0] || ""; $("c-h1").value = h[1] || ""; $("c-h2").value = h[2] || "";
     const cards = c.cards && c.cards.length ? c.cards : d.cards;
@@ -83,6 +91,7 @@
   $("save").addEventListener("click", function () {
     const content = {
       recruiting: $("c-recruiting").checked,
+      showClips: $("c-showclips").checked,
       headline: [$("c-h0").value, $("c-h1").value, $("c-h2").value],
       cards: [0, 1, 2].map(function (i) {
         return { label: $("c-card-l" + i).value, lines: $("c-card-t" + i).value.split(/\r?\n/).map(function (x) { return x.trim(); }).filter(Boolean) };

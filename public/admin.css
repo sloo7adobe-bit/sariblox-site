@@ -82,3 +82,13 @@
 .app-foot { display: flex; gap: 10px; align-items: center; margin-top: 10px; }
 .app-memo { flex: 1; padding: 7px 12px; font-size: 13px; }
 .app-del { font: inherit; font-size: 12px; background: none; border: 0; color: #d0303f; text-decoration: underline; cursor: pointer; }
+
+/* ---------- オン・オフのスイッチ ---------- */
+.switch { display: inline-flex; align-items: center; gap: 12px; cursor: pointer; margin: 2px 0 14px; user-select: none; }
+.switch input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.switch-track { position: relative; width: 58px; height: 32px; border-radius: 999px; background: #c9cfd6; border: 2px solid var(--ink); transition: background-color 180ms; flex-shrink: 0; }
+.switch-thumb { position: absolute; top: 2px; left: 2px; width: 24px; height: 24px; border-radius: 50%; background: #fff; border: 2px solid var(--ink); transition: transform 180ms var(--ease); }
+.switch input:checked + .switch-track { background: #2ecc71; }
+.switch input:checked + .switch-track .switch-thumb { transform: translateX(26px); }
+.switch input:focus-visible + .switch-track { outline: 3px solid var(--blue-shadow); outline-offset: 2px; }
+.switch-text { font-family: var(--font-hand); font-size: 18px; }
