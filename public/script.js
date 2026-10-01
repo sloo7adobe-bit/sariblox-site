@@ -574,10 +574,8 @@ Promise.all([CONTENT_READY, LOOPS_READY]).then(function (res) {
   const items = [];
 
   {
-    // ループ動画があるときは、その 1 コマ目を飛び出すサムネイルに使う。無ければ YouTube のサムネイル
-    const thumbs = clips.length
-      ? clips.slice(0, 9).map(function (c) { return c.poster; }).filter(Boolean)
-      : ids.map(function (id) { return "https://i.ytimg.com/vi/" + id + "/mqdefault.jpg"; });
+    // 頭から飛び出すのは YouTube 動画のサムネイル(管理画面の動画一覧)
+    const thumbs = ids.map(function (id) { return "https://i.ytimg.com/vi/" + id + "/mqdefault.jpg"; });
     thumbs.forEach(function (src, i) {
       const t = thumbTargets[i % thumbTargets.length];
       const el = document.createElement("div");
