@@ -1,52 +1,44 @@
 {
   "clips": [
     {
-      "src": "loops/clip-01.mp4?v=1790846197",
-      "poster": "loops/clip-01.jpg?v=1790846197"
+      "src": "loops/clip-01.mp4?v=1790846889",
+      "poster": "loops/clip-01.jpg?v=1790846889"
     },
     {
-      "src": "loops/clip-02.mp4?v=1790846198",
-      "poster": "loops/clip-02.jpg?v=1790846198"
+      "src": "loops/clip-02.mp4?v=1790846890",
+      "poster": "loops/clip-02.jpg?v=1790846890"
     },
     {
-      "src": "loops/clip-03.mp4?v=1790846199",
-      "poster": "loops/clip-03.jpg?v=1790846199"
+      "src": "loops/clip-03.mp4?v=1790846891",
+      "poster": "loops/clip-03.jpg?v=1790846891"
     },
     {
-      "src": "loops/clip-04.mp4?v=1790846200",
-      "poster": "loops/clip-04.jpg?v=1790846200"
+      "src": "loops/clip-04.mp4?v=1790846892",
+      "poster": "loops/clip-04.jpg?v=1790846892"
     },
     {
-      "src": "loops/clip-05.mp4?v=1790846201",
-      "poster": "loops/clip-05.jpg?v=1790846201"
+      "src": "loops/clip-05.mp4?v=1790846892",
+      "poster": "loops/clip-05.jpg?v=1790846892"
     },
     {
-      "src": "loops/clip-06.mp4?v=1790846202",
-      "poster": "loops/clip-06.jpg?v=1790846202"
+      "src": "loops/clip-06.mp4?v=1790846893",
+      "poster": "loops/clip-06.jpg?v=1790846893"
     },
     {
-      "src": "loops/clip-07.mp4?v=1790846203",
-      "poster": "loops/clip-07.jpg?v=1790846203"
+      "src": "loops/clip-07.mp4?v=1790846894",
+      "poster": "loops/clip-07.jpg?v=1790846894"
     },
     {
-      "src": "loops/clip-08.mp4?v=1790846204",
-      "poster": "loops/clip-08.jpg?v=1790846204"
+      "src": "loops/clip-08.mp4?v=1790846895",
+      "poster": "loops/clip-08.jpg?v=1790846895"
     },
     {
-      "src": "loops/clip-09.mp4?v=1790846205",
-      "poster": "loops/clip-09.jpg?v=1790846205"
+      "src": "loops/clip-09.mp4?v=1790846896",
+      "poster": "loops/clip-09.jpg?v=1790846896"
     },
     {
-      "src": "loops/clip-10.mp4?v=1790846206",
-      "poster": "loops/clip-10.jpg?v=1790846206"
-    },
-    {
-      "src": "loops/clip-11.mp4?v=1790846207",
-      "poster": "loops/clip-11.jpg?v=1790846207"
-    },
-    {
-      "src": "loops/clip-12.mp4?v=1790846208",
-      "poster": "loops/clip-12.jpg?v=1790846208"
+      "src": "loops/clip-10.mp4?v=1790846897",
+      "poster": "loops/clip-10.jpg?v=1790846897"
     }
   ]
 }

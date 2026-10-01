@@ -442,10 +442,9 @@ Promise.all([CONTENT_READY, LOOPS_READY]).then(function (res) {
   const animated = !reduce && hasGsap;
 
   // ---- ループ動画の見せ方 ----
-  //  広い画面: 最後の画面のまわりに、頭から飛び出した動画がぐるっと並ぶ(ring)
-  //  狭い画面: 見出しの上を、動画の列が左右にゆっくり流れる(marquee)
-  const ringMode = animated && clips.length > 0 && window.matchMedia("(min-width: 1200px)").matches;
-  const marqueeMode = clips.length > 0 && !ringMode;
+  //  最後の画面の下、緑の草の上を、大きめの動画が行進するように横へ流れていく(parade)
+  const parade = document.getElementById("clip-parade");
+  const paradeMode = clips.length > 0 && !!parade;
 
   const clipTiles = []; // { el, v, inView }
   let clipsActive = false;
@@ -490,31 +489,53 @@ Promise.all([CONTENT_READY, LOOPS_READY]).then(function (res) {
     if (clipIO) clipIO.observe(el);
   }
 
-  if (marqueeMode) {
-    const box = document.getElementById("clip-marquee");
-    if (box) {
-      intro.classList.add("has-marquee");
-      const rows = stage.clientHeight >= 720 && clips.length >= 6 ? 2 : 1; // 画面が低いときは 1 列にして、カードがはみ出さないようにする
-      const per = Math.ceil(clips.length / rows);
-      for (let r = 0; r < rows; r++) {
-        const row = document.createElement("div");
-        row.className = "marquee-row";
-        const track = document.createElement("div");
-        track.className = "marquee-track" + (r % 2 ? " is-reverse" : "");
-        const part = clips.slice(r * per, (r + 1) * per);
-        track.style.animationDuration = Math.max(18, part.length * 4.5) + "s";
-        part.forEach(function (c) {
-          const tile = document.createElement("div");
-          tile.className = "marquee-tile";
-          const v = makeClipVideo(c);
-          tile.appendChild(v);
-          track.appendChild(tile);
-          registerClip(tile, v);
-        });
-        row.appendChild(track);
-        box.appendChild(row);
-      }
+  // 動画の大きさを、画面の空きに合わせて決める(見出し・ボタン・カードの下に収まる最大サイズ)
+  let paradeH = 0;
+  function layoutParade() {
+    if (!paradeMode) return;
+    const fin = document.getElementById("intro-final");
+    const title = fin.querySelector(".hero-title");
+    const grid = fin.querySelector(".job-grid");
+    const H = stage.clientHeight;
+    const W = stage.clientWidth;
+    const contentH = grid.getBoundingClientRect().bottom - title.getBoundingClientRect().top;
+    const small = W < 640; // スマホは余白を詰めて、そのぶん動画を大きくする
+    const free = H - contentH - (small ? 36 : 60); // 上の余白 + 見出しとの間 + 下の余白
+    let th = Math.max(84, Math.min(free - (small ? 18 : 34), H * 0.3, 270));
+    let tw = Math.min((th * 16) / 9, W * 0.72);
+    th = (tw * 9) / 16;
+    paradeH = Math.round(th + (small ? 26 : 40));
+    intro.style.setProperty("--tile-w", Math.round(tw) + "px");
+    intro.style.setProperty("--parade-h", paradeH + "px");
+  }
+
+  if (paradeMode) {
+    intro.classList.add("has-parade");
+    const track = document.createElement("div");
+    track.className = "parade-track";
+    // 途切れずに流れ続けるよう、同じ並びを 2 回入れる(動きを減らす設定のときは 1 回だけ)
+    const copies = reduce ? 1 : 2;
+    for (let k = 0; k < copies; k++) {
+      clips.forEach(function (c, i) {
+        const tile = document.createElement("div");
+        tile.className = "parade-tile";
+        tile.style.setProperty("--r", ((i % 2 ? 1 : -1) * (2 + ((i * 3) % 3))) + "deg");
+        tile.style.setProperty("--dy", (i % 2 ? 10 : -6) + "px");
+        const bob = document.createElement("div");
+        bob.className = "parade-bob";
+        bob.style.animationDelay = -(i * 0.37) + "s";
+        const v = makeClipVideo(c);
+        bob.appendChild(v);
+        tile.appendChild(bob);
+        track.appendChild(tile);
+        registerClip(tile, v);
+      });
     }
+    track.style.animationDuration = Math.max(24, clips.length * 6) + "s";
+    parade.appendChild(track);
+    layoutParade();
+    window.addEventListener("resize", layoutParade);
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(layoutParade);
   }
 
   if (!animated) {
@@ -526,7 +547,6 @@ Promise.all([CONTENT_READY, LOOPS_READY]).then(function (res) {
   }
 
   intro.classList.add("is-animated");
-  if (ringMode) intro.classList.add("has-ring");
   gsap.registerPlugin(ScrollTrigger);
 
   // ---- 飛び出す要素を作る ----
@@ -551,55 +571,9 @@ Promise.all([CONTENT_READY, LOOPS_READY]).then(function (res) {
     [-18, -30], [20, -14], [-34, 30], [34, 26], [4, -28], [-30, 44], [44, -22], [-44, 18], [30, 42], [-26, -40], [40, 14],
   ];
 
-  // ループ動画を、中央の見出しとカードを囲むように並べる位置(舞台の中心からの %)
-  function ringLayout(n) {
-    const sideEach = n >= 16 ? 3 : n >= 8 ? 2 : n >= 5 ? 1 : 0;
-    const rest = n - sideEach * 2;
-    const top = Math.ceil(rest / 2);
-    const bottom = rest - top;
-    const pos = [];
-    // arc: 中央に近いほど外側(上の段は上、下の段は下)へ少しふくらませて、見出しやカードから離す
-    function row(count, y, arc) {
-      for (let i = 0; i < count; i++) {
-        const x = count === 1 ? 0 : -40 + (80 * i) / (count - 1);
-        pos.push([x, y + arc * (1 - Math.abs(x) / 40) + (i % 2 ? 0.8 : -0.8)]);
-      }
-    }
-    row(top, -37, -3);
-    const sideY = sideEach === 3 ? [-17, 3.5, 24] : sideEach === 2 ? [-12, 13] : [1];
-    for (let i = 0; i < sideEach; i++) {
-      pos.push([-42, sideY[i]]);
-      pos.push([42, sideY[i] + 1.5]);
-    }
-    row(bottom, 39, 1);
-    return { pos: pos, maxRow: Math.max(top, bottom, 1) };
-  }
-
   const items = [];
 
-  if (ringMode) {
-    const layout = ringLayout(clips.length);
-    const setClipW = function () {
-      const w = stage.clientWidth;
-      // 本数が少ないときは 1 枚を大きめに
-      const frac = clips.length <= 12 ? 0.13 : 0.115;
-      const size = Math.min(Math.max(w * frac, 120), 230, (w * 0.86) / layout.maxRow - 16);
-      burst.style.setProperty("--clip-w", Math.round(size) + "px");
-    };
-    setClipW();
-    window.addEventListener("resize", setClipW);
-    clips.forEach(function (c, i) {
-      const t = layout.pos[i];
-      const el = document.createElement("div");
-      el.className = "burst-item burst-clip";
-      const v = makeClipVideo(c);
-      el.appendChild(v);
-      burst.appendChild(el);
-      registerClip(el, v);
-      // 舞台の中心基準 → 頭の位置(上から 30%)基準に直すため y に 20 を足す
-      items.push({ el: el, tx: t[0], ty: t[1] + 20, rot: (i % 2 ? 1 : -1) * (2 + ((i * 5) % 5)), scale: 1, order: (i % 9) * 0.035 + 0.02, keep: true });
-    });
-  } else {
+  {
     // ループ動画があるときは、その 1 コマ目を飛び出すサムネイルに使う。無ければ YouTube のサムネイル
     const thumbs = clips.length
       ? clips.slice(0, 9).map(function (c) { return c.poster; }).filter(Boolean)
@@ -720,13 +694,12 @@ Promise.all([CONTENT_READY, LOOPS_READY]).then(function (res) {
   // 0.52-0.70: 主役が引いて、飛び出したものは奥へ
   tl.to(figure, { scale: 0.92, yPercent: 8, autoAlpha: 0.16, duration: 0.18, ease: "power2.inOut" }, 0.52);
   items.forEach(function (it) {
-    if (it.keep) return; // ループ動画は見出しのまわりに残す
     tl.to(
       it.el,
       {
         x: function () { return (stage.clientWidth * it.tx * 1.25) / 100; },
         y: function () { return (stage.clientHeight * it.ty * 1.25) / 100; },
-        opacity: ringMode ? 0 : 0.2, // 動画が並ぶときは、言葉や飾りは消して画面をすっきりさせる
+        opacity: 0.2,
         scale: it.scale * 0.9,
         duration: 0.22,
         ease: "power1.inOut",
@@ -735,9 +708,14 @@ Promise.all([CONTENT_READY, LOOPS_READY]).then(function (res) {
     );
   });
 
-  // ループ動画が並ぶときは、雲の飾りを消して動画とかぶらないようにする
-  if (clips.length) {
-    tl.to(intro.querySelectorAll(".cloud-deco"), { autoAlpha: 0, duration: 0.12 }, ringMode ? 0.16 : 0.6);
+  // ループ動画の行進: 草が少し高くなって、その上に下からせり上がってくる
+  if (paradeMode) {
+    const grass = intro.querySelector(".grass-strip");
+    gsap.set(parade, { autoAlpha: 0, yPercent: 70 });
+    if (grass) tl.to(grass, { height: function () { return paradeH + 64; }, duration: 0.2, ease: "power2.inOut" }, 0.5);
+    tl.to(parade, { autoAlpha: 1, yPercent: 0, duration: 0.2, ease: "power3.out" }, 0.62);
+    // スマホでは見出しが上まで来るので、雲の飾りは消して重ならないようにする
+    if (stage.clientWidth < 900) tl.to(intro.querySelectorAll(".cloud-deco"), { autoAlpha: 0, duration: 0.1 }, 0.56);
   }
 
   // 0.64-0.86: 見出しが浮かび上がる
@@ -746,7 +724,7 @@ Promise.all([CONTENT_READY, LOOPS_READY]).then(function (res) {
 
   // ループ動画は、画面に出ている間だけ再生する
   if (clipTiles.length) {
-    const activeAt = ringMode ? 0.14 : 0.62;
+    const activeAt = 0.6;
     gsap.ticker.add(function () {
       const a = tl.progress() >= activeAt;
       if (a !== clipsActive) {
@@ -798,6 +776,8 @@ Promise.all([CONTENT_READY, LOOPS_READY]).then(function (res) {
     else window.addEventListener("load", fn);
   }
   afterLoad(function () {
+    layoutParade();
+    tl.invalidate();
     ScrollTrigger.refresh();
     if (window.scrollY <= 1 && tl.scrollTrigger) {
       const t = tl.scrollTrigger.getTween && tl.scrollTrigger.getTween();
