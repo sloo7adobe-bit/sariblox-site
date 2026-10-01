@@ -1,1 +1,72 @@
-{}
+{
+  "clips": [
+    {
+      "src": "loops/clip-01.mp4?v=1790845063",
+      "poster": "loops/clip-01.jpg?v=1790845063"
+    },
+    {
+      "src": "loops/clip-02.mp4?v=1790845064",
+      "poster": "loops/clip-02.jpg?v=1790845064"
+    },
+    {
+      "src": "loops/clip-03.mp4?v=1790845064",
+      "poster": "loops/clip-03.jpg?v=1790845064"
+    },
+    {
+      "src": "loops/clip-04.mp4?v=1790845065",
+      "poster": "loops/clip-04.jpg?v=1790845065"
+    },
+    {
+      "src": "loops/clip-05.mp4?v=1790845066",
+      "poster": "loops/clip-05.jpg?v=1790845066"
+    },
+    {
+      "src": "loops/clip-06.mp4?v=1790845067",
+      "poster": "loops/clip-06.jpg?v=1790845067"
+    },
+    {
+      "src": "loops/clip-07.mp4?v=1790845068",
+      "poster": "loops/clip-07.jpg?v=1790845068"
+    },
+    {
+      "src": "loops/clip-08.mp4?v=1790845068",
+      "poster": "loops/clip-08.jpg?v=1790845068"
+    },
+    {
+      "src": "loops/clip-09.mp4?v=1790845069",
+      "poster": "loops/clip-09.jpg?v=1790845069"
+    },
+    {
+      "src": "loops/clip-10.mp4?v=1790845069",
+      "poster": "loops/clip-10.jpg?v=1790845069"
+    },
+    {
+      "src": "loops/clip-11.mp4?v=1790845070",
+      "poster": "loops/clip-11.jpg?v=1790845070"
+    },
+    {
+      "src": "loops/clip-12.mp4?v=1790845070",
+      "poster": "loops/clip-12.jpg?v=1790845070"
+    },
+    {
+      "src": "loops/clip-13.mp4?v=1790845071",
+      "poster": "loops/clip-13.jpg?v=1790845071"
+    },
+    {
+      "src": "loops/clip-14.mp4?v=1790845071",
+      "poster": "loops/clip-14.jpg?v=1790845071"
+    },
+    {
+      "src": "loops/clip-15.mp4?v=1790845072",
+      "poster": "loops/clip-15.jpg?v=1790845072"
+    },
+    {
+      "src": "loops/clip-16.mp4?v=1790845073",
+      "poster": "loops/clip-16.jpg?v=1790845073"
+    },
+    {
+      "src": "loops/clip-17.mp4?v=1790845073",
+      "poster": "loops/clip-17.jpg?v=1790845073"
+    }
+  ]
+}

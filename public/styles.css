@@ -1102,22 +1102,37 @@ html.js .intro-final,
   place-items: center;
 }
 
-/* ループ動画があるタイルは、再生マークを小さく右下に寄せて映像を隠さない */
-.video-item.has-loop .play {
-  place-items: end;
-  padding: 8px;
+/* ループ動画のグリッド(編集の見本を GIF のように並べる) */
+.video-grid.is-clips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
 }
 
-.video-item.has-loop .play span {
-  width: 38px;
-  height: 26px;
-  border-radius: 8px;
+.video-grid.is-clips .video-item {
+  flex: 0 0 calc((100% - 12px) / 2);
+  border-width: 3px;
+  box-shadow: 3px 3px 0 rgba(28, 28, 28, 0.85);
+  cursor: default;
 }
 
-.video-item.has-loop .play span svg {
-  width: 16px;
-  height: 16px;
+.video-grid.is-clips .video-item:hover {
+  transform: translate(-2px, -2px);
 }
+
+@media (min-width: 900px) {
+  .video-grid.is-clips {
+    gap: 22px;
+  }
+
+  .video-grid.is-clips .video-item {
+    flex-basis: calc((100% - 44px) / 3);
+    border-width: 5px;
+    box-shadow: 5px 5px 0 rgba(28, 28, 28, 0.85);
+  }
+}
+
 
 .video-item .play span {
   display: grid;

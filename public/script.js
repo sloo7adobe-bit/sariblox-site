@@ -363,78 +363,87 @@ CONTENT_READY.then(function (content) {
   const ids = VIDEO_LIST.map(toId);
   const hasAny = ids.some(Boolean);
 
-  grid.innerHTML = ids
-    .slice(0, 12)
-    .map(function (id, i) {
-      if (!id) {
-        return '<div class="video-item placeholder" aria-hidden="true">' + (hasAny ? "" : "動画 " + (i + 1)) + "</div>";
-      }
-      return (
-        '<a class="video-item" data-id="' + id + '" href="https://www.youtube.com/watch?v=' +
-        id +
-        '" target="_blank" rel="noopener noreferrer" aria-label="動画 ' +
-        (i + 1) +
-        ' を YouTube で見る">' +
-        '<img src="https://i.ytimg.com/vi/' +
-        id +
-        '/hqdefault.jpg" alt="" loading="lazy" />' +
-        '<span class="play"><span>' +
-        playIcon +
-        "</span></span></a>"
-      );
-    })
-    .join("");
-
-  // ---- ループ動画: 用意してあるタイルは、サムネイルの代わりに GIF のように流す ----
-  fetch("loops/manifest.json", { cache: "no-cache" })
-    .then(function (r) { return r.ok ? r.json() : {}; })
-    .then(function (loops) {
-      if (!loops) return;
-      const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-      const vids = [];
-      grid.querySelectorAll(".video-item[data-id]").forEach(function (tile) {
-        const src = loops[tile.getAttribute("data-id")];
-        if (!src) return;
-        const v = document.createElement("video");
-        v.muted = true;
-        v.defaultMuted = true;
-        v.loop = true;
-        v.playsInline = true;
-        v.setAttribute("muted", "");
-        v.setAttribute("playsinline", "");
-        v.setAttribute("aria-hidden", "true");
-        v.preload = "none";
-        v.disablePictureInPicture = true;
-        const img = tile.querySelector("img");
-        if (img) v.poster = img.currentSrc || img.src;
-        v.src = src;
-        tile.insertBefore(v, tile.querySelector(".play"));
-        tile.classList.add("has-loop");
-        vids.push(v);
-        if (reduce) {
-          // 動きを減らす設定の人には自動再生しない(マウスを乗せたときだけ)
-          tile.addEventListener("mouseenter", function () { v.play().catch(function () {}); });
-          tile.addEventListener("mouseleave", function () { v.pause(); });
+  // ---- YouTube のサムネイルを並べる(ループ動画が無いときの表示) ----
+  function renderThumbs() {
+    grid.classList.remove("is-clips");
+    grid.innerHTML = ids
+      .slice(0, 12)
+      .map(function (id, i) {
+        if (!id) {
+          return '<div class="video-item placeholder" aria-hidden="true">' + (hasAny ? "" : "動画 " + (i + 1)) + "</div>";
         }
-      });
-      if (reduce || !vids.length) return;
-      if (!("IntersectionObserver" in window)) {
-        vids.forEach(function (v) { v.play().catch(function () {}); });
-        return;
+        return (
+          '<a class="video-item" data-id="' + id + '" href="https://www.youtube.com/watch?v=' +
+          id +
+          '" target="_blank" rel="noopener noreferrer" aria-label="動画 ' +
+          (i + 1) +
+          ' を YouTube で見る">' +
+          '<img src="https://i.ytimg.com/vi/' +
+          id +
+          '/hqdefault.jpg" alt="" loading="lazy" />' +
+          '<span class="play"><span>' +
+          playIcon +
+          "</span></span></a>"
+        );
+      })
+      .join("");
+  }
+
+  // ---- ループ動画を GIF のように並べる(編集の見本) ----
+  function renderClips(clips) {
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    grid.classList.add("is-clips");
+    grid.innerHTML = "";
+    const vids = clips.map(function (c) {
+      const tile = document.createElement("div");
+      tile.className = "video-item is-clip";
+      const v = document.createElement("video");
+      v.muted = true;
+      v.defaultMuted = true;
+      v.loop = true;
+      v.playsInline = true;
+      v.setAttribute("muted", "");
+      v.setAttribute("playsinline", "");
+      v.setAttribute("aria-hidden", "true");
+      v.preload = "none";
+      v.disablePictureInPicture = true;
+      if (c.poster) v.poster = c.poster;
+      v.src = c.src;
+      tile.appendChild(v);
+      grid.appendChild(tile);
+      if (reduce) {
+        // 動きを減らす設定の人には自動再生しない(マウスを乗せる・タップしたときだけ)
+        tile.addEventListener("mouseenter", function () { v.play().catch(function () {}); });
+        tile.addEventListener("mouseleave", function () { v.pause(); });
+        tile.addEventListener("click", function () { if (v.paused) v.play().catch(function () {}); else v.pause(); });
       }
-      // 画面に見えている間だけ再生する(通信量と電池の節約)
-      const io = new IntersectionObserver(
-        function (entries) {
-          entries.forEach(function (e) {
-            if (e.isIntersecting) e.target.play().catch(function () {});
-            else e.target.pause();
-          });
-        },
-        { threshold: 0.25 }
-      );
-      vids.forEach(function (v) { io.observe(v); });
+      return v;
+    });
+    if (reduce) return;
+    if (!("IntersectionObserver" in window)) {
+      vids.forEach(function (v) { v.play().catch(function () {}); });
+      return;
+    }
+    // 画面に見えている間だけ再生する(通信量と電池の節約)
+    const io = new IntersectionObserver(
+      function (entries) {
+        entries.forEach(function (e) {
+          if (e.isIntersecting) e.target.play().catch(function () {});
+          else e.target.pause();
+        });
+      },
+      { rootMargin: "120px 0px", threshold: 0.1 }
+    );
+    vids.forEach(function (v) { io.observe(v); });
+  }
+
+  fetch("loops/manifest.json", { cache: "no-cache" })
+    .then(function (r) { return r.ok ? r.json() : null; })
+    .then(function (m) {
+      if (m && m.clips && m.clips.length) renderClips(m.clips);
+      else renderThumbs();
     })
-    .catch(function () {});
+    .catch(renderThumbs);
 });
 
 /* ==========================================================
