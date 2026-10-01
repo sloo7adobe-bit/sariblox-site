@@ -370,7 +370,7 @@ CONTENT_READY.then(function (content) {
         return '<div class="video-item placeholder" aria-hidden="true">' + (hasAny ? "" : "動画 " + (i + 1)) + "</div>";
       }
       return (
-        '<a class="video-item" href="https://www.youtube.com/watch?v=' +
+        '<a class="video-item" data-id="' + id + '" href="https://www.youtube.com/watch?v=' +
         id +
         '" target="_blank" rel="noopener noreferrer" aria-label="動画 ' +
         (i + 1) +
@@ -384,6 +384,57 @@ CONTENT_READY.then(function (content) {
       );
     })
     .join("");
+
+  // ---- ループ動画: 用意してあるタイルは、サムネイルの代わりに GIF のように流す ----
+  fetch("loops/manifest.json", { cache: "no-cache" })
+    .then(function (r) { return r.ok ? r.json() : {}; })
+    .then(function (loops) {
+      if (!loops) return;
+      const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      const vids = [];
+      grid.querySelectorAll(".video-item[data-id]").forEach(function (tile) {
+        const src = loops[tile.getAttribute("data-id")];
+        if (!src) return;
+        const v = document.createElement("video");
+        v.muted = true;
+        v.defaultMuted = true;
+        v.loop = true;
+        v.playsInline = true;
+        v.setAttribute("muted", "");
+        v.setAttribute("playsinline", "");
+        v.setAttribute("aria-hidden", "true");
+        v.preload = "none";
+        v.disablePictureInPicture = true;
+        const img = tile.querySelector("img");
+        if (img) v.poster = img.currentSrc || img.src;
+        v.src = src;
+        tile.insertBefore(v, tile.querySelector(".play"));
+        tile.classList.add("has-loop");
+        vids.push(v);
+        if (reduce) {
+          // 動きを減らす設定の人には自動再生しない(マウスを乗せたときだけ)
+          tile.addEventListener("mouseenter", function () { v.play().catch(function () {}); });
+          tile.addEventListener("mouseleave", function () { v.pause(); });
+        }
+      });
+      if (reduce || !vids.length) return;
+      if (!("IntersectionObserver" in window)) {
+        vids.forEach(function (v) { v.play().catch(function () {}); });
+        return;
+      }
+      // 画面に見えている間だけ再生する(通信量と電池の節約)
+      const io = new IntersectionObserver(
+        function (entries) {
+          entries.forEach(function (e) {
+            if (e.isIntersecting) e.target.play().catch(function () {});
+            else e.target.pause();
+          });
+        },
+        { threshold: 0.25 }
+      );
+      vids.forEach(function (v) { io.observe(v); });
+    })
+    .catch(function () {});
 });
 
 /* ==========================================================

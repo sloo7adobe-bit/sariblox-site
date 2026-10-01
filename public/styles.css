@@ -1084,11 +1084,39 @@ html.js .intro-final,
   border-radius: 5px;
 }
 
+.video-item video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 5px;
+  background: #000;
+  pointer-events: none;
+}
+
 .video-item .play {
   position: absolute;
   inset: 0;
   display: grid;
   place-items: center;
+}
+
+/* ループ動画があるタイルは、再生マークを小さく右下に寄せて映像を隠さない */
+.video-item.has-loop .play {
+  place-items: end;
+  padding: 8px;
+}
+
+.video-item.has-loop .play span {
+  width: 38px;
+  height: 26px;
+  border-radius: 8px;
+}
+
+.video-item.has-loop .play span svg {
+  width: 16px;
+  height: 16px;
 }
 
 .video-item .play span {

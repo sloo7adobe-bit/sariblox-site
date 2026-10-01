@@ -9,3 +9,5 @@ node_modules
 .env.local
 .env*.local
 .agents
+ループ動画/*
+!ループ動画/使い方.txt
