@@ -2342,43 +2342,42 @@ body.cta-on .site-header .btn-primary:not(.is-disabled) {
     box-shadow: 4px 4px 0 var(--ink);
   }
 
+  /* 条件の帯: スマホと同じ「ラベル | 中身」の 3 行。壁より狭い帯にして、上から下へ 1 本の列で読めるようにする */
   .intro-final .job-grid {
-    --lab: 0px;
-    grid-template-columns: none;
-    grid-auto-flow: column;
-    grid-auto-columns: minmax(0, 1fr);
-    gap: 0;
-    padding: 0;
+    gap: 0 16px;
+    padding: 6px 22px;
     border-radius: 16px;
     box-shadow: 4px 4px 0 var(--ink);
   }
 
   .intro-final .job-item {
-    grid-column: auto;
-    grid-template-columns: minmax(0, max-content); /* ラベルと中身を 1 つの箱として列のまん中に置き、箱の中は左ぞろえ */
-    justify-content: center;
-    align-content: start; /* 行数がちがっても 3 つのラベルは同じ高さに並ぶ */
-    row-gap: 4px;
-    padding: 10px 20px 12px;
-  }
-
-  .intro-final .job-item + .job-item {
-    border-top: 0;
-    border-left: 2px dashed rgba(28, 28, 28, 0.18);
+    padding: 9px 0;
   }
 
   .intro-final .job-label {
-    font-size: 23px;
-    line-height: 1.25;
-    padding: 0 7px;
-    margin-left: -7px;
+    font-size: 20px;
+    line-height: 1.3;
+    padding: 0 6px;
+    margin-left: -3px;
+  }
+
+  /* 2 つの項目は横に並べて 1 行で読む(入らないときだけ折り返す) */
+  .intro-final .job-card .list {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    column-gap: 22px;
+    row-gap: 2px;
   }
 
   .intro-final .job-card .list li {
     padding-left: 14px;
     font-size: 16px;
     line-height: 1.5;
-    white-space: normal;
+  }
+
+  .intro-final .job-card .list li + li {
+    margin-top: 0;
   }
 
   .intro-final .job-card .list li::before {
@@ -2425,7 +2424,7 @@ body.cta-on .site-header .btn-primary:not(.is-disabled) {
   }
 
   .intro-final .job-item {
-    padding: 8px 20px 10px;
+    padding: 7px 0;
   }
 
   .wall-tag {
@@ -2445,12 +2444,11 @@ body.cta-on .site-header .btn-primary:not(.is-disabled) {
   }
 
   .intro-final .job-item {
-    padding: 6px 20px 8px;
-    row-gap: 2px;
+    padding: 5px 0;
   }
 
   .intro-final .job-label {
-    font-size: 21px;
+    font-size: 19px;
   }
 
   .intro-final .job-card .list li {
@@ -2460,7 +2458,7 @@ body.cta-on .site-header .btn-primary:not(.is-disabled) {
 
 @media (min-width: 1440px) and (min-aspect-ratio: 5/4) {
   .intro-final .job-label {
-    font-size: 25px;
+    font-size: 21px;
   }
 
   .intro-final .job-card .list li {
