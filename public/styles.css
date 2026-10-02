@@ -1937,29 +1937,29 @@ body.is-admin textarea {
 
 /* ==========================================================
    最後の画面(FINAL)
-   空 = 見出しとボタンだけ / 丘 = テレビ 1 台 + 立て看板(条件) + 静止サムネイルの棚
-   位置が動くものは 1 つも無い。動くのはテレビの中の映像だけ。
+   空 = 見出し → ボタン → 条件の帯(オファーのかたまり) / 丘 = 見本の壁(全部の動画が同時に流れる 1 枚の板)
+   位置が動くものは 1 つも無い。動くのは壁のタイルの「中の映像」だけ。
    ========================================================== */
 :root {
-  --title-edge: #143d82; /* 見出しのふちの色(ここ 1 か所を変えれば 紺 / 黒 / 青 を切り替えられる) */
+  --title-edge: #143d82;
 }
 
 .intro-final {
-  /* 余白のものさし: 4 / 8 / 12 / 16 / 24 / 32 / 48 */
+  /* 余白のものさし: 4 / 8 / 12 / 16 / 24 / 32 / 40 */
   --pad-t: 16px;
   --pad-b: max(12px, env(safe-area-inset-bottom));
   --pad-x: 16px;
   --gap-cta: 12px;   /* 見出し → ボタン */
-  --gap-scene: 24px; /* ボタン → テレビ(最小) */
-  --gap-rail: 8px;   /* テレビ → サムネイルの棚 */
-  --gap-board: 12px; /* 棚 → 立て看板(縦並びのとき) */
+  --gap-board: 12px; /* ボタン → 条件の帯(同じかたまり) */
+  --gap-wall: 34px;  /* 条件の帯 → 壁(別のかたまり。ここに札と停止ボタンが乗る) */
+  --g: 6px;          /* 壁のすき間 = 壁のふちの内側の余白(1 種類だけ) */
   position: absolute;
   z-index: 5;
   inset: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-start; /* 上から順に置く(中央寄せであふれて見出しがヘッダーに隠れるのを防ぐ) */
+  justify-content: flex-start;
   text-align: center;
   padding: var(--pad-t) var(--pad-x) var(--pad-b);
   pointer-events: none;
@@ -1971,7 +1971,7 @@ body.is-admin textarea {
 
 /* ---- 見出し(袋文字) ---- */
 .intro-final .hero-title {
-  margin-top: auto; /* 余った高さは 見出しの上 / ボタンとテレビの間 / 一番下 に 3 等分 */
+  margin-top: auto; /* 余った高さは 見出しの上 / 帯と壁の間 / 一番下 に 3 等分 */
   font-size: clamp(32px, 9.6vw, 76px);
   line-height: 1.1;
   -webkit-text-stroke: 0.09em var(--title-edge);
@@ -1994,7 +1994,6 @@ body.is-admin textarea {
   }
 }
 
-/* 背の高いスマホ: 余った高さを見出しに回して 2 行で大きく(JS が is-tallhead を付ける) */
 .intro.is-tallhead .intro-final .hero-title {
   font-size: clamp(54px, 16.5vw, 68px);
 }
@@ -2003,7 +2002,6 @@ body.is-admin textarea {
 .intro-final .hero-actions {
   width: auto;
   margin-top: var(--gap-cta);
-  padding-bottom: var(--gap-scene);
 }
 
 .intro-final .hero-actions .btn-lg {
@@ -2012,274 +2010,23 @@ body.is-admin textarea {
   touch-action: manipulation;
 }
 
-/* 最後の画面のボタンが見えている間、ヘッダーの「応募する」は白にして黄色を 1 つだけにする */
 body.cta-on .site-header .btn-primary:not(.is-disabled) {
   background: #fff;
 }
 
-/* ---- 丘の上の一式 ---- */
-.scene {
-  margin: auto 0;
-  width: min(560px, 100%);
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  justify-items: center;
-}
-
-/* テレビ(#clip-parade の中に JS が作る) */
-.clip-parade {
-  position: relative;
-  display: none;
-}
-
-.intro.has-show .clip-parade {
-  display: block;
-}
-
-.tv {
-  position: relative;
-  width: calc(var(--tv-w, 300px) + 8px);
-  margin: 2px;
-  border: 4px solid #fff;
-  border-radius: 12px;
-  outline: 2px solid var(--ink);
-  box-shadow: 4px 4px 0 var(--ink);
-  background: #fff;
-}
-
-.tv-screen {
-  position: relative;
-  aspect-ratio: 16 / 9;
-  border-radius: 8px;
-  overflow: hidden;
-  background: #111;
-}
-
-.tv-poster,
-.tv-video {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-
-.tv-video {
-  opacity: 0; /* 実際に再生が始まるまではポスター画像を見せる(切り替えで黒くならない) */
-}
-
-.tv.has-frame .tv-video {
-  opacity: 1;
-}
-
-/* 画面全体が 一時停止 / 再生 のボタン */
-.tv-toggle {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  margin: 0;
-  padding: 0;
-  border: 0;
-  border-radius: inherit;
-  background: transparent;
-  cursor: pointer;
-  touch-action: manipulation;
-  -webkit-tap-highlight-color: transparent;
-}
-
-/* 右上の 一時停止 / 再生 マーク(テロップは下に出るので上に置く) */
-.tv-toggle::before {
-  content: "";
-  position: absolute;
-  right: 8px;
-  top: 8px;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  border: 2px solid var(--ink);
-  box-shadow: 2px 2px 0 var(--ink);
-  background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'%3E%3Cpath fill='%231c1c1c' d='M2 1h4v12H2zM8 1h4v12H8z'/%3E%3C/svg%3E") center / 14px 14px no-repeat;
-}
-
-.tv.is-paused .tv-toggle::before {
-  background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'%3E%3Cpath fill='%231c1c1c' d='M3 1l10 6-10 6z'/%3E%3C/svg%3E") 56% 50% / 14px 14px no-repeat;
-}
-
-/* 止まっているとき(自動再生できない端末・動きを減らす設定も)は、まん中に大きな再生マーク */
-.tv-toggle::after {
-  content: "";
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 64px;
-  height: 64px;
-  margin: -32px 0 0 -32px;
-  border-radius: 50%;
-  border: 2px solid var(--ink);
-  box-shadow: 3px 3px 0 var(--ink);
-  background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'%3E%3Cpath fill='%231c1c1c' d='M3 1l10 6-10 6z'/%3E%3C/svg%3E") 56% 50% / 26px 26px no-repeat;
-  opacity: 0;
-}
-
-.tv.is-paused .tv-toggle::after {
-  opacity: 1;
-}
-
-.tv-tag {
-  position: absolute;
-  z-index: 2;
-  left: -8px;
-  top: -16px;
-  rotate: -3deg;
-  padding: 5px 11px;
-  border-radius: 999px;
-  border: 2px solid var(--ink);
-  box-shadow: 2px 2px 0 var(--ink);
-  background: #fff;
-  color: var(--ink);
-  font-family: var(--font-hand);
-  font-size: 14px;
-  line-height: 1;
-  white-space: nowrap;
-  pointer-events: none;
-}
-
-/* 「3 / 10」: 棚を出せない・全部は見えないときだけ出す */
-.tv-count {
-  position: absolute;
-  right: 52px;
-  top: 14px;
-  display: none;
-  padding: 3px 8px;
-  border-radius: 999px;
-  border: 2px solid var(--ink);
-  background: #fff;
-  color: var(--ink);
-  font-size: 13px;
-  font-weight: 700;
-  line-height: 1.3;
-  letter-spacing: 0;
-  pointer-events: none;
-}
-
-.intro.has-count .tv-count {
-  display: block;
-}
-
-/* 前へ / 次へ: 棚を出せないとき、マウスで棚が全部見えないときだけ出す */
-.tv-nav {
-  position: absolute;
-  z-index: 2;
-  top: 50%;
-  width: 36px;
-  height: 36px;
-  margin-top: -18px;
-  padding: 0;
-  display: none;
-  place-items: center;
-  border-radius: 50%;
-  border: 2px solid var(--ink);
-  box-shadow: 2px 2px 0 var(--ink);
-  background: #fff;
-  color: var(--ink);
-  cursor: pointer;
-  touch-action: manipulation;
-}
-
-.tv-nav::before { /* 押せる範囲を 44px に広げる */
-  content: "";
-  position: absolute;
-  inset: -4px;
-}
-
-.tv-nav svg {
-  width: 16px;
-  height: 16px;
-}
-
-.tv-prev { left: -14px; }
-.tv-next { right: -14px; }
-
-.intro.has-nav .tv-nav {
-  display: grid;
-}
-
-/* サムネイルの棚(全部 静止画。自分では絶対に動かない) */
-.reel {
-  position: relative;
-  display: none;
-  gap: 8px;
-  width: 100%;
-  margin-top: var(--gap-rail);
-  padding: 7px 3px 3px;
-  overflow-x: auto;
-  overscroll-behavior-x: contain;
-  scroll-snap-type: x proximity;
-  scrollbar-width: none;
-}
-
-.reel::-webkit-scrollbar {
-  display: none;
-}
-
-.intro.has-reel:not(.is-norail) .reel {
-  display: flex;
-}
-
-.reel-thumb {
-  flex: 0 0 auto;
-  width: var(--thumb-w, 96px);
-  aspect-ratio: 16 / 9;
-  padding: 0;
-  border: 3px solid #fff;
-  border-radius: 8px;
-  outline: 1px solid rgba(28, 28, 28, 0.35);
-  background: #fff;
-  overflow: hidden;
-  cursor: pointer;
-  scroll-snap-align: start;
-  touch-action: manipulation;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.reel-thumb:first-child { margin-left: auto; }  /* 入りきるときは中央寄せ、あふれるときは左から */
-.reel-thumb:last-child { margin-right: auto; }
-
-.reel-thumb img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-  border-radius: 5px;
-}
-
-/* いま映っている 1 枚: 形で示す(黄色は使わない) */
-.reel-thumb[aria-current="true"] {
-  outline: 2px solid var(--ink);
-  translate: 0 -4px;
-  box-shadow: 0 4px 0 var(--ink);
-}
-
-/* スマホ: 棚があふれるときは右の画面端まで流して「続きがある」ことを見せる */
-@media (max-width: 639px) {
-  .reel.is-overflow {
-    width: calc(100% + var(--pad-x));
-    justify-self: start;
-    padding-right: var(--pad-x);
-  }
-}
-
-/* ---- 立て看板(3 つの条件を 1 枚に)。管理画面が書き換える HTML はそのまま ---- */
+/* ==========================================================
+   条件の帯(.job-grid)。管理画面が書き換える HTML はそのまま、CSS だけで形を作る
+   スマホ: 1 枚の紙に 3 行(ラベル | 中身)。PC: 1 枚の紙に 3 列(ラベルの下に中身)
+   ========================================================== */
 .intro-final .job-grid {
   display: grid;
   grid-template-columns: max-content minmax(0, 1fr);
-  gap: 0 10px;
-  width: 100%;
-  max-width: none;
+  --lab: 87px; /* ラベルの列の幅(「本数・納期」5 文字ぶん) */
+  gap: 0 6px;
+  width: var(--board-w, 100%);
+  max-width: 100%;
   margin-top: var(--gap-board);
-  padding: 2px 12px;
+  padding: 2px 6px;
   text-align: left;
   background: #fff;
   border: 2px solid var(--ink);
@@ -2292,7 +2039,8 @@ body.cta-on .site-header .btn-primary:not(.is-disabled) {
   grid-template-columns: subgrid;
   grid-column: 1 / -1;
   align-items: center;
-  padding: 7px 0;
+  min-width: 0;
+  padding: 4px 0;
 }
 
 @supports not (grid-template-columns: subgrid) {
@@ -2302,7 +2050,7 @@ body.cta-on .site-header .btn-primary:not(.is-disabled) {
 
   .intro-final .job-item {
     grid-template-columns: 5.4em minmax(0, 1fr);
-    column-gap: 10px;
+    column-gap: 8px;
   }
 }
 
@@ -2310,23 +2058,27 @@ body.cta-on .site-header .btn-primary:not(.is-disabled) {
   border-top: 2px dashed rgba(28, 28, 28, 0.16);
 }
 
+/* ラベル = 黄色いマーカー(見出しの「編集者」・応募ボタンと同じ黄色。押せる形にはしない) */
 .intro-final .job-label {
   margin: 0;
   justify-self: start;
-  padding: 0 4px;
-  margin-left: -4px;
-  font-size: 15px;
-  line-height: 1.3;
+  padding: 0 3px;
+  margin-left: 0;
+  font-size: 16px;
+  line-height: 1.35;
   text-align: left;
   white-space: nowrap;
   color: var(--ink);
   text-shadow: none;
-  background: linear-gradient(transparent 58%, var(--sky-light) 58%); /* マーカーの線 */
+  background-image: linear-gradient(transparent 46%, var(--yellow) 46%, var(--yellow) 94%, transparent 94%);
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
 }
 
 .intro-final .job-card {
   display: block;
   flex: none;
+  min-width: 0;
   min-height: 0;
   padding: 0;
   border: 0;
@@ -2340,43 +2092,38 @@ body.cta-on .site-header .btn-primary:not(.is-disabled) {
 }
 
 .intro-final .job-card .list li {
-  padding-left: 13px;
-  font-size: 14px;
-  font-weight: 500;
-  line-height: 1.5;
+  padding-left: 10px;
+  /* 16 文字の行が 1 行で入る、いちばん大きい字にする(13〜16px) */
+  font-size: clamp(13px, calc((100vw - 64px - var(--lab)) / 16.2), 16px);
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: 0;
   color: var(--ink);
   text-wrap: pretty;
 }
 
 .intro-final .job-card .list li + li {
-  margin-top: 1px;
+  margin-top: 0;
 }
 
 .intro-final .job-card .list li::before {
-  left: 2px;
-  top: 0.62em;
+  left: 1px;
+  top: 0.56em;
   width: 5px;
   height: 5px;
   border: 0;
   background: var(--ink);
 }
 
-/* 幅のせまいスマホ: 16 文字の行が 1 行で入るようにする */
+@media (max-width: 389px) {
+  .intro-final .job-grid { --lab: 82px; }
+  .intro-final .job-label { font-size: 15px; }
+}
+
 @media (max-width: 374px) {
-  .intro-final .job-grid {
-    padding: 2px 8px;
-    column-gap: 6px;
-  }
-
-  .intro-final .job-label {
-    font-size: 14px;
-  }
-
-  .intro-final .job-card .list li {
-    padding-left: 11px;
-    font-size: 13px;
-    letter-spacing: 0;
-  }
+  .intro-final { --pad-x: 12px; } /* 幅 360px の端末でも条件の字を 14px にするため、左右の余白を 4px ずつ詰める */
+  .intro-final .job-grid { --lab: 69px; }
+  .intro-final .job-label { font-size: 14px; }
 
   .brand {
     gap: 8px;
@@ -2393,41 +2140,196 @@ body.cta-on .site-header .btn-primary:not(.is-disabled) {
 }
 
 /* 背の低いスマホ(ツールバーが出ている iPhone など) */
-@media (max-width: 639px) and (max-height: 640px) {
+@media (max-width: 639px) and (max-height: 720px) {
   .intro-final {
     --pad-t: 12px;
-    --gap-cta: 8px;
-    --gap-scene: 20px;
+    --gap-cta: 10px;
     --gap-board: 10px;
-  }
-
-  .intro-final .job-grid {
-    padding-top: 0;
-    padding-bottom: 0;
-  }
-
-  .intro-final .job-item {
-    padding: 4px 0;
-  }
-
-  .intro-final .job-card .list li {
-    line-height: 1.4;
-  }
-
-  .intro-final .job-card .list li + li {
-    margin-top: 0;
   }
 }
 
-/* ---- 横に広い画面: テレビの右に立て看板を並べる ---- */
+@media (max-width: 639px) and (max-height: 640px) {
+  .intro-final {
+    --gap-cta: 8px;
+  }
+}
+
+@media (min-width: 640px) {
+  .intro-final .job-grid { padding: 4px 14px; column-gap: 12px; }
+  .intro-final .job-item { padding: 8px 0; }
+  .intro-final .job-label { font-size: 18px; }
+  .intro-final .job-card .list li { font-size: 16px; line-height: 1.45; }
+}
+
+/* ==========================================================
+   見本の壁(#clip-parade の中に JS が作る)
+   白い台紙 1 枚 + 黒ふち 1 本 + 影 1 つ。中のタイルは はだかの映像で、すき間は 1 種類だけ
+   ========================================================== */
+.clip-parade {
+  position: relative;
+  display: none;
+  width: var(--wall-w, 100%);
+  max-width: 100%;
+  margin: auto 0;
+  padding-top: var(--gap-wall);
+}
+
+.intro.has-show .clip-parade {
+  display: block;
+}
+
+.wall {
+  position: relative;
+  padding: var(--g);
+  border: 2px solid var(--ink);
+  border-radius: calc(var(--g) * 2 + 2px);
+  background: #fff;
+  box-shadow: 4px 4px 0 var(--ink);
+}
+
+.wall-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--cols, 2), minmax(0, 1fr));
+  gap: var(--g);
+}
+
+.tile {
+  position: relative;
+  aspect-ratio: var(--tile-ar, 16 / 9);
+  border-radius: var(--g);
+  overflow: hidden;
+  background: var(--sky-light); /* 読み込めなかったときも黒い穴にしない */
+}
+
+.tile.is-hero {
+  grid-column: span 2;
+  grid-row: span 2;
+  aspect-ratio: var(--hero-ar, auto);
+}
+
+.tile::after { /* 明るいコマが白い台紙に溶けないように、内側に 1px の線 */
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.12);
+  pointer-events: none;
+}
+
+.tile-poster,
+.tile-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 100%; /* 高さが少し足りないときに切るのは上だけ(テロップは下に出るので) */
+  display: block;
+}
+
+.tile-video {
+  opacity: 0; /* 実際に再生が始まるまではポスター画像を見せる */
+}
+
+.tile.has-frame .tile-video {
+  opacity: 1;
+}
+
+/* 札: 壁の左上のふちに乗る(映像の上には掛からない) */
+.wall-tag {
+  position: absolute;
+  z-index: 2;
+  left: 8px;
+  bottom: calc(100% - 4px);
+  rotate: -2.5deg;
+  transform-origin: left bottom;
+  padding: 5px 11px;
+  border-radius: 999px;
+  border: 2px solid var(--ink);
+  box-shadow: 2px 2px 0 var(--ink);
+  background: #fff;
+  color: var(--ink);
+  font-family: var(--font-hand);
+  font-size: 14px;
+  line-height: 1;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* ぜんぶ止める / 再生: 壁の右上のふちに乗る丸ボタン 1 つだけ */
+.wall-toggle {
+  position: absolute;
+  z-index: 2;
+  right: 8px;
+  bottom: calc(100% - 4px);
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border-radius: 50%;
+  border: 2px solid var(--ink);
+  box-shadow: 2px 2px 0 var(--ink);
+  background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'%3E%3Cpath fill='%231c1c1c' d='M2 1h4v12H2zM8 1h4v12H8z'/%3E%3C/svg%3E") center / 12px 12px no-repeat;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.wall-toggle::before { /* 押せる範囲を 44px に広げる */
+  content: "";
+  position: absolute;
+  inset: -6px;
+}
+
+.wall.is-paused .wall-toggle {
+  background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'%3E%3Cpath fill='%231c1c1c' d='M3 1l10 6-10 6z'/%3E%3C/svg%3E") 58% 50% / 12px 12px no-repeat;
+}
+
+/* 止まっているとき(自動再生できない端末・動きを減らす設定・自分で止めた)だけ: 壁のまん中に大きな再生マーク。壁のどこを押しても全部が動き出す */
+.wall-play {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  display: none;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.wall.is-paused .wall-play {
+  display: block;
+}
+
+.wall-play::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 64px;
+  height: 64px;
+  margin: -32px 0 0 -32px;
+  border-radius: 50%;
+  border: 2px solid var(--ink);
+  box-shadow: 3px 3px 0 var(--ink);
+  background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'%3E%3Cpath fill='%231c1c1c' d='M3 1l10 6-10 6z'/%3E%3C/svg%3E") 56% 50% / 26px 26px no-repeat;
+}
+
+/* ---- 横に広い画面: 条件は 3 列の帯、壁は幅いっぱい ---- */
 @media (min-width: 960px) and (min-aspect-ratio: 5/4) {
   .intro-final {
     --pad-t: 32px;
     --pad-b: 24px;
-    --pad-x: 32px;
+    --pad-x: max(32px, 5vw); /* 壁の左右に丘が見える余白を残す */
     --gap-cta: 16px;
-    --gap-scene: 48px;
-    --gap-rail: 12px;
+    --gap-board: 16px;
+    --gap-wall: 46px;
+    --g: 8px;
   }
 
   .intro-final .hero-title {
@@ -2440,81 +2342,76 @@ body.cta-on .site-header .btn-primary:not(.is-disabled) {
     box-shadow: 4px 4px 0 var(--ink);
   }
 
-  .scene {
-    width: auto;
-    max-width: 100%;
-    grid-template-columns: auto auto;
-    column-gap: 32px;
-    align-items: center; /* 看板はテレビの縦まん中にそろえる(丘の線は両方の後ろを通る) */
-    justify-items: start;
-  }
-
-  .clip-parade {
-    grid-column: 1;
-    grid-row: 1;
-  }
-
-  .tv {
-    width: calc(var(--tv-w, 480px) + 12px);
-    margin: 3px;
-    border-width: 6px;
-    border-radius: 16px;
-    outline-width: 3px;
-    box-shadow: 6px 6px 0 var(--ink);
-  }
-
-  .tv-screen {
-    border-radius: 10px;
-  }
-
-  .tv-tag {
-    left: -12px;
-    top: -18px;
-    padding: 7px 14px;
-    font-size: 17px;
-  }
-
-  .tv-toggle::before {
-    right: 10px;
-    top: 10px;
-    width: 40px;
-    height: 40px;
-  }
-
-  .tv-count {
-    right: 60px;
-    top: 17px;
-  }
-
   .intro-final .job-grid {
-    grid-column: 2;
-    grid-row: 1;
-    width: max-content;
-    max-width: 440px;
-    margin-top: 0;
-    padding: 4px 18px;
-    column-gap: 12px;
+    --lab: 0px;
+    grid-template-columns: none;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
+    gap: 0;
+    padding: 0;
     border-radius: 16px;
+    box-shadow: 4px 4px 0 var(--ink);
   }
 
   .intro-final .job-item {
-    padding: 10px 0;
+    grid-column: auto;
+    grid-template-columns: minmax(0, max-content); /* ラベルと中身を 1 つの箱として列のまん中に置き、箱の中は左ぞろえ */
+    justify-content: center;
+    align-content: start; /* 行数がちがっても 3 つのラベルは同じ高さに並ぶ */
+    row-gap: 4px;
+    padding: 10px 20px 12px;
+  }
+
+  .intro-final .job-item + .job-item {
+    border-top: 0;
+    border-left: 2px dashed rgba(28, 28, 28, 0.18);
   }
 
   .intro-final .job-label {
-    font-size: 17px;
+    font-size: 23px;
+    line-height: 1.25;
+    padding: 0 7px;
+    margin-left: -7px;
   }
 
   .intro-final .job-card .list li {
-    font-size: 15px;
+    padding-left: 14px;
+    font-size: 16px;
+    line-height: 1.5;
+    white-space: normal;
   }
 
-  .reel {
-    grid-column: 1 / -1;
-    grid-row: 2;
-    gap: 10px;
-    width: 0;        /* サムネイルの幅でグリッドが広がらないようにする */
-    min-width: 100%;
+  .intro-final .job-card .list li::before {
+    left: 2px;
+    top: 0.64em;
+  }
+
+  .wall {
+    border-radius: 18px;
+    box-shadow: 5px 5px 0 var(--ink);
+  }
+
+  .wall-tag {
+    left: 12px;
+    bottom: calc(100% - 6px);
+    padding: 7px 14px;
+    font-size: 19px;
+  }
+
+  .wall-toggle {
+    right: 12px;
+    bottom: calc(100% - 5px);
+    width: 40px;
+    height: 40px;
+    background-size: 14px 14px;
+  }
+
+  .wall.is-paused .wall-toggle {
+    background-size: 14px 14px;
+  }
+
+  .wall-toggle::before {
+    inset: -2px;
   }
 }
 
@@ -2523,65 +2420,89 @@ body.cta-on .site-header .btn-primary:not(.is-disabled) {
     --pad-t: 16px;
     --pad-b: 16px;
     --gap-cta: 12px;
-    --gap-scene: 32px;
+    --gap-board: 14px;
+    --gap-wall: 42px;
+  }
+
+  .intro-final .job-item {
+    padding: 8px 20px 10px;
+  }
+
+  .wall-tag {
+    padding: 6px 13px;
+    font-size: 17px;
+  }
+}
+
+/* ノートパソコン(1366x768 の画面でブラウザーを開いたときなど、舞台の高さが 600px 前後) */
+@media (min-width: 960px) and (min-aspect-ratio: 5/4) and (max-height: 690px) {
+  .intro-final {
+    --pad-t: 12px;
+    --pad-b: 12px;
+    --gap-cta: 10px;
+    --gap-board: 12px;
+    --gap-wall: 38px;
+  }
+
+  .intro-final .job-item {
+    padding: 6px 20px 8px;
+    row-gap: 2px;
+  }
+
+  .intro-final .job-label {
+    font-size: 21px;
+  }
+
+  .intro-final .job-card .list li {
+    line-height: 1.45;
   }
 }
 
 @media (min-width: 1440px) and (min-aspect-ratio: 5/4) {
   .intro-final .job-label {
-    font-size: 18px;
+    font-size: 25px;
   }
 
   .intro-final .job-card .list li {
-    font-size: 16px;
+    font-size: 17px;
   }
 }
 
-/* ---- ループ動画が 1 本も無いとき: 看板だけをまん中に ---- */
-.intro:not(.has-show) .scene {
-  display: block;
-  width: min(560px, 100%);
-}
-
+/* ---- ループ動画が 1 本も無いとき: 見出し・ボタン・条件の帯だけをまん中に ---- */
 .intro:not(.has-show) .intro-final .job-grid {
-  width: 100%;
-  max-width: none;
-  margin: 0 auto;
+  margin-bottom: auto;
 }
 
-/* ---- さわれるものの反応(位置が動くのは押したときの一瞬だけ) ---- */
-.tv-toggle:focus-visible,
-.tv-nav:focus-visible,
-.reel-thumb:focus-visible {
+/* ---- さわれるものの反応 ---- */
+.wall-toggle:focus-visible,
+.wall-play:focus-visible {
   outline: 3px solid var(--ink);
   outline-offset: 3px;
   box-shadow: 0 0 0 3px #fff;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .tv-video {
-    transition: opacity 120ms linear;
-  }
-
-  .reel-thumb {
-    transition: translate 150ms ease-out, box-shadow 150ms ease-out;
-  }
-
-  .tv-nav {
-    transition: translate 150ms ease-out, box-shadow 150ms ease-out;
-  }
-}
-
-@media (hover: hover) and (pointer: fine) {
-  .reel-thumb:not([aria-current="true"]):hover {
-    translate: 0 -2px;
-    box-shadow: 0 2px 0 var(--ink);
-  }
-}
-
-.reel-thumb:active,
-.tv-nav:active {
+.wall-toggle:active {
   translate: 1px 1px;
+  box-shadow: 1px 1px 0 var(--ink);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .tile-video {
+    transition: opacity 150ms linear;
+  }
+
+  /* 条件のマーカー: 最後の画面に着いたとき 1 回だけ、左から右へ引かれる(そのあとはずっと止まったまま) */
+  .intro.is-animated .intro-final .job-label {
+    background-size: 0% 100%;
+  }
+
+  .intro.is-animated .intro-final .job-grid.is-cued .job-label {
+    background-size: 100% 100%;
+    transition: background-size 320ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .intro.is-animated .intro-final .job-grid.is-cued .job-item:nth-child(2) .job-label { transition-delay: 110ms; }
+  .intro.is-animated .intro-final .job-grid.is-cued .job-item:nth-child(3) .job-label { transition-delay: 220ms; }
 }
 
 /* ---- 最後の画面に着いたら、飛び出したものの下ごしらえを片づける ---- */
@@ -2590,7 +2511,7 @@ body.cta-on .site-header .btn-primary:not(.is-disabled) {
 }
 
 .intro.is-final .scroll-hint-line {
-  animation: none; /* 見えていない「↓ スクロール」の線も止める */
+  animation: none;
 }
 
 /* ---- 静的表示(動きを減らす設定・GSAP なし) ---- */

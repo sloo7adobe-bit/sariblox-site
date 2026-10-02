@@ -445,93 +445,74 @@ Promise.all([CONTENT_READY, LOOPS_READY]).then(function (res) {
   const hasGsap = typeof window.gsap !== "undefined" && typeof window.ScrollTrigger !== "undefined";
   const animated = !reduce && hasGsap;
 
-  // ---- 編集サンプル: 丘の上のテレビ 1 台 + 静止サムネイルの棚 ----
-  //  位置が動くものは 1 つも無い。再生するのは常に 1 本だけ(テレビの中)。
-  const AUTO_ADVANCE = true; // false にすると 1 本目がループするだけ(ほかはサムネイルで選ぶ)
+  // ---- 編集サンプル: 丘の上の「見本の壁」----
+  //  タイルの位置は 1 つも動かない。動くのはタイルの中の映像だけ。全部のタイルが同時に流れる。
   const CLIP_TAG = (content && content.clipTag) || "こんな編集がほしい!";
+  const DWELL = 4500; // 見本がタイルの数より多いとき: 1 本を最低これだけ見せてから、ループの切れ目で次の見本にパッと替える
   const fin = document.getElementById("intro-final");
   const titleEl = fin.querySelector(".hero-title");
   const actionsEl = fin.querySelector(".hero-actions");
-  const scene = document.getElementById("scene");
   const board = fin.querySelector(".job-grid");
   const unit = document.getElementById("clip-parade");
-  const reel = document.getElementById("clip-reel");
   const grass = intro.querySelector(".grass-strip");
-  const sideMQ = window.matchMedia("(min-width: 960px) and (min-aspect-ratio: 5/4)");
-  const fineMQ = window.matchMedia("(hover: hover) and (pointer: fine)");
+  const wideMQ = window.matchMedia("(min-width: 960px) and (min-aspect-ratio: 5/4)");
+  const coarseMQ = window.matchMedia("(pointer: coarse)");
+  const conn = navigator.connection;
 
   const show = {
-    clips: [], index: 0,
-    auto: AUTO_ADVANCE && !reduce, // 自動で次の見本へ進むか(一度でも操作されたら、その訪問中はずっと止める)
-    userPaused: false,             // 一時停止ボタンで止めている
-    needTap: reduce,               // 動きを減らす設定: 押されるまで再生しない
-    blocked: false,                // 端末に自動再生を断られた(省電力モードなど)
-    finalOn: false, inView: true, held: false,
-    loops: 0, need: 1, last: 0,
+    clips: [],
+    userPaused: false,                                 // 停止ボタンで止めている
+    needTap: reduce || !!(conn && conn.saveData),      // 動きを減らす設定・通信量節約: 押されるまで再生しない
+    blocked: false,                                    // 端末に自動再生を断られた(省電力モードなど)
+    finalOn: false, inView: true, sig: "",
   };
-  let tv = null, posterEl = null, videoEl = null, toggleBtn = null, countEl = null, thumbs = [], warm = null, tvIO = null;
+  let wall = null, gridEl = null, toggleBtn = null, slots = [], wallIO = null, startTimers = [], wallTl = null;
 
-  function autoOK() { return show.auto && show.clips.length > 1; }
-  function applyLoop() {
-    // 決めた回数ぶんループしたら loop を外す → 最後まで再生すると ended が来て、次の見本へパッと切り替わる
-    if (videoEl) videoEl.loop = !(autoOK() && show.loops >= show.need - 1);
-  }
+  function stopped() { return show.userPaused || show.needTap || show.blocked; }
+  function wantPlay() { return show.finalOn && show.inView && !document.hidden && !stopped(); }
   function render() {
-    if (!tv) return;
-    const stopped = show.userPaused || show.needTap || show.blocked;
-    tv.classList.toggle("is-paused", stopped);
-    toggleBtn.setAttribute("aria-label", stopped ? "再生" : "一時停止");
+    if (!wall) return;
+    const s = stopped();
+    wall.classList.toggle("is-paused", s);
+    toggleBtn.setAttribute("aria-pressed", s ? "true" : "false");
+    toggleBtn.setAttribute("aria-label", s ? "動画をぜんぶ再生" : "動画をぜんぶ一時停止");
   }
-  function sync() {
-    if (!videoEl) return;
-    const want = show.finalOn && show.inView && !document.hidden && !show.userPaused && !show.needTap;
-    if (want && videoEl.paused) {
-      const p = videoEl.play();
-      if (p && p.catch) p.catch(function () { if (videoEl.paused && show.finalOn && !document.hidden) { show.blocked = true; render(); } });
-    } else if (!want && !videoEl.paused) {
-      videoEl.pause();
-    }
+  function playSlot(s) {
+    if (s.dead || !s.video.paused) return;
+    const p = s.video.play();
+    if (p && p.catch) p.catch(function (err) {
+      if (err && err.name === "NotAllowedError" && !show.blocked) { // 自動再生を断られた: もう試さない。ポスターの壁 + 再生ボタンにする
+        show.blocked = true;
+        sync();
+      }
+    });
+  }
+  function sync(now) {
+    const want = wantPlay();
+    startTimers.forEach(clearTimeout);
+    startTimers = [];
+    let k = 0;
+    slots.forEach(function (s) {
+      if (want) {
+        if (s.video.paused && !s.dead) {
+          if (now) playSlot(s); // 押した瞬間(同じ操作の中)で全部を始める
+          else startTimers.push(setTimeout(function () { if (wantPlay()) playSlot(s); }, 90 * k++)); // 左上から順に、ぱぱぱっと点く
+        }
+      } else if (!s.video.paused) s.video.pause();
+    });
     render();
   }
-  function warmNext() {
-    // 次の 1 本だけ先に読み込んでおく(通信量を節約する設定のときはやらない)
-    if (!autoOK()) return;
-    const conn = navigator.connection;
-    if (conn && conn.saveData) return;
-    const nx = show.clips[(show.index + 1) % show.clips.length];
-    if (warm && warm.getAttribute("src") === nx.src) return;
-    warm = document.createElement("video");
-    warm.muted = true;
-    warm.preload = "auto";
-    warm.src = nx.src;
+  function setClip(s) {
+    const c = show.clips[s.queue[s.qi]];
+    s.el.classList.remove("has-frame");
+    if (c.poster) s.img.src = c.poster; else s.img.removeAttribute("src");
+    s.video.loop = s.queue.length === 1; // 1 本だけ受け持つタイルは、そのままループ
+    s.video.src = c.src;                 // preload="none" なので、再生するまで読み込まれない
+    s.since = 0;
   }
-  function select(i, byUser) {
-    const n = show.clips.length;
-    if (!n) return;
-    i = ((i % n) + n) % n;
-    show.index = i;
-    show.loops = 0;
-    show.last = 0;
-    show.need = 1;
-    show.blocked = false;
-    if (byUser) { show.auto = false; show.userPaused = false; show.needTap = false; }
-    const c = show.clips[i];
-    tv.classList.remove("has-frame");
-    if (c.poster) posterEl.src = c.poster; else posterEl.removeAttribute("src");
-    videoEl.loop = true;
-    videoEl.src = c.src; // preload="none" なので、再生するまで読み込まれない
-    thumbs.forEach(function (t, k) {
-      if (k === i) t.setAttribute("aria-current", "true");
-      else t.removeAttribute("aria-current");
-    });
-    countEl.textContent = i + 1 + " / " + n;
-    // 選ばれたサムネイルが棚の見えている範囲の外なら、棚の位置をパッと合わせる(なめらかには動かさない)
-    const t = thumbs[i];
-    if (t && reel.scrollWidth > reel.clientWidth + 1) {
-      const l = t.offsetLeft; // .reel は position: relative なので、棚の中での位置になる
-      if (l < reel.scrollLeft || l + t.offsetWidth > reel.scrollLeft + reel.clientWidth) reel.scrollLeft = Math.max(0, l - 3);
-    }
-    sync();
+  function nextClip(s) {
+    s.qi = (s.qi + 1) % s.queue.length;
+    setClip(s);
   }
 
   function buildShowcase(list) {
@@ -543,123 +524,105 @@ Promise.all([CONTENT_READY, LOOPS_READY]).then(function (res) {
       for (let i = 0; i < forced; i++) list.push(src[i % src.length]);
     }
     show.clips = list;
+    startTimers.forEach(clearTimeout);
+    startTimers = [];
     unit.textContent = "";
-    reel.textContent = "";
-    thumbs = [];
-    if (tvIO) { tvIO.disconnect(); tvIO = null; }
-    tv = posterEl = videoEl = toggleBtn = countEl = null;
+    slots = [];
+    show.sig = "";
+    if (wallIO) { wallIO.disconnect(); wallIO = null; }
+    wall = gridEl = toggleBtn = null;
     intro.classList.toggle("has-show", list.length > 0);
-    intro.classList.toggle("has-reel", list.length > 1);
     if (!list.length) return;
 
-    const arrow = function (d) {
-      return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="' + d + '"/></svg>';
+    wall = document.createElement("div");
+    wall.className = "wall";
+    wall.innerHTML =
+      '<span class="wall-tag"></span>' +
+      '<button type="button" class="wall-toggle" aria-pressed="false" aria-label="動画をぜんぶ一時停止"></button>' +
+      '<div class="wall-grid"></div>' +
+      '<button type="button" class="wall-play" aria-label="動画をぜんぶ再生"></button>';
+    unit.appendChild(wall);
+    wall.querySelector(".wall-tag").textContent = CLIP_TAG;
+    gridEl = wall.querySelector(".wall-grid");
+    toggleBtn = wall.querySelector(".wall-toggle");
+    const flip = function () {
+      if (stopped()) { show.userPaused = false; show.needTap = false; show.blocked = false; sync(true); }
+      else { show.userPaused = true; sync(); }
     };
-    tv = document.createElement("div");
-    tv.className = "tv";
-    tv.innerHTML =
-      '<span class="tv-tag"></span>' +
-      '<div class="tv-screen">' +
-      '<img class="tv-poster" alt="" decoding="async" />' +
-      '<video class="tv-video" muted playsinline preload="none" tabindex="-1" aria-hidden="true" disablepictureinpicture></video>' +
-      '<button type="button" class="tv-toggle" aria-label="一時停止"></button>' +
-      '<span class="tv-count" aria-hidden="true"></span>' +
-      "</div>" +
-      '<button type="button" class="tv-nav tv-prev" aria-label="前の編集サンプル">' + arrow("m15 5-7 7 7 7") + "</button>" +
-      '<button type="button" class="tv-nav tv-next" aria-label="次の編集サンプル">' + arrow("m9 5 7 7-7 7") + "</button>";
-    unit.appendChild(tv);
-    tv.querySelector(".tv-tag").textContent = CLIP_TAG;
-    posterEl = tv.querySelector(".tv-poster");
-    videoEl = tv.querySelector(".tv-video");
-    toggleBtn = tv.querySelector(".tv-toggle");
-    countEl = tv.querySelector(".tv-count");
-    videoEl.muted = true;
-    videoEl.defaultMuted = true;
-    videoEl.playsInline = true;
-
-    videoEl.addEventListener("loadedmetadata", function () {
-      // 1 本あたり 5 秒以上は見せる: 2 秒の見本は 3 回、7 秒の見本は 1 回
-      show.need = Math.max(1, Math.min(3, Math.ceil(5 / (videoEl.duration || 5))));
-      applyLoop();
-    });
-    videoEl.addEventListener("playing", function () {
-      tv.classList.add("has-frame");
-      show.blocked = false;
-      render();
-      warmNext();
-    });
-    videoEl.addEventListener("timeupdate", function () {
-      if (videoEl.currentTime + 0.3 < show.last) { show.loops++; applyLoop(); } // 頭に戻った = 1 回ループした
-      show.last = videoEl.currentTime;
-    });
-    videoEl.addEventListener("ended", function () {
-      if (autoOK() && !show.held) { select(show.index + 1, false); return; }
-      videoEl.currentTime = 0; // マウスを乗せている間・フォーカス中は同じ見本を見せ続ける
-      show.last = 0;
-      applyLoop();
-      sync();
-    });
-
-    toggleBtn.addEventListener("click", function () {
-      if (show.userPaused || show.needTap || show.blocked) { show.userPaused = false; show.needTap = false; show.blocked = false; }
-      else show.userPaused = true;
-      show.auto = false; // 一度さわったら、自動で次へは進めない
-      applyLoop();
-      sync();
-    });
-    tv.querySelector(".tv-prev").addEventListener("click", function () { select(show.index - 1, true); });
-    tv.querySelector(".tv-next").addEventListener("click", function () { select(show.index + 1, true); });
-
-    list.forEach(function (c, i) {
-      const b = document.createElement("button");
-      b.type = "button";
-      b.className = "reel-thumb";
-      b.setAttribute("aria-label", "編集サンプル " + (i + 1) + " を再生");
-      b.innerHTML = '<img src="' + esc(c.poster || "") + '" alt="" loading="lazy" decoding="async" />';
-      b.addEventListener("click", function () { select(i, true); });
-      reel.appendChild(b);
-      thumbs.push(b);
-    });
+    toggleBtn.addEventListener("click", flip);
+    wall.querySelector(".wall-play").addEventListener("click", flip);
 
     if ("IntersectionObserver" in window) {
-      tvIO = new IntersectionObserver(function (es) {
-        show.inView = es[es.length - 1].intersectionRatio >= 0.5;
+      wallIO = new IntersectionObserver(function (es) {
+        show.inView = es[es.length - 1].intersectionRatio >= 0.35;
         sync();
-      }, { threshold: [0, 0.5, 1] });
-      tvIO.observe(tv);
+      }, { threshold: [0, 0.35, 1] });
+      wallIO.observe(wall);
     }
-    select(0, false);
+    render();
   }
 
-  // マウスを乗せている間・キーボードで操作している間は、自動で次へ進めない
-  [unit, reel].forEach(function (el) {
-    el.addEventListener("pointerenter", function (e) { if (e.pointerType === "mouse") show.held = true; });
-    el.addEventListener("pointerleave", function () { show.held = false; });
-    el.addEventListener("focusin", function () { show.held = true; });
-    el.addEventListener("focusout", function () { show.held = false; });
-    el.addEventListener("keydown", function (e) {
-      if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
-      if (show.clips.length < 2) return;
-      e.preventDefault();
-      const onThumb = thumbs.indexOf(document.activeElement) >= 0;
-      select(show.index + (e.key === "ArrowRight" ? 1 : -1), true);
-      if (onThumb && thumbs[show.index]) thumbs[show.index].focus({ preventScroll: true });
-    });
-  });
-  document.addEventListener("visibilitychange", sync);
+  // タイルを作り直す(本数や列の数が変わったときだけ)
+  function makeTiles(L) {
+    startTimers.forEach(clearTimeout);
+    startTimers = [];
+    slots.forEach(function (s) { s.video.pause(); s.video.removeAttribute("src"); s.video.load(); });
+    gridEl.textContent = "";
+    slots = [];
+    const N = show.clips.length;
+    for (let k = 0; k < L.S; k++) {
+      const el = document.createElement("div");
+      el.className = "tile" + (L.hero && k === 0 ? " is-hero" : "");
+      el.innerHTML =
+        '<img class="tile-poster" alt="" decoding="async" />' +
+        '<video class="tile-video" muted playsinline preload="none" tabindex="-1" aria-hidden="true" disablepictureinpicture></video>';
+      const s = { el: el, img: el.firstChild, video: el.lastChild, queue: [], qi: 0, since: 0, fails: 0, dead: false };
+      for (let c = k; c < N; c += L.S) s.queue.push(c); // タイル k は 見本 k, k+S, k+2S… を受け持つ(場所は固定)
+      s.video.muted = true;
+      s.video.defaultMuted = true;
+      s.video.playsInline = true;
+      s.video.addEventListener("playing", function () {
+        s.el.classList.add("has-frame");
+        s.fails = 0;
+        if (!s.since) s.since = performance.now();
+      });
+      s.video.addEventListener("ended", function () { // loop を外しているタイル(2 本以上を受け持つ)だけに来る
+        if (performance.now() - s.since >= DWELL) nextClip(s);
+        else s.video.currentTime = 0;
+        if (wantPlay()) playSlot(s);
+      });
+      s.video.addEventListener("error", function () { // 読めない見本: ポスターのまま。受け持ちが他にあれば次へ
+        s.fails++;
+        if (s.queue.length > 1 && s.fails < s.queue.length) { nextClip(s); if (wantPlay()) playSlot(s); }
+        else s.dead = true;
+      });
+      setClip(s);
+      gridEl.appendChild(el);
+      slots.push(s);
+    }
+    if (wallTl) buildWallTl();
+  }
+  function buildWallTl() {
+    // タイルの登場: 左上から順にポンポンと出る。本数が 4 でも 18 でも、かかる長さは同じ
+    wallTl.clear();
+    const els = slots.map(function (s) { return s.el; });
+    if (!els.length) return;
+    gsap.set(els, { autoAlpha: 0, scale: 0.92 });
+    wallTl.to(els, { autoAlpha: 1, scale: 1, duration: 0.04, ease: "power3.out", stagger: { amount: 0.06, from: "start" } }, 0);
+  }
+
+  document.addEventListener("visibilitychange", function () { sync(); });
+  window.addEventListener("pageshow", function (e) { if (e.persisted) { if (st) ScrollTrigger.refresh(); sync(); } });
   const onReduceChange = function () {
     if (!reduceMQ.matches) return;
-    show.auto = false; // 途中で「動きを減らす」に変わったら、すぐ止める
-    show.needTap = true;
-    applyLoop();
+    show.needTap = true; // 途中で「動きを減らす」に変わったら、すぐ全部止める
     sync();
   };
   if (reduceMQ.addEventListener) reduceMQ.addEventListener("change", onReduceChange);
   else if (reduceMQ.addListener) reduceMQ.addListener(onReduceChange);
 
   // ---- 最後の画面の割り付け ----
-  //  見出し・ボタン・看板の文字は絶対に削らない。縮むのは すき間 → テレビ の順。
-  //  位置は offsetTop / offsetHeight だけで測る(GSAP の transform の影響を受けない)。
+  //  見出し・ボタン・条件の文字は絶対に削らない。高さが足りないときに縮む / 減るのは 壁 だけ。
   const ruler = document.createElement("div"); // 舞台 1 画面ぶんの高さと、最初の丘の高さ(26vh / 最低150px)を測るものさし
   ruler.setAttribute("aria-hidden", "true");
   ruler.style.cssText = "position:absolute;left:0;top:0;width:1px;height:calc(100vh - 64px);height:calc(100svh - 64px);visibility:hidden;pointer-events:none";
@@ -678,115 +641,131 @@ Promise.all([CONTENT_READY, LOOPS_READY]).then(function (res) {
     return y;
   }
   function sizesKey() {
-    return [stage.clientWidth, ruler.offsetHeight, titleEl.offsetHeight, board.offsetWidth, board.offsetHeight, show.clips.length].join("x");
+    return [stage.clientWidth, ruler.offsetHeight, titleEl.offsetHeight, board.offsetHeight, show.clips.length].join("x");
+  }
+
+  // 壁の割り付けを選ぶ: タイルが大きく、同時に見える見本が多い形(全部が同時に出る形を優遇)
+  //  1 タイルの幅が min を下回る形は選ばない(小さすぎて編集が分からないため)
+  function chooseGrid(N, availW, availH, o) {
+    let best = null;
+    for (let cols = o.minCols || 1; cols <= o.maxCols; cols++) {
+      for (let rows = 1; rows <= o.maxRows; rows++) {
+        for (let h = 0; h < 2; h++) {
+          const hero = h === 1;
+          if (hero && (cols < 2 || rows < 2 || cols * rows < 6)) continue;
+          const S = cols * rows - (hero ? 3 : 0);
+          if (S > N || S > o.cap) continue;
+          const sW = (availW - o.frame - (cols + 1) * o.g) / cols;
+          const tH = (availH - 1 - o.frame - (rows + 1) * o.g) / rows; // 1px は端数のゆとり
+          if (tH <= 0) continue;
+          // 高さがほんの少し足りないだけなら、タイルを縮めずに上下を少しだけ切る(16:9 → 最大 16:8.4)
+          let s = Math.min(sW, o.maxTile, hero ? (o.maxHero - o.g) / 2 : 1e9);
+          let ar = 16 / 9;
+          if (s * 9 / 16 > tH) {
+            if (s / tH <= o.maxAr) ar = s / tH;
+            else { ar = o.maxAr; s = tH * ar; } // それでも足りなければ、切れる限度の形のまま幅も縮める
+          }
+          s = Math.floor(s);
+          if (s < o.min) continue;
+          // 点数 = タイルの幅 ×(同時に見える見本の割合)² 。全部が同時に見える形は 25% 増し、大きい 1 枚がある形はそのぶん加点
+          const score = s * (hero ? 1 + 1 / S : 1) * (S / N) * (S / N) * (S === N ? 1.25 : 1);
+          const c = { cols: cols, rows: rows, hero: hero, S: S, s: s, ar: ar, score: score };
+          if (!best || c.score > best.score + 0.5) best = c;
+        }
+      }
+    }
+    return best;
   }
 
   function layoutFinal() {
     const W = stage.clientWidth;
     const H = ruler.offsetHeight;
     const N = show.clips.length;
-    const side = sideMQ.matches;
+    const wide = wideMQ.matches;
     const cs = getComputedStyle(fin);
     const padT = parseFloat(cs.paddingTop) || 0;
     const padB = parseFloat(cs.paddingBottom) || 0;
     const padX = parseFloat(cs.paddingLeft) || 0;
-    const gapRail = parseFloat(getComputedStyle(reel).marginTop) || 0;
-    const colW = Math.min(side ? 1120 : 560, W - padX * 2);
-    const frame = side ? 18 : 12; // テレビの白ふち + 黒ふち(上下の合計)
-    const gapCol = 32;
-    const g = side ? 10 : 8;
-    const thumbMax = Math.max(64, Math.min(112, Math.round(H * 0.135)));
+    const g = parseFloat(cs.getPropertyValue("--g")) || 6;
+    const colW = Math.floor(Math.min(wide ? 1560 : 560, W - padX * 2));
+    const boardMin = wide ? Math.min(colW, 1040) : colW;
+    const opts = {
+      g: g, frame: 4, min: wide ? 200 : 128, maxTile: 400, maxHero: 720, maxAr: wide ? 1.9 : 2,
+      minCols: N < 2 || wide ? 1 : (W >= 640 || N > 2 ? 2 : 1), maxCols: wide ? 8 : 2, maxRows: !wide && W >= 640 ? 4 : 3,
+      cap: wide ? (coarseMQ.matches ? 12 : 18) : (W < 640 ? 6 : 8),
+    };
 
-    function thumbFor(RW) {
-      // 入りきるなら全部見せる(マウス 64px / タッチ 72px まで縮める)。入りきらないときだけ「k 枚 + 半分」で続きを見せる
-      let w = Math.floor((RW - 6 - (N - 1) * g) / N);
-      let over = false;
-      if (w >= (side ? 64 : 72)) w = Math.min(w, thumbMax);
-      else {
-        const minW = side ? 88 : 80;
-        const k = Math.max(1, Math.floor((RW - 6 - minW / 2) / (minW + g)));
-        w = Math.floor((RW - 6 - k * g) / (k + 0.5));
-        over = true;
-      }
-      return { w: w, over: over, h: Math.round((w * 9) / 16) + 10 }; // 10 = 棚の上下の余白
-    }
-
-    function fit(railOn) {
+    function measure(tall) {
+      intro.classList.toggle("is-tallhead", tall);
+      intro.style.setProperty("--board-w", colW + "px");
       const head = titleEl.offsetHeight + (parseFloat(getComputedStyle(actionsEl).marginTop) || 0) + actionsEl.offsetHeight;
-      const boardH = board.offsetHeight;
-      const boardW = board.offsetWidth;
-      const gapBoard = side ? 0 : parseFloat(getComputedStyle(board).marginTop) || 0;
-      if (!N) return { tvH: 0, rail: null, over: padT + head + boardH + padB - H, railOn: false };
-      const maxTvW = side ? Math.min(640, Math.max(W * 0.4, boardW + 40), colW - gapCol - boardW - frame) : Math.min(640, colW - frame);
-      const rail = N > 1 && railOn ? thumbFor(side ? Math.min(colW, maxTvW + frame + gapCol + boardW) : colW) : null;
-      const railH = rail ? rail.h + gapRail : 0;
-      const floor = side ? 170 : 130;
-      const free = side
-        ? H - padT - padB - head - frame - railH
-        : H - padT - padB - head - frame - railH - gapBoard - boardH;
-      const tvH = Math.max(floor, Math.min(free, (maxTvW * 9) / 16));
-      const sceneH = side ? Math.max(tvH + frame, boardH) + railH : tvH + frame + railH + gapBoard + boardH;
-      return { tvH: tvH, rail: rail, free: free, over: padT + head + sceneH + padB - H, railOn: !!rail, boardW: boardW };
+      const gapBoard = parseFloat(getComputedStyle(board).marginTop) || 0;
+      const gapWall = N ? parseFloat(getComputedStyle(unit).paddingTop) || 0 : 0;
+      let boardH = board.offsetHeight;
+      let L = null, wallW = 0, boardW = colW;
+      for (let pass = 0; pass < 2; pass++) {
+        const availH = H - padT - padB - head - gapBoard - boardH - gapWall;
+        L = N ? chooseGrid(N, colW, availH, opts) : null;
+        if (N && !L) break;
+        wallW = L ? L.cols * L.s + (L.cols + 1) * g + 4 : 0;
+        boardW = Math.max(wallW, boardMin);
+        if (boardW === colW) break;
+        intro.style.setProperty("--board-w", boardW + "px"); // 壁が細いときは帯も合わせる(細くなりすぎない幅まで)。高さが変わったらもう一度だけ選び直す
+        const h2 = board.offsetHeight;
+        if (h2 === boardH) break;
+        boardH = h2;
+      }
+      const wallH = L ? 4 + (L.rows + 1) * g + L.rows * (L.s / L.ar) : 0;
+      return { L: L, wallW: wallW, boardW: boardW, spare: H - padT - padB - head - gapBoard - boardH - gapWall - wallH };
     }
 
-    function choose() {
-      let r = fit(true);
-      // 棚を入れるとテレビが小さくなりすぎるときは、棚をやめてテレビに前へ / 次へボタンを出す
-      if (N > 1 && (r.over > 0.5 || r.free < (side ? 170 : 150))) r = fit(false);
-      return r;
+    let r = measure(false);
+    // 背の高いスマホ: 余った高さを見出しに回して 2 行で大きくする(壁が小さくならないときだけ)
+    if (!wide && W < 640 && N && r.L && r.spare >= 96) {
+      const r2 = measure(true);
+      if (r2.L && r2.spare >= 16 && r2.L.S === r.L.S && r2.L.s >= r.L.s) r = r2;
+      else r = measure(false);
+    }
+    let L = r.L;
+    if (N && !L) {
+      // どう詰めても 1 画面に入らない(横向きのスマホ・管理画面の文章が長い など): タイルは見やすい大きさのまま、入りきらないぶんはスクロールの続きで見せる
+      L = chooseGrid(N, colW, 1e5, Object.assign({}, opts, { maxRows: H < 420 ? 1 : 2 }));
+      r.wallW = L.cols * L.s + (L.cols + 1) * g + 4;
+      r.boardW = Math.max(r.wallW, boardMin);
     }
 
-    intro.classList.remove("is-tallhead");
-    let r = choose();
-    // 背の高いスマホ: 余った高さを見出しに回して 2 行で大きくする
-    if (!side && W < 640 && N && -r.over >= 96) {
-      intro.classList.add("is-tallhead");
-      const r2 = choose();
-      if (r2.over <= -16 && r2.railOn === r.railOn && r2.tvH >= r.tvH - 0.5) r = r2;
-      else { intro.classList.remove("is-tallhead"); r = choose(); }
+    intro.style.setProperty("--board-w", (N ? r.boardW : Math.min(colW, wide ? 1040 : 560)) + "px");
+    if (L) {
+      intro.style.setProperty("--wall-w", r.wallW + "px");
+      intro.style.setProperty("--cols", L.cols);
+      intro.style.setProperty("--tile-ar", String(L.ar));
+      intro.style.setProperty("--hero-ar", L.cols === 2 ? String((2 * L.s + g) / (2 * (L.s / L.ar) + g)) : "auto");
+      const sig = [L.cols, L.rows, L.hero ? 1 : 0, L.S, N].join("-");
+      if (sig !== show.sig) { show.sig = sig; makeTiles(L); if (show.finalOn) sync(); }
     }
-
-    if (r.over > 0.5 && N) {
-      // どう詰めても 1 画面に入らない(横向きのスマホ・管理画面の文章が長い など):
-      // 無理に縮めず、テレビは見やすい大きさのままにして、入りきらないぶんはスクロールの続きで見せる
-      const maxTvW = side ? Math.min(640, Math.max(W * 0.4, r.boardW + 40), colW - gapCol - r.boardW - frame) : Math.min(640, colW - frame);
-      r = { tvH: Math.max(side ? 170 : 130, Math.min((maxTvW * 9) / 16, window.innerHeight * 0.62)), railOn: N > 1, boardW: r.boardW };
-      r.rail = N > 1 ? thumbFor(side ? Math.min(colW, maxTvW + frame + gapCol + r.boardW) : colW) : null;
-    }
-
-    const tvW = Math.round((r.tvH * 16) / 9);
-    intro.style.setProperty("--tv-w", tvW + "px");
-    intro.classList.toggle("is-norail", N > 1 && !r.railOn);
-    let overflow = false;
-    if (r.rail) {
-      // 横並びのときは、実際の幅(テレビ + 看板)でもう一度サムネイルの幅を出す。高さの予算は超えない
-      const real = side ? thumbFor(Math.min(colW, tvW + frame + gapCol + r.boardW)) : r.rail;
-      intro.style.setProperty("--thumb-w", (real.h <= r.rail.h ? real.w : Math.min(real.w, r.rail.w)) + "px");
-      overflow = real.over;
-    }
-    reel.classList.toggle("is-overflow", overflow);
-    const noRail = N > 1 && !r.railOn;
-    intro.classList.toggle("has-count", N > 1 && (noRail || overflow));
-    intro.classList.toggle("has-nav", N > 1 && (noRail || (overflow && fineMQ.matches)));
 
     // 入りきらないぶん(px)。固定中は、演出のあとのスクロールで中身を上へ送って見せる(静的表示ではそのまま下へ続く)
-    overD = Math.max(0, Math.round(scene.offsetTop + scene.offsetHeight + padB - H));
+    const last = N ? unit : board;
+    overD = Math.max(0, Math.round(topIn(last, fin) + last.offsetHeight + padB - H));
     if (shiftA) {
       const d = Math.max(0.001, (END_T * overD) / (window.innerHeight * 1.3)); // 1px スクロール = 1px 送り
       shiftA.duration(d);
       shiftB.duration(d);
     }
 
-    // 丘の線は、テレビ(と看板)の後ろを通す。文字やふちに線が触れない高さにする
-    const anchor = N ? tv : board;
-    const k = N && !side ? 0.45 : 0.5;
-    grassH = Math.max(0, Math.round(stage.clientHeight - (topIn(anchor, stage) + k * anchor.offsetHeight)));
-    hillR0 = Math.round(ruler2.offsetHeight * 0.6);              // 最初の画面の丘の丸み(今までと同じ形)
-    hillR1 = Math.round(Math.min(grassH * 0.6, side ? 150 : 72)); // 最後の画面の丘の丸み(高くなってもドームにしない)
+    // 丘の線は壁の後ろを通す(条件の帯は空の中)。見本が無いときは帯の下
+    if (N) {
+      grassH = Math.max(0, Math.round(stage.clientHeight - (topIn(wall, stage) + (wide ? 0.5 : 0.45) * wall.offsetHeight)));
+    } else {
+      grassH = Math.max(0, Math.min(ruler2.offsetHeight, Math.round(stage.clientHeight - (topIn(board, stage) + board.offsetHeight + 32))));
+    }
+    hillR0 = Math.round(ruler2.offsetHeight * 0.6);
+    hillR1 = Math.round(Math.min(grassH * 0.6, wide ? 150 : 72));
     intro.style.setProperty("--grass-h", grassH + "px");
     intro.style.setProperty("--hill-r0", hillR0 + "px");
     intro.style.setProperty("--hill-r1", hillR1 + "px");
     lastSizes = sizesKey();
+    window.__WALL = L ? { cols: L.cols, rows: L.rows, hero: L.hero, S: L.S, s: L.s, ar: L.ar, wallW: r.wallW, boardW: r.boardW, overD: overD, spare: r.spare } : { overD: overD };
   }
 
   function relayout() {
@@ -812,10 +791,12 @@ Promise.all([CONTENT_READY, LOOPS_READY]).then(function (res) {
   if (heroCta && "IntersectionObserver" in window) {
     new IntersectionObserver(function (es) { ctaInView = es[es.length - 1].isIntersecting; syncCta(); }, { rootMargin: "-64px 0px 0px 0px" }).observe(heroCta);
   }
+  let cued = false;
   function setFinal(on) {
     if (on === show.finalOn) return;
     show.finalOn = on;
     intro.classList.toggle("is-final", on);
+    if (on && !cued) { cued = true; setTimeout(function () { board.classList.add("is-cued"); }, 450); } // 条件のマーカーを 1 回だけ引く
     syncCta();
     sync();
   }
@@ -823,7 +804,7 @@ Promise.all([CONTENT_READY, LOOPS_READY]).then(function (res) {
   const debugP = qs.get("p");
 
   buildShowcase(clips);
-  // 一覧の読み込みが 0.9 秒より遅れても、届いた時点でテレビを作る(今までは黙って出なかった)
+  // 一覧の読み込みが 0.9 秒より遅れても、届いた時点で壁を作る
   if (!clips.length) {
     LOOPS_REQ.then(function (late) {
       if (!late || !late.length || show.clips.length) return;
@@ -922,7 +903,9 @@ Promise.all([CONTENT_READY, LOOPS_READY]).then(function (res) {
   gsap.set(opened, { opacity: 0, clipPath: "inset(28.5% 0 0 0)" }); // フタが上がるまで中身は隠す
   gsap.set(lid, { opacity: 0 }); // 最初は1枚の写真だけを見せる(フタは動く瞬間に出す)
   gsap.set(fin, { autoAlpha: 0, y: 0 });
-  gsap.set([titleEl, actionsEl, scene], { autoAlpha: 0, y: 16 }); // 最後の画面は 見出し → ボタン → 丘の一式 の順に出す
+  gsap.set([titleEl, actionsEl], { autoAlpha: 0, y: 16 });
+  gsap.set(board, { autoAlpha: 0, y: 20, rotation: -1.5 });
+  gsap.set(unit, { autoAlpha: 0 });
   gsap.set(items.map(function (i) { return i.el; }), { xPercent: -50, yPercent: -50, x: 0, y: 0, scale: 0, opacity: 0, rotation: 0 });
 
   // 最後の画面の割り付けを先に決める(丘の高さをタイムラインが読む)
@@ -1029,20 +1012,27 @@ Promise.all([CONTENT_READY, LOOPS_READY]).then(function (res) {
     0.5
   );
 
-  // 0.62-0.82: 見出し → ボタン → 丘の一式(テレビ・棚・看板は 1 つのかたまりで)
+  // 0.62-0.84: 見出し → ボタン → 条件の帯(1 枚で、立て札が立つように)→ 壁(台紙 → タイルが左上から順に)
   tl.set(fin, { autoAlpha: 1 }, 0.62);
   tl.to(titleEl, { autoAlpha: 1, y: 0, duration: 0.1, ease: "power2.out" }, 0.62);
   tl.to(actionsEl, { autoAlpha: 1, y: 0, duration: 0.1, ease: "power2.out" }, 0.66);
-  tl.to(scene, { autoAlpha: 1, y: 0, duration: 0.12, ease: "power2.out" }, 0.7);
-  tl.to({}, { duration: 0.14 }, 0.82); // 読める余韻(ここまでの長さ 0.96 は今までと同じ)
+  tl.to(board, { autoAlpha: 1, y: 0, rotation: 0, duration: 0.07, ease: "power2.out" }, 0.69);
+  tl.to(unit, { autoAlpha: 1, duration: 0.03, ease: "power1.out" }, 0.72);
+  wallTl = gsap.timeline();
+  tl.add(wallTl, 0.74);
+  buildWallTl();
+  tl.to({}, { duration: 0.12 }, 0.84); // 読める余韻(ここまでの長さ 0.96 は今までと同じ)
 
   // 0.96 以降: 1 画面に入りきらないときだけ、スクロールの続きで中身を上へ送る(丘の線も一緒に上がる)。入りきるときは何も起きない
-  shiftA = tl.to(fin, { y: function () { return -overD; }, duration: 0.001 }, END_T);
-  shiftB = tl.to(grass, { height: function () { return grassH + overD; }, duration: 0.001 }, END_T);
+  //  注意: tl.to() が返すのはタイムライン自身。長さを後から変えるには、トゥイーンを別に作って add する
+  shiftA = gsap.to(fin, { y: function () { return -overD; }, duration: 0.001, ease: "none" });
+  shiftB = gsap.to(grass, { height: function () { return grassH + overD; }, duration: 0.001, ease: "none" });
+  tl.add(shiftA, END_T);
+  tl.add(shiftB, END_T);
   layoutFinal(); // 送りの長さを反映
 
-  // テレビは、最後の画面に着いている間だけ再生する
-  gsap.ticker.add(function () { setFinal(tl.time() >= 0.82); });
+  // 壁は、最後の画面に着いている間だけ再生する(入る: 0.84 / 出る: 0.78。境目で点いたり消えたりしない)
+  gsap.ticker.add(function () { const t = tl.time(); setFinal(show.finalOn ? t >= 0.78 : t >= 0.84); });
 
   ScrollTrigger.addEventListener("refreshInit", layoutFinal); // 画面サイズが変わるたび、再計算の直前に割り付け直す
   if (!st) window.addEventListener("resize", relayoutSoon);
