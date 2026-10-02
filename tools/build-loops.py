@@ -81,13 +81,14 @@ def main():
         if r.returncode != 0 or not os.path.exists(mp4):
             print(f"  失敗: {f}\n{r.stderr.strip()[:300]}")
             continue
-        # 読み込み前に見せる 1 コマ目の画像
-        run(["ffmpeg", "-y", "-loglevel", "error", "-i", mp4, "-frames:v", "1", "-q:v", "5", jpg])
+        # 読み込み前に見せる 1 コマの画像(先頭は白フラッシュや黒のことがあるので、まん中あたりのコマを使う)
+        run(["ffmpeg", "-y", "-loglevel", "error", "-ss", f"{length * 0.55:.3f}", "-i", mp4, "-frames:v", "1", "-q:v", "5", jpg])
         v = int(os.path.getmtime(mp4))
+        pv = int(os.path.getmtime(jpg)) if os.path.exists(jpg) else v
         size = os.path.getsize(mp4)
         total += size
         keep.update({name + ".mp4", name + ".jpg"})
-        clips.append({"src": f"loops/{name}.mp4?v={v}", "poster": f"loops/{name}.jpg?v={v}"})
+        clips.append({"src": f"loops/{name}.mp4?v={v}", "poster": f"loops/{name}.jpg?v={pv}"})
         print(f"  {i:2d}. {f}  →  {name}.mp4  {size / 1024:.0f} KB")
     for f in os.listdir(OUT):
         if f not in keep:

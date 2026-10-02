@@ -403,72 +403,107 @@ p {
   position: absolute;
   z-index: 4;
   left: 50%;
-  bottom: 15vh;
+  bottom: 11vh;
   transform: translateX(-50%);
-  width: min(92vw, 720px);
+  width: min(94vw, 900px);
   text-align: center;
 }
 
-.intro-name {
-  font-family: var(--font-hand);
-  font-size: clamp(30px, 5.4vw, 54px);
+/* 最初の画面の大見出し(袋文字) */
+.intro-copy .hero-title {
+  font-size: clamp(34px, 8.8vw, 84px);
   line-height: 1.1;
-  color: #fff;
-  text-shadow: 2px 2px 0 var(--blue-shadow), 4px 4px 0 rgba(42, 127, 212, 0.35);
+  -webkit-text-stroke: 0.09em var(--title-edge);
+  paint-order: stroke fill;
+  text-shadow: 0.05em 0.06em 0 var(--title-edge);
+}
+
+.intro-copy .hero-title-line {
+  white-space: nowrap;
+}
+
+@supports not (-webkit-text-stroke: 1px #000) {
+  .intro-copy .hero-title {
+    text-shadow:
+      0.04em 0 0 var(--title-edge), -0.04em 0 0 var(--title-edge),
+      0 0.04em 0 var(--title-edge), 0 -0.04em 0 var(--title-edge),
+      0.03em 0.03em 0 var(--title-edge), -0.03em 0.03em 0 var(--title-edge),
+      0.03em -0.03em 0 var(--title-edge), -0.03em -0.03em 0 var(--title-edge),
+      0.07em 0.09em 0 var(--title-edge);
+  }
 }
 
 .intro-apply {
-  margin-top: 14px;
+  margin-top: 16px;
+  touch-action: manipulation;
 }
 
-
-/* 募集内容(スマホ用セクション) */
+/* ==========================================================
+   本文(オープニングのあと): 条件 → 編集の見本 → 応募
+   丘の緑がそのままフッターまで続く
+   ========================================================== */
 .job-section {
-  display: none;
   position: relative;
-  padding: 36px 0 24px;
+  background: #62b52f;
+  padding: 44px 16px 10px;
 }
 
-.job-grid-sp {
-  max-width: 460px;
+.job-band {
+  --g: 6px;
+  width: min(100%, 560px);
   margin: 0 auto;
 }
 
-/* スマホ: 最後の画面は見出しとボタンだけ、カードはその下のセクションへ */
-@media (max-width: 639px) {
+.works-section {
+  display: none;
+  position: relative;
+  background: #62b52f;
+  padding: 30px 16px 26px;
+}
+
+.works-section.has-show {
+  display: block;
+}
+
+.works-inner {
+  max-width: 1180px;
+  margin: 0 auto;
+}
+
+.cta-section {
+  position: relative;
+  background: #62b52f;
+  padding: 26px 16px 72px;
+  text-align: center;
+}
+
+.cta-section .cta-big {
+  padding: 15px 42px;
+  font-size: 22px;
+  box-shadow: 5px 5px 0 var(--ink);
+}
+
+@media (min-width: 960px) and (min-aspect-ratio: 5/4) {
   .job-section {
-    display: none;
+    padding: 56px 32px 12px;
   }
 
-  .job-grid {
-    gap: 10px;
+  .job-band {
+    --g: 8px;
+    width: min(100%, 800px);
   }
 
-  .job-label {
-    font-size: 16px;
-    margin-bottom: 3px;
+  .works-section {
+    padding: 40px max(32px, 5vw) 36px;
   }
 
-  .job-card {
-    padding: 8px 12px;
-    border-radius: 12px;
-    box-shadow: 3px 3px 0 rgba(28, 28, 28, 0.85);
+  .cta-section {
+    padding: 34px 16px 88px;
   }
 
-  .job-card .list li {
-    font-size: 13px;
-    line-height: 1.5;
-    padding-left: 16px;
-  }
-
-  .job-card .list li + li {
-    margin-top: 2px;
-  }
-
-  .job-card .list li::before {
-    width: 7px;
-    height: 7px;
-    top: 0.55em;
+  .cta-section .cta-big {
+    padding: 17px 52px;
+    font-size: 25px;
   }
 }
 
@@ -507,7 +542,6 @@ p {
 }
 
 /* 静的表示(JS 無効・reduced motion 用) */
-.intro.is-static .intro-copy,
 .intro.is-static .scroll-hint,
 .intro.is-static .burst {
   display: none;
@@ -521,18 +555,6 @@ p {
 .intro.is-static .me-closed,
 .intro.is-static .me-lid {
   opacity: 0;
-}
-
-/* JS 有効時: 最終テキストは読み込み直後から隠しておく(一瞬見えるのを防ぐ) */
-html.js .intro-final,
-.intro.is-animated .intro-final {
-  opacity: 0;
-  visibility: hidden;
-}
-
-.intro.is-static .intro-final {
-  opacity: 1;
-  visibility: visible;
 }
 
 /* JS 有効時: 中央ぞろえの transform は GSAP 側が持つ(CSS と二重にならないように) */
@@ -2062,72 +2084,6 @@ body.is-admin textarea {
   --title-edge: #143d82;
 }
 
-.intro-final {
-  /* 余白のものさし: 4 / 8 / 12 / 16 / 24 / 32 / 40 */
-  --pad-t: 16px;
-  --pad-b: max(12px, env(safe-area-inset-bottom));
-  --pad-x: 16px;
-  --gap-cta: 12px;   /* 見出し → ボタン */
-  --gap-board: 12px; /* ボタン → 条件の帯(同じかたまり) */
-  --gap-wall: 34px;  /* 条件の帯 → 壁(別のかたまり。ここに札と停止ボタンが乗る) */
-  --g: 6px;          /* 壁のすき間 = 壁のふちの内側の余白(1 種類だけ) */
-  position: absolute;
-  z-index: 5;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  text-align: center;
-  padding: var(--pad-t) var(--pad-x) var(--pad-b);
-  pointer-events: none;
-}
-
-.intro-final > * {
-  pointer-events: auto;
-}
-
-/* ---- 見出し(袋文字) ---- */
-.intro-final .hero-title {
-  margin-top: auto; /* 余った高さは 見出しの上 / 帯と壁の間 / 一番下 に 3 等分 */
-  font-size: clamp(32px, 9.6vw, 76px);
-  line-height: 1.1;
-  -webkit-text-stroke: 0.09em var(--title-edge);
-  paint-order: stroke fill;
-  text-shadow: 0.05em 0.06em 0 var(--title-edge);
-}
-
-.intro-final .hero-title-line {
-  white-space: nowrap;
-}
-
-@supports not (-webkit-text-stroke: 1px #000) {
-  .intro-final .hero-title {
-    text-shadow:
-      0.04em 0 0 var(--title-edge), -0.04em 0 0 var(--title-edge),
-      0 0.04em 0 var(--title-edge), 0 -0.04em 0 var(--title-edge),
-      0.03em 0.03em 0 var(--title-edge), -0.03em 0.03em 0 var(--title-edge),
-      0.03em -0.03em 0 var(--title-edge), -0.03em -0.03em 0 var(--title-edge),
-      0.07em 0.09em 0 var(--title-edge);
-  }
-}
-
-.intro.is-tallhead .intro-final .hero-title {
-  font-size: clamp(54px, 16.5vw, 68px);
-}
-
-/* ---- ボタン ---- */
-.intro-final .hero-actions {
-  width: auto;
-  margin-top: var(--gap-cta);
-}
-
-.intro-final .hero-actions .btn-lg {
-  padding: 11px 26px;
-  font-size: 18px;
-  touch-action: manipulation;
-}
-
 body.cta-on .site-header .btn-primary:not(.is-disabled) {
   background: #fff;
 }
@@ -2136,14 +2092,13 @@ body.cta-on .site-header .btn-primary:not(.is-disabled) {
    条件の帯(.job-grid)。管理画面が書き換える HTML はそのまま、CSS だけで形を作る
    スマホ: 1 枚の紙に 3 行(ラベル | 中身)。PC: 1 枚の紙に 3 列(ラベルの下に中身)
    ========================================================== */
-.intro-final .job-grid {
+.job-band .job-grid {
   display: grid;
   grid-template-columns: max-content minmax(0, 1fr);
   --lab: 87px; /* ラベルの列の幅(「本数・納期」5 文字ぶん) */
   gap: 0 6px;
-  width: var(--board-w, 100%);
+  width: 100%;
   max-width: 100%;
-  margin-top: var(--gap-board);
   padding: 2px 6px;
   text-align: left;
   background: #fff;
@@ -2152,7 +2107,7 @@ body.cta-on .site-header .btn-primary:not(.is-disabled) {
   box-shadow: 3px 3px 0 var(--ink);
 }
 
-.intro-final .job-item {
+.job-band .job-item {
   display: grid;
   grid-template-columns: subgrid;
   grid-column: 1 / -1;
@@ -2162,22 +2117,22 @@ body.cta-on .site-header .btn-primary:not(.is-disabled) {
 }
 
 @supports not (grid-template-columns: subgrid) {
-  .intro-final .job-grid {
+  .job-band .job-grid {
     display: block;
   }
 
-  .intro-final .job-item {
+  .job-band .job-item {
     grid-template-columns: 5.4em minmax(0, 1fr);
     column-gap: 8px;
   }
 }
 
-.intro-final .job-item + .job-item {
+.job-band .job-item + .job-item {
   border-top: 2px dashed rgba(28, 28, 28, 0.16);
 }
 
 /* ラベル = 黄色いマーカー(見出しの「編集者」・応募ボタンと同じ黄色。押せる形にはしない) */
-.intro-final .job-label {
+.job-band .job-label {
   margin: 0;
   justify-self: start;
   padding: 0 3px;
@@ -2193,7 +2148,7 @@ body.cta-on .site-header .btn-primary:not(.is-disabled) {
   background-size: 100% 100%;
 }
 
-.intro-final .job-card {
+.job-band .job-card {
   display: block;
   flex: none;
   min-width: 0;
@@ -2205,11 +2160,11 @@ body.cta-on .site-header .btn-primary:not(.is-disabled) {
   box-shadow: none;
 }
 
-.intro-final .job-card .list {
+.job-band .job-card .list {
   text-align: left;
 }
 
-.intro-final .job-card .list li {
+.job-band .job-card .list li {
   padding-left: 10px;
   /* 16 文字の行が 1 行で入る、いちばん大きい字にする(13〜16px) */
   font-size: clamp(13px, calc((100vw - 64px - var(--lab)) / 16.2), 16px);
@@ -2220,11 +2175,11 @@ body.cta-on .site-header .btn-primary:not(.is-disabled) {
   text-wrap: pretty;
 }
 
-.intro-final .job-card .list li + li {
+.job-band .job-card .list li + li {
   margin-top: 0;
 }
 
-.intro-final .job-card .list li::before {
+.job-band .job-card .list li::before {
   left: 1px;
   top: 0.56em;
   width: 5px;
@@ -2234,14 +2189,14 @@ body.cta-on .site-header .btn-primary:not(.is-disabled) {
 }
 
 @media (max-width: 389px) {
-  .intro-final .job-grid { --lab: 82px; }
-  .intro-final .job-label { font-size: 15px; }
+  .job-band .job-grid { --lab: 82px; }
+  .job-band .job-label { font-size: 15px; }
 }
 
 @media (max-width: 374px) {
-  .intro-final { --pad-x: 12px; } /* 幅 360px の端末でも条件の字を 14px にするため、左右の余白を 4px ずつ詰める */
-  .intro-final .job-grid { --lab: 69px; }
-  .intro-final .job-label { font-size: 14px; }
+  .job-section { padding-left: 12px; padding-right: 12px; } /* 幅 360px の端末でも条件の字を 14px にするため、左右の余白を 4px ずつ詰める */
+  .job-band .job-grid { --lab: 69px; }
+  .job-band .job-label { font-size: 14px; }
 
   .brand {
     gap: 8px;
@@ -2257,26 +2212,11 @@ body.cta-on .site-header .btn-primary:not(.is-disabled) {
   white-space: nowrap;
 }
 
-/* 背の低いスマホ(ツールバーが出ている iPhone など) */
-@media (max-width: 639px) and (max-height: 720px) {
-  .intro-final {
-    --pad-t: 12px;
-    --gap-cta: 10px;
-    --gap-board: 10px;
-  }
-}
-
-@media (max-width: 639px) and (max-height: 640px) {
-  .intro-final {
-    --gap-cta: 8px;
-  }
-}
-
 @media (min-width: 640px) {
-  .intro-final .job-grid { padding: 4px 14px; column-gap: 12px; }
-  .intro-final .job-item { padding: 8px 0; }
-  .intro-final .job-label { font-size: 18px; }
-  .intro-final .job-card .list li { font-size: 16px; line-height: 1.45; }
+  .job-band .job-grid { padding: 4px 14px; column-gap: 12px; }
+  .job-band .job-item { padding: 8px 0; }
+  .job-band .job-label { font-size: 18px; }
+  .job-band .job-card .list li { font-size: 16px; line-height: 1.45; }
 }
 
 /* ==========================================================
@@ -2284,16 +2224,19 @@ body.cta-on .site-header .btn-primary:not(.is-disabled) {
    白い台紙 1 枚 + 黒ふち 1 本 + 影 1 つ。中のタイルは はだかの映像で、すき間は 1 種類だけ
    ========================================================== */
 .clip-parade {
+  --g: 6px; /* 壁のすき間 = 壁のふちの内側の余白(1 種類だけ) */
   position: relative;
-  display: none;
   width: var(--wall-w, 100%);
   max-width: 100%;
-  margin: auto 0;
-  padding-top: var(--gap-wall);
+  margin: 0 auto;
+  padding-top: 34px; /* 札と停止ボタンが乗るぶん */
 }
 
-.intro.has-show .clip-parade {
-  display: block;
+@media (min-width: 960px) and (min-aspect-ratio: 5/4) {
+  .clip-parade {
+    --g: 8px;
+    padding-top: 46px;
+  }
 }
 
 .wall {
@@ -2438,41 +2381,31 @@ body.cta-on .site-header .btn-primary:not(.is-disabled) {
   background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'%3E%3Cpath fill='%231c1c1c' d='M3 1l10 6-10 6z'/%3E%3C/svg%3E") 56% 50% / 26px 26px no-repeat;
 }
 
-/* ---- 横に広い画面: 条件は 3 列の帯、壁は幅いっぱい ---- */
+/* ---- 横に広い画面 ---- */
 @media (min-width: 960px) and (min-aspect-ratio: 5/4) {
-  .intro-final {
-    --pad-t: 32px;
-    --pad-b: 24px;
-    --pad-x: max(32px, 5vw); /* 壁の左右に丘が見える余白を残す */
-    --gap-cta: 16px;
-    --gap-board: 16px;
-    --gap-wall: 46px;
-    --g: 8px;
+  .intro-copy .hero-title {
+    font-size: clamp(56px, min(6.6vw, 12.5vh), 96px);
   }
 
-  .intro-final .hero-title {
-    font-size: clamp(56px, min(6.6vw, 12.5vh), 104px);
-  }
-
-  .intro-final .hero-actions .btn-lg {
+  .intro-copy .intro-apply {
     padding: 15px 36px;
     font-size: 22px;
     box-shadow: 4px 4px 0 var(--ink);
   }
 
   /* 条件の帯: スマホと同じ「ラベル | 中身」の 3 行。壁より狭い帯にして、上から下へ 1 本の列で読めるようにする */
-  .intro-final .job-grid {
+  .job-band .job-grid {
     gap: 0 16px;
     padding: 6px 22px;
     border-radius: 16px;
     box-shadow: 4px 4px 0 var(--ink);
   }
 
-  .intro-final .job-item {
+  .job-band .job-item {
     padding: 9px 0;
   }
 
-  .intro-final .job-label {
+  .job-band .job-label {
     font-size: 20px;
     line-height: 1.3;
     padding: 0 6px;
@@ -2480,7 +2413,7 @@ body.cta-on .site-header .btn-primary:not(.is-disabled) {
   }
 
   /* 2 つの項目は横に並べて 1 行で読む(入らないときだけ折り返す) */
-  .intro-final .job-card .list {
+  .job-band .job-card .list {
     display: flex;
     flex-wrap: wrap;
     align-items: baseline;
@@ -2488,17 +2421,17 @@ body.cta-on .site-header .btn-primary:not(.is-disabled) {
     row-gap: 2px;
   }
 
-  .intro-final .job-card .list li {
+  .job-band .job-card .list li {
     padding-left: 14px;
     font-size: 16px;
     line-height: 1.5;
   }
 
-  .intro-final .job-card .list li + li {
+  .job-band .job-card .list li + li {
     margin-top: 0;
   }
 
-  .intro-final .job-card .list li::before {
+  .job-band .job-card .list li::before {
     left: 2px;
     top: 0.64em;
   }
@@ -2533,15 +2466,7 @@ body.cta-on .site-header .btn-primary:not(.is-disabled) {
 }
 
 @media (min-width: 960px) and (min-aspect-ratio: 5/4) and (max-height: 759px) {
-  .intro-final {
-    --pad-t: 16px;
-    --pad-b: 16px;
-    --gap-cta: 12px;
-    --gap-board: 14px;
-    --gap-wall: 42px;
-  }
-
-  .intro-final .job-item {
+  .job-band .job-item {
     padding: 7px 0;
   }
 
@@ -2553,40 +2478,27 @@ body.cta-on .site-header .btn-primary:not(.is-disabled) {
 
 /* ノートパソコン(1366x768 の画面でブラウザーを開いたときなど、舞台の高さが 600px 前後) */
 @media (min-width: 960px) and (min-aspect-ratio: 5/4) and (max-height: 690px) {
-  .intro-final {
-    --pad-t: 12px;
-    --pad-b: 12px;
-    --gap-cta: 10px;
-    --gap-board: 12px;
-    --gap-wall: 38px;
-  }
-
-  .intro-final .job-item {
+  .job-band .job-item {
     padding: 5px 0;
   }
 
-  .intro-final .job-label {
+  .job-band .job-label {
     font-size: 19px;
   }
 
-  .intro-final .job-card .list li {
+  .job-band .job-card .list li {
     line-height: 1.45;
   }
 }
 
 @media (min-width: 1440px) and (min-aspect-ratio: 5/4) {
-  .intro-final .job-label {
+  .job-band .job-label {
     font-size: 21px;
   }
 
-  .intro-final .job-card .list li {
+  .job-band .job-card .list li {
     font-size: 17px;
   }
-}
-
-/* ---- ループ動画が 1 本も無いとき: 見出し・ボタン・条件の帯だけをまん中に ---- */
-.intro:not(.has-show) .intro-final .job-grid {
-  margin-bottom: auto;
 }
 
 /* ---- さわれるものの反応 ---- */
@@ -2608,32 +2520,26 @@ body.cta-on .site-header .btn-primary:not(.is-disabled) {
   }
 
   /* 条件のマーカー: 最後の画面に着いたとき 1 回だけ、左から右へ引かれる(そのあとはずっと止まったまま) */
-  .intro.is-animated .intro-final .job-label {
+  .job-band.will-cue .job-label {
     background-size: 0% 100%;
   }
 
-  .intro.is-animated .intro-final .job-grid.is-cued .job-label {
+  .job-band.will-cue .job-grid.is-cued .job-label {
     background-size: 100% 100%;
     transition: background-size 320ms cubic-bezier(0.22, 1, 0.36, 1);
   }
 
-  .intro.is-animated .intro-final .job-grid.is-cued .job-item:nth-child(2) .job-label { transition-delay: 110ms; }
-  .intro.is-animated .intro-final .job-grid.is-cued .job-item:nth-child(3) .job-label { transition-delay: 220ms; }
-}
-
-/* ---- 最後の画面に着いたら、飛び出したものの下ごしらえを片づける ---- */
-.intro.is-final .burst-item {
-  will-change: auto;
-}
-
-.intro.is-final .scroll-hint-line {
-  animation: none;
+  .job-band.will-cue .job-grid.is-cued .job-item:nth-child(2) .job-label { transition-delay: 110ms; }
+  .job-band.will-cue .job-grid.is-cued .job-item:nth-child(3) .job-label { transition-delay: 220ms; }
 }
 
 /* ---- 静的表示(動きを減らす設定・GSAP なし) ---- */
-.intro.is-static .intro-figure,
 .intro.is-static .intro-glow {
   display: none;
+}
+
+.intro.is-static .intro-figure {
+  transform: translateX(-50%);
 }
 
 .intro.is-static .cloud-deco {
@@ -2647,30 +2553,6 @@ body.cta-on .site-header .btn-primary:not(.is-disabled) {
 
   .intro.is-static .cloud-intro-l { top: 8%; }
   .intro.is-static .cloud-intro-r { top: 15%; }
-}
-
-.intro.is-static .grass-strip {
-  min-height: 0;
-  height: var(--grass-h, 26vh);
-  --hill-r: var(--hill-r1, 60%);
-}
-
-/* 静的表示は固定しないので、1 画面に入りきらなければそのまま下へ続く */
-.intro.is-static {
-  height: auto;
-  min-height: calc(100vh - 64px);
-  min-height: calc(100svh - 64px);
-}
-
-.intro.is-static .intro-stage {
-  height: auto;
-  min-height: inherit;
-}
-
-.intro.is-static .intro-final {
-  position: relative;
-  inset: auto;
-  min-height: inherit;
 }
 
 /* ---- 草: 丘は 1 つだけ。その下はフッターまで 1 枚の草原(公認切り抜きを出していても同じ) ---- */
