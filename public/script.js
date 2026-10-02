@@ -67,7 +67,7 @@ function esc(str) {
   const VIDEO_SOFTS = ["premiere", "aftereffects", "ymm4"];
   let lastFocus = null;
 
-  // ---- 使っているソフト(複数選択)----
+  // ---- 使用ソフト(複数選択)----
   function chosenSofts() {
     return Array.prototype.slice
       .call(softsWrap.querySelectorAll("input:checked"))
@@ -376,7 +376,7 @@ function esc(str) {
 
     if (!name) { setError("名前を入れてください。"); nameEl.focus(); return; }
     if (!discord) { setError("Discord のユーザー名を入れてください。"); discordEl.focus(); return; }
-    if (softs.length === 0) { setError("使っているソフトを 1 つ以上選んでください。"); return; }
+    if (softs.length === 0) { setError("使用ソフトを 1 つ以上選んでください。"); return; }
     if (needVideos && videos.length === 0) { setError("自分が編集した動画を 1 本以上追加してください。"); videoEl.focus(); return; }
     if (needThumbs && thumbs.length === 0) { setError("自分で作ったサムネを 1 枚以上アップロードしてください。"); return; }
     if (reason.length < 5) { setError("応募した理由をもう少し書いてください。"); reasonEl.focus(); return; }

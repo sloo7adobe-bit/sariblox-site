@@ -115,7 +115,7 @@ module.exports = async function handler(req, res) {
     }
   }
 
-  // 使っているソフト(複数可)
+  // 使用ソフト(複数可)
   const SOFT_NAMES = { premiere: "Premiere Pro", aftereffects: "After Effects", ymm4: "YMM4", photoshop: "Photoshop" };
   const software = (Array.isArray(body.software) ? body.software : [])
     .map((s) => clean(s, 20))
@@ -240,7 +240,7 @@ module.exports = async function handler(req, res) {
     { name: "Discord", value: "`" + discordRaw + "`", inline: true },
   ];
   if (software.length) {
-    fields.push({ name: "使っているソフト", value: software.map((s) => SOFT_NAMES[s]).join(" / ") });
+    fields.push({ name: "使用ソフト", value: software.map((s) => SOFT_NAMES[s]).join(" / ") });
   }
   if (videos.length) {
     fields.push({ name: `編集した動画(${videos.length}本)`, value: videoLines || "-" });
