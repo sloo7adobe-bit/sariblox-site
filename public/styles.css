@@ -5,22 +5,22 @@
 
 @font-face {
   font-family: "Jiyucho";
-  src: url("font/jiyucho-subset.woff2?v=20261003c") format("woff2");
+  src: url("font/jiyucho-subset.woff2?v=20261003d") format("woff2");
   font-weight: 400;
   font-style: normal;
   font-display: swap;
 }
 
 :root {
-  --sky-top: #33496f;
-  --sky: #2a3c5e;
-  --sky-light: #243450;
-  --grid: rgba(255, 255, 255, 0.06);
+  --sky-top: #dad1b1;
+  --sky: #cfc097;
+  --sky-light: #c9ba8f;
+  --grid: rgba(28, 28, 28, 0.055);
   --ink: #1c1c1c;
   --ink-soft: #3d4a55;
   --muted: #55636f;
   --paper: #ffffff;
-  --yellow: #c1b080;
+  --yellow: #ffd60a;
   --blue-shadow: #2a7fd4;
   --grass: #74c93a;
   --grass-dark: #4fa326;
@@ -171,10 +171,10 @@ p {
   position: sticky;
   top: 0;
   z-index: 50;
-  background: rgba(26, 36, 58, 0.82);
+  background: rgba(223, 213, 177, 0.88);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  border-bottom: 2px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 2px solid rgba(28, 28, 28, 0.08);
 }
 
 .header-inner {
@@ -192,8 +192,7 @@ p {
   font-family: var(--font-hand);
   font-size: 22px;
   line-height: 1;
-  color: #fff;
-  text-shadow: 1.5px 1.5px 0 var(--blue-shadow);
+  color: var(--ink);
 }
 
 .brand-avatar {
@@ -302,7 +301,7 @@ p {
   height: 9%;
   transform: translate(-50%, -50%) scaleX(0.2);
   border-radius: 50%;
-  background: radial-gradient(ellipse at center, #fff 0%, #eee5cb 35%, rgba(193, 176, 128, 0.25) 70%, transparent 100%);
+  background: radial-gradient(ellipse at center, #fff 0%, #fff4b0 35%, rgba(255, 214, 10, 0.25) 70%, transparent 100%);
   filter: blur(8px);
   opacity: 0;
   pointer-events: none;
@@ -453,7 +452,7 @@ p {
   background:
     repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.03) 0 1px, transparent 1px 72px),
     repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.03) 0 1px, transparent 1px 72px),
-    linear-gradient(180deg, #2d4066 0%, #243450 100%);
+    linear-gradient(180deg, #cfc097 0%, #c3b287 100%);
 }
 
 /* 演出の最後の画面: 空白の画面を作らず、条件の帯と応募ボタンがそのまま現れる */
@@ -509,7 +508,7 @@ p {
 .works-section {
   display: none;
   position: relative;
-  background: #243450;
+  background: #c3b287;
   padding: 26px 16px 72px;
 }
 
@@ -525,16 +524,16 @@ p {
 .cta-big {
   padding: 15px 42px;
   font-size: 22px;
-  box-shadow: 5px 5px 0 rgba(0, 0, 0, 0.6), 0 16px 40px rgba(0, 0, 0, 0.45);
+  box-shadow: 5px 5px 0 var(--ink), 0 12px 28px rgba(96, 80, 42, 0.28);
 }
 
 /* 暗い背景の上では、黒い落ち影が見えないので、ふわっとした影で浮かせる */
 .job-band .job-grid {
-  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.6), 0 18px 50px rgba(0, 0, 0, 0.42) !important;
+  box-shadow: 4px 4px 0 var(--ink), 0 12px 30px rgba(96, 80, 42, 0.25) !important;
 }
 
 .wall {
-  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.6), 0 22px 60px rgba(0, 0, 0, 0.45) !important;
+  box-shadow: 4px 4px 0 var(--ink), 0 16px 40px rgba(96, 80, 42, 0.28) !important;
 }
 
 @media (min-width: 960px) and (min-aspect-ratio: 5/4) {
@@ -589,14 +588,13 @@ html.js .intro-final,
   flex-direction: column;
   align-items: center;
   gap: 6px;
-  color: #fff;
-  text-shadow: 1.5px 1.5px 0 rgba(0, 0, 0, 0.4);
+  color: var(--ink);
 }
 
 .scroll-hint-line {
   width: 2px;
   height: 30px;
-  background: #fff;
+  background: var(--ink);
   animation: hint 1.6s ease-in-out infinite;
   transform-origin: top;
   border-radius: 2px;
@@ -1730,7 +1728,7 @@ body.modal-open {
 }
 
 .field-input:focus {
-  box-shadow: 0 0 0 4px rgba(193, 176, 128, 0.6);
+  box-shadow: 0 0 0 4px rgba(255, 214, 10, 0.55);
 }
 
 .field-textarea {
@@ -1911,7 +1909,7 @@ body.modal-open {
 }
 
 .soft-chip.is-on {
-  background: #e9e0c6;
+  background: #fff3bf;
   box-shadow: 3px 3px 0 var(--ink);
   transform: translate(-1px, -1px);
 }
@@ -2332,7 +2330,7 @@ body.cta-on .site-header .btn-primary:not(.is-disabled) {
   aspect-ratio: var(--tile-ar, 16 / 9);
   border-radius: var(--g);
   overflow: hidden;
-  background: #dde6f2; /* 読み込めなかったときも黒い穴にしない */
+  background: #ece6d2; /* 読み込めなかったときも黒い穴にしない */
 }
 
 .tile.is-hero {
@@ -2647,7 +2645,7 @@ body.cta-on .site-header .btn-primary:not(.is-disabled) {
 .site-footer::before {
   top: 0;
   border-radius: 0;
-  background: linear-gradient(180deg, #243450 0%, #1a2740 100%);
+  background: linear-gradient(180deg, #c3b287 0%, #a8956a 100%);
 }
 
 .footer-brand {
@@ -2655,7 +2653,7 @@ body.cta-on .site-header .btn-primary:not(.is-disabled) {
 }
 
 body.has-clips #clips {
-  background: #243450;
+  background: #c3b287;
 }
 
 body.has-clips #clips .section-title,

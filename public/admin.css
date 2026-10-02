@@ -79,7 +79,7 @@
 .app-video-title { display: block; font-size: 12.5px; font-weight: 700; line-height: 1.35; margin-top: 6px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .app-video-author { display: block; font-size: 11px; color: var(--muted); }
 .app-softs { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
-.soft-tag { font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 999px; border: 1.5px solid var(--ink); background: #e9e0c6; }
+.soft-tag { font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 999px; border: 1.5px solid var(--ink); background: #fff3bf; }
 .soft-tag-ps { background: #d7f5dd; }
 .app-thumb { flex: 0 0 200px; scroll-snap-align: start; display: block; }
 .app-thumb img { width: 200px; aspect-ratio: 16/9; object-fit: cover; border-radius: 10px; border: 2px solid var(--ink); display: block; background: #ddd; transition: transform 150ms; }
