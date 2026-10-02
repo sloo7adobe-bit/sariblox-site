@@ -5,16 +5,16 @@
 
 @font-face {
   font-family: "Jiyucho";
-  src: url("font/jiyucho-subset.woff2?v=20261002e") format("woff2");
+  src: url("font/jiyucho-subset.woff2?v=20261003a") format("woff2");
   font-weight: 400;
   font-style: normal;
   font-display: swap;
 }
 
 :root {
-  --sky-top: #3fa9f5;
-  --sky: #6cc4ff;
-  --sky-light: #b9e6ff;
+  --sky-top: #2f8fe0;
+  --sky: #5cb3f3;
+  --sky-light: #a9d9f9;
   --grid: rgba(255, 255, 255, 0.22);
   --ink: #1c1c1c;
   --ink-soft: #3d4a55;
@@ -453,7 +453,7 @@ p {
   background:
     repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.03) 0 1px, transparent 1px 72px),
     repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.03) 0 1px, transparent 1px 72px),
-    linear-gradient(180deg, #1b1e26 0%, #14161c 100%);
+    linear-gradient(180deg, #2d4066 0%, #243450 100%);
 }
 
 /* 演出の最後の画面: 空白の画面を作らず、条件の帯と応募ボタンがそのまま現れる */
@@ -509,7 +509,7 @@ p {
 .works-section {
   display: none;
   position: relative;
-  background: #14161c;
+  background: #243450;
   padding: 26px 16px 72px;
 }
 
@@ -2646,7 +2646,7 @@ body.cta-on .site-header .btn-primary:not(.is-disabled) {
 .site-footer::before {
   top: 0;
   border-radius: 0;
-  background: linear-gradient(180deg, #14161c 0%, #0d0f13 100%);
+  background: linear-gradient(180deg, #243450 0%, #1a2740 100%);
 }
 
 .footer-brand {
@@ -2654,7 +2654,7 @@ body.cta-on .site-header .btn-primary:not(.is-disabled) {
 }
 
 body.has-clips #clips {
-  background: #14161c;
+  background: #243450;
 }
 
 body.has-clips #clips .section-title,
