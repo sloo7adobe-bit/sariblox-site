@@ -5,17 +5,17 @@
 
 @font-face {
   font-family: "Jiyucho";
-  src: url("font/jiyucho-subset.woff2?v=20261003a") format("woff2");
+  src: url("font/jiyucho-subset.woff2?v=20261003b") format("woff2");
   font-weight: 400;
   font-style: normal;
   font-display: swap;
 }
 
 :root {
-  --sky-top: #2f8fe0;
-  --sky: #5cb3f3;
-  --sky-light: #a9d9f9;
-  --grid: rgba(255, 255, 255, 0.22);
+  --sky-top: #33496f;
+  --sky: #2a3c5e;
+  --sky-light: #243450;
+  --grid: rgba(255, 255, 255, 0.06);
   --ink: #1c1c1c;
   --ink-soft: #3d4a55;
   --muted: #55636f;
@@ -171,10 +171,10 @@ p {
   position: sticky;
   top: 0;
   z-index: 50;
-  background: rgba(63, 169, 245, 0.72);
+  background: rgba(26, 36, 58, 0.82);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  border-bottom: 2px solid rgba(28, 28, 28, 0.08);
+  border-bottom: 2px solid rgba(255, 255, 255, 0.08);
 }
 
 .header-inner {
@@ -324,7 +324,7 @@ p {
   pointer-events: none;
   --hill-r: var(--hill-r0, 60%); /* 丘の丸み。JS が px で入れる(無ければ今までどおり 60%) */
   border-radius: 50% 50% 0 0 / var(--hill-r) var(--hill-r) 0 0;
-  background: linear-gradient(180deg, #7fd24a 0%, var(--grass) 35%, #62b52f 100%);
+  background: linear-gradient(180deg, #6fc243 0%, #63b538 35%, #55a52e 100%);
 }
 
 .burst {
@@ -589,13 +589,14 @@ html.js .intro-final,
   flex-direction: column;
   align-items: center;
   gap: 6px;
-  color: var(--ink);
+  color: #fff;
+  text-shadow: 1.5px 1.5px 0 rgba(0, 0, 0, 0.4);
 }
 
 .scroll-hint-line {
   width: 2px;
   height: 30px;
-  background: var(--ink);
+  background: #fff;
   animation: hint 1.6s ease-in-out infinite;
   transform-origin: top;
   border-radius: 2px;
@@ -2331,7 +2332,7 @@ body.cta-on .site-header .btn-primary:not(.is-disabled) {
   aspect-ratio: var(--tile-ar, 16 / 9);
   border-radius: var(--g);
   overflow: hidden;
-  background: var(--sky-light); /* 読み込めなかったときも黒い穴にしない */
+  background: #dde6f2; /* 読み込めなかったときも黒い穴にしない */
 }
 
 .tile.is-hero {
