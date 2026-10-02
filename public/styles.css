@@ -5,7 +5,7 @@
 
 @font-face {
   font-family: "Jiyucho";
-  src: url("font/jiyucho-subset.woff2?v=20261003b") format("woff2");
+  src: url("font/jiyucho-subset.woff2?v=20261003c") format("woff2");
   font-weight: 400;
   font-style: normal;
   font-display: swap;
@@ -20,7 +20,7 @@
   --ink-soft: #3d4a55;
   --muted: #55636f;
   --paper: #ffffff;
-  --yellow: #ffd60a;
+  --yellow: #c1b080;
   --blue-shadow: #2a7fd4;
   --grass: #74c93a;
   --grass-dark: #4fa326;
@@ -302,7 +302,7 @@ p {
   height: 9%;
   transform: translate(-50%, -50%) scaleX(0.2);
   border-radius: 50%;
-  background: radial-gradient(ellipse at center, #fff 0%, #fff4b0 35%, rgba(255, 214, 10, 0.25) 70%, transparent 100%);
+  background: radial-gradient(ellipse at center, #fff 0%, #eee5cb 35%, rgba(193, 176, 128, 0.25) 70%, transparent 100%);
   filter: blur(8px);
   opacity: 0;
   pointer-events: none;
@@ -1730,7 +1730,7 @@ body.modal-open {
 }
 
 .field-input:focus {
-  box-shadow: 0 0 0 4px rgba(255, 214, 10, 0.55);
+  box-shadow: 0 0 0 4px rgba(193, 176, 128, 0.6);
 }
 
 .field-textarea {
@@ -1911,7 +1911,7 @@ body.modal-open {
 }
 
 .soft-chip.is-on {
-  background: #fff3bf;
+  background: #e9e0c6;
   box-shadow: 3px 3px 0 var(--ink);
   transform: translate(-1px, -1px);
 }

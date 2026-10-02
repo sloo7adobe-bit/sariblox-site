@@ -249,7 +249,7 @@ module.exports = async function handler(req, res) {
 
   const main = {
     title: "新しい応募が届きました",
-    color: 0xffd60a,
+    color: 0xc1b080,
     fields,
     timestamp: new Date().toISOString(),
     footer: { text: "sariblox.com 応募フォーム" },
