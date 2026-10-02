@@ -687,8 +687,8 @@ Promise.all([CONTENT_READY, LOOPS_READY]).then(function (res) {
     const padB = parseFloat(cs.paddingBottom) || 0;
     const padX = parseFloat(cs.paddingLeft) || 0;
     const g = parseFloat(cs.getPropertyValue("--g")) || 6;
-    const colW = Math.floor(Math.min(wide ? 1560 : 560, W - padX * 2));
-    const boardMin = wide ? Math.min(colW, 1040) : colW;
+    const colW = Math.floor(Math.min(wide ? 1180 : 560, W - padX * 2));
+    const boardMin = wide ? Math.min(colW, 800) : colW; /* PC の条件の帯は壁より狭い固定幅(まん中の 1 本の列に目を通すだけで読める幅) */
     const opts = {
       g: g, frame: 4, min: wide ? 200 : 128, maxTile: 400, maxHero: 720, maxAr: wide ? 1.9 : 2,
       minCols: N < 2 || wide ? 1 : (W >= 640 || N > 2 ? 2 : 1), maxCols: wide ? 8 : 2, maxRows: !wide && W >= 640 ? 4 : 3,
@@ -708,7 +708,7 @@ Promise.all([CONTENT_READY, LOOPS_READY]).then(function (res) {
         L = N ? chooseGrid(N, colW, availH, opts) : null;
         if (N && !L) break;
         wallW = L ? L.cols * L.s + (L.cols + 1) * g + 4 : 0;
-        boardW = Math.max(wallW, boardMin);
+        boardW = wide ? boardMin : Math.max(wallW, boardMin); /* PC では帯を壁の幅に引き伸ばさない */
         if (boardW === colW) break;
         intro.style.setProperty("--board-w", boardW + "px"); // 壁が細いときは帯も合わせる(細くなりすぎない幅まで)。高さが変わったらもう一度だけ選び直す
         const h2 = board.offsetHeight;
@@ -731,10 +731,10 @@ Promise.all([CONTENT_READY, LOOPS_READY]).then(function (res) {
       // どう詰めても 1 画面に入らない(横向きのスマホ・管理画面の文章が長い など): タイルは見やすい大きさのまま、入りきらないぶんはスクロールの続きで見せる
       L = chooseGrid(N, colW, 1e5, Object.assign({}, opts, { maxRows: H < 420 ? 1 : 2 }));
       r.wallW = L.cols * L.s + (L.cols + 1) * g + 4;
-      r.boardW = Math.max(r.wallW, boardMin);
+      r.boardW = wide ? boardMin : Math.max(r.wallW, boardMin);
     }
 
-    intro.style.setProperty("--board-w", (N ? r.boardW : Math.min(colW, wide ? 1040 : 560)) + "px");
+    intro.style.setProperty("--board-w", (N ? r.boardW : Math.min(colW, wide ? 800 : 560)) + "px");
     if (L) {
       intro.style.setProperty("--wall-w", r.wallW + "px");
       intro.style.setProperty("--cols", L.cols);
