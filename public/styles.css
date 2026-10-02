@@ -5,7 +5,7 @@
 
 @font-face {
   font-family: "Jiyucho";
-  src: url("font/jiyucho-subset.woff2?v=20261002c") format("woff2");
+  src: url("font/jiyucho-subset.woff2?v=20261002d") format("woff2");
   font-weight: 400;
   font-style: normal;
   font-display: swap;
@@ -442,10 +442,26 @@ p {
    本文(オープニングのあと): 条件 → 編集の見本 → 応募
    丘の緑がそのままフッターまで続く
    ========================================================== */
-.job-section {
-  position: relative;
-  background: #62b52f;
-  padding: 58px 16px 0;
+/* 演出の最後の画面: 空白の画面を作らず、条件の帯と応募ボタンがそのまま現れる */
+.intro-final {
+  position: absolute;
+  z-index: 5;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  padding: 72px 16px 40px;
+  pointer-events: none;
+}
+
+.intro-final > * {
+  pointer-events: auto;
+}
+
+.intro-final .hero-actions {
+  margin: 0;
 }
 
 .job-band {
@@ -480,7 +496,7 @@ p {
   display: none;
   position: relative;
   background: #62b52f;
-  padding: 22px 16px 72px;
+  padding: 26px 16px 72px;
 }
 
 .works-section.has-show {
@@ -492,23 +508,15 @@ p {
   margin: 0 auto;
 }
 
-/* 条件と見本の間の、大きな応募ボタン */
-.cta-section {
-  position: relative;
-  background: #62b52f;
-  padding: 30px 16px 34px;
-  text-align: center;
-}
-
-.cta-section .cta-big {
+.cta-big {
   padding: 15px 42px;
   font-size: 22px;
   box-shadow: 5px 5px 0 var(--ink);
 }
 
 @media (min-width: 960px) and (min-aspect-ratio: 5/4) {
-  .job-section {
-    padding: 76px 32px 0;
+  .intro-final {
+    gap: 26px;
   }
 
   .job-band {
@@ -524,17 +532,28 @@ p {
   }
 
   .works-section {
-    padding: 28px max(32px, 5vw) 88px;
+    padding: 34px max(32px, 5vw) 88px;
   }
 
-  .cta-section {
-    padding: 38px 16px 42px;
-  }
-
-  .cta-section .cta-big {
+  .cta-big {
     padding: 17px 52px;
     font-size: 25px;
   }
+}
+
+/* JS 有効時: 最後の画面の中身は読み込み直後から隠しておく(一瞬見えるのを防ぐ) */
+html.js .intro-final,
+.intro.is-animated .intro-final {
+  opacity: 0;
+  visibility: hidden;
+}
+
+.intro.is-static .intro-final {
+  position: relative;
+  inset: auto;
+  opacity: 1;
+  visibility: visible;
+  padding: 44px 16px 56px;
 }
 
 .scroll-hint {
@@ -2224,7 +2243,7 @@ body.cta-on .site-header .btn-primary:not(.is-disabled) {
 }
 
 @media (max-width: 374px) {
-  .job-section { padding-left: 12px; padding-right: 12px; } /* 幅 360px の端末でも条件の字を 14px にするため、左右の余白を 4px ずつ詰める */
+  .intro-final { padding-left: 12px; padding-right: 12px; } /* 幅 360px の端末でも条件の字を 14px にするため、左右の余白を 4px ずつ詰める */
   .job-band .job-grid { --lab: 69px; }
   .job-band .job-label { font-size: 14px; }
 
@@ -2563,13 +2582,24 @@ body.cta-on .site-header .btn-primary:not(.is-disabled) {
   .job-band.will-cue .job-grid.is-cued .job-item:nth-child(3) .job-label { transition-delay: 220ms; }
 }
 
-/* ---- 静的表示(動きを減らす設定・GSAP なし) ---- */
-.intro.is-static .intro-glow {
+/* ---- 静的表示(動きを減らす設定・GSAP なし): 写真と演出は使わず、見出し → 条件 → ボタン を縦に並べる ---- */
+.intro.is-static,
+.intro.is-static .intro-stage {
+  height: auto;
+  min-height: 0;
+}
+
+.intro.is-static .intro-glow,
+.intro.is-static .intro-figure,
+.intro.is-static .grass-strip {
   display: none;
 }
 
-.intro.is-static .intro-figure {
-  transform: translateX(-50%);
+.intro.is-static .intro-copy {
+  position: static;
+  transform: none;
+  width: auto;
+  padding: 56px 16px 0;
 }
 
 .intro.is-static .cloud-deco {

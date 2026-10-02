@@ -592,8 +592,11 @@ Promise.all([CONTENT_READY, LOOPS_READY]).then(function (res) {
   const CLIP_TAG = (content && content.clipTag) || "こんな編集がほしい!";
   const DWELL = 4500; // 見本がタイルの数より多いとき: 1 本を最低これだけ見せてから、ループの切れ目で次の見本にパッと替える
   const works = document.getElementById("works");
-  const band = document.querySelector(".job-band");
+  const fin = document.getElementById("intro-final");
+  const band = fin ? fin.querySelector(".job-band") : null;
   const board = band ? band.querySelector(".job-grid") : null;
+  const actionsEl = fin ? fin.querySelector(".hero-actions") : null;
+  const grass = intro && !noIntro ? intro.querySelector(".grass-strip") : null;
   const unit = document.getElementById("clip-parade");
   const wideMQ = window.matchMedia("(min-width: 960px) and (min-aspect-ratio: 5/4)");
   const coarseMQ = window.matchMedia("(pointer: coarse)");
@@ -758,7 +761,7 @@ Promise.all([CONTENT_READY, LOOPS_READY]).then(function (res) {
   //  条件のセクションの下に普通に置くので、高さの制限はない。幅に合わせて列の数とタイルの大きさを選ぶだけ
   let lastSizes = "";
   let tl = null, st = null;
-  const END_T = 0.72; // 演出が終わる時刻(飛び出したものが消えたあとの余韻まで)
+  const END_T = 0.8; // 演出が終わる時刻(条件の帯とボタンが出そろって、読める余韻まで)
 
   function sizesKey() {
     return [unit.parentElement ? unit.parentElement.clientWidth : 0, wideMQ.matches ? 1 : 0, show.clips.length].join("x");
@@ -800,6 +803,8 @@ Promise.all([CONTENT_READY, LOOPS_READY]).then(function (res) {
   function layoutWall() {
     lastSizes = sizesKey();
     const N = show.clips.length;
+    // 演出があるときは、壁のセクションを上へ重ねて、ボタンのすぐ下に壁が来るようにする(間に空の丘を残さない)
+    if (works) works.style.marginTop = animated && N ? -Math.round(window.innerHeight * (wideMQ.matches ? 0.25 : 0.18)) + "px" : "";
     if (!N || !wall || !unit.parentElement) return;
     const wide = wideMQ.matches;
     const g = parseFloat(getComputedStyle(unit).getPropertyValue("--g")) || 6;
@@ -832,25 +837,8 @@ Promise.all([CONTENT_READY, LOOPS_READY]).then(function (res) {
     relayoutTimer = setTimeout(function () { if (sizesKey() !== lastSizes) relayout(); }, 150);
   }
 
-  // 下の大きな「応募する」が見えている間だけ、ヘッダーのボタンを白にする
-  const heroCta = document.querySelector("#apply-cta .js-open-apply");
-  if (heroCta && "IntersectionObserver" in window) {
-    new IntersectionObserver(function (es) {
-      document.body.classList.toggle("cta-on", es[es.length - 1].isIntersecting);
-    }, { rootMargin: "-64px 0px 0px 0px" }).observe(heroCta);
-  }
-
-  // 条件のマーカー: 帯がはじめて見えたとき 1 回だけ、左から右へ引かれる
-  if (band && board && animated && "IntersectionObserver" in window) {
-    band.classList.add("will-cue");
-    const cueIO = new IntersectionObserver(function (es) {
-      if (es[es.length - 1].intersectionRatio >= 0.6) {
-        setTimeout(function () { board.classList.add("is-cued"); }, 150);
-        cueIO.disconnect();
-      }
-    }, { threshold: [0, 0.6, 1] });
-    cueIO.observe(board);
-  }
+  // 条件のマーカー: 最後の画面に着いたとき 1 回だけ、左から右へ引かれる(引く合図は演出側が出す)
+  if (band && animated) band.classList.add("will-cue");
 
   const debugP = qs.get("p");
 
@@ -953,6 +941,9 @@ Promise.all([CONTENT_READY, LOOPS_READY]).then(function (res) {
   gsap.set(inner, { xPercent: -50, yPercent: -50, x: 0, y: 0, scaleX: 0.2, scaleY: 1, autoAlpha: 0 }); // 中央ぞろえは GSAP 側で管理(iPhone でずれるのを防ぐ)
   gsap.set(opened, { opacity: 0, clipPath: "inset(28.5% 0 0 0)" }); // フタが上がるまで中身は隠す
   gsap.set(lid, { opacity: 0 }); // 最初は1枚の写真だけを見せる(フタは動く瞬間に出す)
+  gsap.set(fin, { autoAlpha: 0 });
+  gsap.set(band, { autoAlpha: 0, y: 26, rotation: -1.2 });
+  gsap.set(actionsEl, { autoAlpha: 0, y: 18 });
   gsap.set(items.map(function (i) { return i.el; }), { xPercent: -50, yPercent: -50, x: 0, y: 0, scale: 0, opacity: 0, rotation: 0 });
 
   layoutWall();
@@ -969,7 +960,7 @@ Promise.all([CONTENT_READY, LOOPS_READY]).then(function (res) {
         : {
             trigger: intro,
             start: "top 64px", // 固定ヘッダーの下に貼り付ける(頭が隠れないように)
-            end: function () { return "+=" + Math.round(window.innerHeight * 1.0); }, // 演出が短くなったぶん固定も短く(1 コマあたりのスクロール量は今までと同じ)
+            end: function () { return "+=" + Math.round(window.innerHeight * 1.05); }, // 1 コマあたりのスクロール量は今までと同じ
             pin: true,
             scrub: 0.7,
             anticipatePin: 1,
@@ -1043,15 +1034,32 @@ Promise.all([CONTENT_READY, LOOPS_READY]).then(function (res) {
   tl.to(glow, { autoAlpha: 0, duration: 0.12 }, 0.5);
   tl.set(burst, { autoAlpha: 0 }, 0.62);
 
-  // 0.62-0.72: 消えたあとの余韻(このあと固定が外れて、下の本文(条件 → 見本 → 応募)へ続く)
-  tl.to({}, { duration: 0.1 }, 0.62);
+  // 0.48-0.64: 丘が少し高くなって、最後の画面の土台になる
+  if (grass) {
+    tl.to(grass, { height: function () { return Math.round(stage.clientHeight * 0.42); }, minHeight: 0, duration: 0.16, ease: "power2.inOut" }, 0.48);
+    tl.to(grass, { "--hill-r": function () { return Math.round(Math.min(stage.clientHeight * 0.25, 130)) + "px"; }, duration: 0.16, ease: "power2.inOut" }, 0.48);
+  }
 
-  // 最初の画面の「応募する」: 演出を最後まで再生しながら、条件の帯まで下へスクロールする
+  // 0.60-0.78: 空白の画面は作らない。条件の帯が立て札のように立ち、応募ボタンが続く
+  tl.set(fin, { autoAlpha: 1 }, 0.6);
+  tl.to(band, { autoAlpha: 1, y: 0, rotation: 0, duration: 0.1, ease: "power2.out" }, 0.6);
+  tl.to(actionsEl, { autoAlpha: 1, y: 0, duration: 0.09, ease: "power2.out" }, 0.66);
+  tl.to({}, { duration: 0.05 }, 0.75); // 読める余韻
+
+  // 最後の画面に着いている間: 条件のマーカーを 1 回だけ引く + ヘッダーのボタンを白にする
+  let cued = false;
+  gsap.ticker.add(function () {
+    const t = tl.time();
+    const on = t >= 0.72 && (!st || st.isActive || window.scrollY <= (st ? st.end : 1e9));
+    if (on && !cued && board) { cued = true; setTimeout(function () { board.classList.add("is-cued"); }, 200); }
+    document.body.classList.toggle("cta-on", t >= 0.72 && (!st || st.isActive));
+  });
+
+  // 最初の画面の「応募する」: 演出を最後まで再生しながら、条件の帯が出そろう位置までスクロールする
   function scrollToIntroEnd() {
     if (!st) return;
     const from = window.scrollY;
-    const job = document.getElementById("job");
-    const to = job ? from + job.getBoundingClientRect().top - 72 : st.end;
+    const to = st.start + (st.end - st.start) * (END_T / tl.duration());
     if (to - from <= 0) return;
     const root = document.documentElement;
     const prevBehavior = root.style.scrollBehavior;
