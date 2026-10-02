@@ -1757,6 +1757,108 @@ body.modal-open {
   background: #ffe3e8;
 }
 
+/* 使っているソフト(複数選択) */
+.soft-choices {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.soft-chip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 12px;
+  border: 2px solid var(--ink);
+  border-radius: 12px;
+  background: #fff;
+  cursor: pointer;
+  user-select: none;
+  transition: background 150ms, box-shadow 150ms, transform 150ms;
+}
+
+.soft-chip input {
+  width: 19px;
+  height: 19px;
+  accent-color: var(--ink);
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.soft-chip .soft-name {
+  font-weight: 700;
+  font-size: 14.5px;
+  line-height: 1.25;
+}
+
+.soft-chip .soft-sub {
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+
+.soft-chip.is-on {
+  background: #fff3bf;
+  box-shadow: 3px 3px 0 var(--ink);
+  transform: translate(-1px, -1px);
+}
+
+@media (max-width: 560px) {
+  .soft-choices {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* 作ったサムネ(画像アップロード) */
+.thumb-list {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.thumb-list:empty {
+  display: none;
+}
+
+.thumb-item {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  border: 2px solid var(--ink);
+  border-radius: 12px;
+  overflow: hidden;
+  background: #ddd;
+  animation: cardIn 250ms var(--ease);
+}
+
+.thumb-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.thumb-remove {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid var(--ink);
+  background: #fff;
+  color: var(--ink);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.thumb-remove:hover {
+  background: #ffe3e8;
+}
+
 .hp {
   position: absolute;
   left: -9999px;

@@ -162,7 +162,7 @@
 
       <form id="apply-form" novalidate>
         <h2 class="modal-title" id="apply-form-title">応募フォーム</h2>
-        <p class="modal-lead">4つ入れるだけで送れます。登録やログインはいりません。</p>
+        <p class="modal-lead">さくっと入れるだけで送れます。登録やログインはいりません。</p>
 
         <div class="field">
           <label class="field-label" for="f-name"><span class="field-num">1</span>名前<span class="field-req">必須</span></label>
@@ -176,7 +176,18 @@
         </div>
 
         <div class="field">
-          <label class="field-label" for="f-video"><span class="field-num">3</span>過去に作った作品<span class="field-req">1本以上</span></label>
+          <span class="field-label"><span class="field-num">3</span>使っているソフト<span class="field-req">必須</span></span>
+          <p class="field-help field-help-top">できることを全部選んでください(複数OK)。選んだものに合わせて、下の項目が変わります。</p>
+          <div class="soft-choices" id="f-softs">
+            <label class="soft-chip"><input type="checkbox" value="premiere" /><span class="soft-name en-word">Premiere Pro</span><span class="soft-sub">動画編集</span></label>
+            <label class="soft-chip"><input type="checkbox" value="aftereffects" /><span class="soft-name en-word">After Effects</span><span class="soft-sub">エフェクト・演出</span></label>
+            <label class="soft-chip"><input type="checkbox" value="ymm4" /><span class="soft-name en-word">YMM4</span><span class="soft-sub">ゆっくり動画</span></label>
+            <label class="soft-chip"><input type="checkbox" value="photoshop" /><span class="soft-name en-word">Photoshop</span><span class="soft-sub">サムネ制作</span></label>
+          </div>
+        </div>
+
+        <div class="field" id="field-videos" hidden>
+          <label class="field-label" for="f-video"><span class="field-num">4</span>過去に編集した動画<span class="field-req">1本以上</span></label>
           <div class="video-add">
             <input class="field-input" id="f-video" type="url" placeholder="YouTubeの動画URLを貼り付け" autocomplete="off" inputmode="url" />
             <button type="button" class="btn btn-ghost btn-sm" id="f-video-add">追加</button>
@@ -186,8 +197,17 @@
           <ul class="video-list" id="f-video-list" aria-live="polite"></ul>
         </div>
 
+        <div class="field" id="field-thumbs" hidden>
+          <label class="field-label" for="f-thumb"><span class="field-num">5</span>作ったサムネ<span class="field-req">1枚以上</span></label>
+          <input id="f-thumb" type="file" accept="image/*" multiple class="hp" tabindex="-1" />
+          <button type="button" class="btn btn-ghost" id="f-thumb-add">画像を選ぶ(最大 3 枚)</button>
+          <p class="field-help">自分で作ったサムネ画像をそのままアップロードできます。画像は自動で軽くなるので、大きいままでOKです。</p>
+          <p class="field-error" id="f-thumb-error" hidden></p>
+          <div class="thumb-list" id="f-thumb-list" aria-live="polite"></div>
+        </div>
+
         <div class="field">
-          <label class="field-label" for="f-reason"><span class="field-num">4</span>応募した理由<span class="field-req">必須</span></label>
+          <label class="field-label" for="f-reason"><span class="field-num">6</span>応募した理由<span class="field-req">必須</span></label>
           <p class="field-help field-help-top">どういうスタイルの編集ができるのか、1本だいたいどのくらいで終わるのか、何を意識して作っているのか、普段誰のチャンネルを見ているのか、を書いてください。</p>
           <textarea class="field-input field-textarea" id="f-reason" name="reason" rows="5" maxlength="2000" placeholder="例: テンポ重視のカット編集が得意で、10分の動画なら2日ほどで仕上げます。普段は〇〇のチャンネルをよく見ています。" required></textarea>
         </div>

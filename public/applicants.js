@@ -56,7 +56,8 @@
     return items.filter(function (it) {
       if (filter !== "all" && (it.status || "new") !== filter) return false;
       if (!q) return true;
-      return [it.name, it.discord, it.reason, it.memo].join(" ").toLowerCase().indexOf(q) !== -1;
+      const softNames = (it.software || []).map(function (s) { return SOFT_NAMES[s] || s; }).join(" ");
+      return [it.name, it.discord, it.reason, it.memo, softNames].join(" ").toLowerCase().indexOf(q) !== -1;
     });
   }
 
@@ -67,8 +68,22 @@
     $("list").innerHTML = list.map(card).join("");
   }
 
+  const SOFT_NAMES = { premiere: "Premiere Pro", aftereffects: "After Effects", ymm4: "YMM4", photoshop: "Photoshop" };
+
   function card(it) {
     const st = STATUS[it.status] || STATUS.new;
+    const softs = (it.software || [])
+      .filter(function (s) { return SOFT_NAMES[s]; })
+      .map(function (s) { return '<span class="soft-tag' + (s === "photoshop" ? " soft-tag-ps" : "") + '">' + SOFT_NAMES[s] + "</span>"; })
+      .join("");
+    const thumbs = (it.thumbs || []).map(function (p, i) {
+      const url = "/api/thumb?id=" + encodeURIComponent(it.id) + "&n=" + (i + 1);
+      return (
+        '<a class="app-thumb" href="' + url + '" target="_blank" rel="noopener noreferrer" title="クリックで大きく表示">' +
+        '<img src="' + url + '" alt="応募サムネ ' + (i + 1) + '" loading="lazy" />' +
+        "</a>"
+      );
+    }).join("");
     const vids = (it.videos || []).map(function (v) {
       return (
         '<a class="app-video" href="https://www.youtube.com/watch?v=' + esc(v.id) + '" target="_blank" rel="noopener noreferrer">' +
@@ -94,7 +109,8 @@
       }).join("") +
       "</div>" +
       "</div>" +
-      '<div class="app-videos">' + (vids || '<span class="admin-help">動画なし</span>') + "</div>" +
+      (softs ? '<div class="app-softs">' + softs + "</div>" : "") +
+      '<div class="app-videos">' + (vids || "") + thumbs + (!vids && !thumbs ? '<span class="admin-help">作品なし</span>' : "") + "</div>" +
       '<p class="app-reason">' + esc(it.reason).replace(/\n/g, "<br>") + "</p>" +
       '<div class="app-foot">' +
       '<input class="field-input app-memo" data-memo placeholder="メモ(自分用。保存は自動)" value="' + esc(it.memo || "") + '" />' +

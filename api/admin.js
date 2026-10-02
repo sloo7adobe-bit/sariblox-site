@@ -171,9 +171,8 @@ module.exports = async function handler(req, res) {
       res.status(400).json({ ok: false, error: "id が不正です" });
       return;
     }
-    const { del, list } = require("@vercel/blob");
-    const page = await list({ prefix: "applications/" + id + ".json", limit: 1 });
-    if (page.blobs.length) await del(page.blobs.map((b) => b.url));
+    // 応募データ本体(<id>.json)と、添付のサムネ(<id>/thumb-*.jpg)をまとめて消す
+    await S.deleteByPrefix("applications/" + id);
     res.status(200).json({ ok: true });
     return;
   }

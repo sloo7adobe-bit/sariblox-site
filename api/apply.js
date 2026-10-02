@@ -115,7 +115,36 @@ module.exports = async function handler(req, res) {
     }
   }
 
-  if (!name || !discord || videos.length === 0 || reason.length < 5) {
+  // 使っているソフト(複数可)
+  const SOFT_NAMES = { premiere: "Premiere Pro", aftereffects: "After Effects", ymm4: "YMM4", photoshop: "Photoshop" };
+  const software = (Array.isArray(body.software) ? body.software : [])
+    .map((s) => clean(s, 20))
+    .filter((s, i, a) => SOFT_NAMES[s] && a.indexOf(s) === i)
+    .slice(0, 4);
+  const needVideos = software.some((s) => s !== "photoshop");
+  const needThumbs = software.includes("photoshop");
+
+  // サムネ画像(Photoshop を選んだときだけ、JPEG の dataURL で最大 3 枚)
+  const thumbBuffers = [];
+  if (needThumbs && Array.isArray(body.thumbs)) {
+    for (const t of body.thumbs.slice(0, 3)) {
+      if (typeof t !== "string" || !t.startsWith("data:image/jpeg;base64,")) continue;
+      try {
+        const buf = Buffer.from(t.slice("data:image/jpeg;base64,".length), "base64");
+        // JPEG の先頭バイトか確認し、1.5MB までに制限
+        if (buf.length > 100 && buf.length <= 1.5 * 1024 * 1024 && buf[0] === 0xff && buf[1] === 0xd8) {
+          thumbBuffers.push(buf);
+        }
+      } catch (e) {}
+    }
+  }
+
+  const bad =
+    !name || !discord || reason.length < 5 ||
+    (software.length === 0
+      ? videos.length === 0 // 古い画面から送られた場合はこれまで通り動画だけ見る
+      : (needVideos && videos.length === 0) || (needThumbs && thumbBuffers.length === 0));
+  if (bad) {
     res.status(400).json({ ok: false, error: "入力内容が足りません。" });
     return;
   }
@@ -165,14 +194,32 @@ module.exports = async function handler(req, res) {
 
   // ---- 管理画面用に応募内容を保存(Discord への送信に失敗しても残る) ----
   const appId = Date.now() + "-" + crypto.randomBytes(3).toString("hex");
+  const thumbPaths = [];
   if (hasBlob) {
+    try {
+      // サムネ画像は別ファイルとして保存し、応募データには場所だけ書く
+      for (let i = 0; i < thumbBuffers.length; i++) {
+        const p = "applications/" + appId + "/thumb-" + (i + 1) + ".jpg";
+        await put(p, thumbBuffers[i], {
+          access: "private",
+          contentType: "image/jpeg",
+          addRandomSuffix: false,
+          allowOverwrite: true,
+        });
+        thumbPaths.push(p);
+      }
+    } catch (e) {
+      console.error("save thumbs failed", e);
+    }
     try {
       await S.writeJson("applications/" + appId + ".json", {
         id: appId,
         name,
         discord: discordRaw,
         reason,
+        software,
         videos,
+        thumbs: thumbPaths,
         at: new Date().toISOString(),
         device: /Mobi|Android|iPhone|iPad/i.test(String(req.headers["user-agent"] || "")) ? "スマホ" : "PC",
         status: "new",
@@ -188,21 +235,31 @@ module.exports = async function handler(req, res) {
     .join("\n")
     .slice(0, 1000);
 
-  const embeds = [
-    {
-      title: "新しい応募が届きました",
-      color: 0xffd60a,
-      fields: [
-        { name: "名前", value: name, inline: true },
-        { name: "Discord", value: "`" + discordRaw + "`", inline: true },
-        { name: `編集した動画(${videos.length}本)`, value: videoLines || "-" },
-        { name: "応募した理由", value: reason.slice(0, 1024) },
-      ],
-      thumbnail: { url: `https://i.ytimg.com/vi/${videos[0].id}/mqdefault.jpg` },
-      timestamp: new Date().toISOString(),
-      footer: { text: "sariblox.com 応募フォーム" },
-    },
+  const fields = [
+    { name: "名前", value: name, inline: true },
+    { name: "Discord", value: "`" + discordRaw + "`", inline: true },
   ];
+  if (software.length) {
+    fields.push({ name: "使っているソフト", value: software.map((s) => SOFT_NAMES[s]).join(" / ") });
+  }
+  if (videos.length) {
+    fields.push({ name: `編集した動画(${videos.length}本)`, value: videoLines || "-" });
+  }
+  fields.push({ name: "応募した理由", value: reason.slice(0, 1024) });
+
+  const main = {
+    title: "新しい応募が届きました",
+    color: 0xffd60a,
+    fields,
+    timestamp: new Date().toISOString(),
+    footer: { text: "sariblox.com 応募フォーム" },
+  };
+  if (videos.length) {
+    main.thumbnail = { url: `https://i.ytimg.com/vi/${videos[0].id}/mqdefault.jpg` };
+  } else if (thumbBuffers.length) {
+    main.thumbnail = { url: "attachment://thumb-1.jpg" };
+  }
+  const embeds = [main];
 
   videos.slice(0, 3).forEach((v) => {
     embeds.push({
@@ -213,17 +270,38 @@ module.exports = async function handler(req, res) {
     });
   });
 
-  try {
-    const r = await fetch(webhook, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        username: "応募フォーム",
-        content: `📩 **${name}** さんから応募が届きました(Discord: \`${discordRaw}\`)`,
-        embeds,
-        allowed_mentions: { parse: [] },
-      }),
+  thumbBuffers.forEach((b, i) => {
+    embeds.push({
+      title: `作ったサムネ ${i + 1}`,
+      color: 0x7bc96f,
+      image: { url: `attachment://thumb-${i + 1}.jpg` },
     });
+  });
+
+  const payload = {
+    username: "応募フォーム",
+    content: `📩 **${name}** さんから応募が届きました(Discord: \`${discordRaw}\`)`,
+    embeds,
+    allowed_mentions: { parse: [] },
+  };
+
+  try {
+    let r;
+    if (thumbBuffers.length) {
+      // 画像つきのときは multipart で、画像そのものを Discord に添付する
+      const fd = new FormData();
+      fd.append("payload_json", JSON.stringify(payload));
+      thumbBuffers.forEach((b, i) => {
+        fd.append("files[" + i + "]", new Blob([b], { type: "image/jpeg" }), "thumb-" + (i + 1) + ".jpg");
+      });
+      r = await fetch(webhook, { method: "POST", body: fd });
+    } else {
+      r = await fetch(webhook, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+    }
     if (!r.ok) {
       const t = await r.text();
       console.error("discord webhook failed", r.status, t);

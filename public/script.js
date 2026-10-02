@@ -53,9 +53,45 @@ function esc(str) {
   const reasonEl = document.getElementById("f-reason");
   const formErr = document.getElementById("f-form-error");
   const submitBtn = document.getElementById("f-submit");
+  const softsWrap = document.getElementById("f-softs");
+  const fieldVideos = document.getElementById("field-videos");
+  const fieldThumbs = document.getElementById("field-thumbs");
+  const thumbInput = document.getElementById("f-thumb");
+  const thumbAdd = document.getElementById("f-thumb-add");
+  const thumbErr = document.getElementById("f-thumb-error");
+  const thumbList = document.getElementById("f-thumb-list");
 
   const videos = []; // { id, title }
+  const thumbs = []; // { dataUrl }
+  const THUMB_MAX = 3;
+  const VIDEO_SOFTS = ["premiere", "aftereffects", "ymm4"];
   let lastFocus = null;
+
+  // ---- 使っているソフト(複数選択)----
+  function chosenSofts() {
+    return Array.prototype.slice
+      .call(softsWrap.querySelectorAll("input:checked"))
+      .map(function (i) { return i.value; });
+  }
+  function renumber() {
+    let n = 1;
+    form.querySelectorAll(".field").forEach(function (f) {
+      if (f.hidden) return;
+      const num = f.querySelector(".field-num");
+      if (num) num.textContent = n++;
+    });
+  }
+  function syncSofts() {
+    const chosen = chosenSofts();
+    softsWrap.querySelectorAll(".soft-chip").forEach(function (chip) {
+      chip.classList.toggle("is-on", chip.querySelector("input").checked);
+    });
+    fieldVideos.hidden = !chosen.some(function (s) { return VIDEO_SOFTS.indexOf(s) !== -1; });
+    fieldThumbs.hidden = chosen.indexOf("photoshop") === -1;
+    renumber();
+  }
+  softsWrap.addEventListener("change", syncSofts);
+  syncSofts();
 
   function esc(str) {
     return String(str).replace(/[&<>"']/g, function (c) {
@@ -131,6 +167,8 @@ function esc(str) {
       if (dbg.has("demo")) {
         nameEl.value = "たろう";
         discordEl.value = "taro_edit";
+        softsWrap.querySelector('input[value="premiere"]').checked = true;
+        syncSofts();
         videoEl.value = "https://youtu.be/IbyUW3-2kks";
         addVideo();
         reasonEl.value = "サリーぶろっくすの動画をよく見ています。テンポの良いカット編集が得意です。";
@@ -221,6 +259,104 @@ function esc(str) {
     renderVideos();
   });
 
+  // ---- サムネ画像の追加(端末の中で軽い JPEG に変換してから送る) ----
+  function showThumbError(msg) {
+    thumbErr.textContent = msg;
+    thumbErr.hidden = !msg;
+  }
+
+  function compressImage(file) {
+    return new Promise(function (resolve, reject) {
+      const url = URL.createObjectURL(file);
+      const img = new Image();
+      img.onload = function () {
+        URL.revokeObjectURL(url);
+        try {
+          const MAX_W = 1600;
+          const scale = Math.min(1, MAX_W / (img.naturalWidth || 1));
+          const w = Math.max(1, Math.round(img.naturalWidth * scale));
+          const h = Math.max(1, Math.round(img.naturalHeight * scale));
+          const cv = document.createElement("canvas");
+          cv.width = w;
+          cv.height = h;
+          const ctx = cv.getContext("2d");
+          ctx.fillStyle = "#fff"; // 透過 PNG は白背景にする
+          ctx.fillRect(0, 0, w, h);
+          ctx.drawImage(img, 0, 0, w, h);
+          let q = 0.85;
+          let data = cv.toDataURL("image/jpeg", q);
+          // だいたい 700KB 以下になるまで画質を下げる
+          while (data.length > 700 * 1024 * 4 / 3 && q > 0.45) {
+            q -= 0.1;
+            data = cv.toDataURL("image/jpeg", q);
+          }
+          resolve(data);
+        } catch (err) {
+          reject(err);
+        }
+      };
+      img.onerror = function () {
+        URL.revokeObjectURL(url);
+        reject(new Error("bad image"));
+      };
+      img.src = url;
+    });
+  }
+
+  function renderThumbs() {
+    thumbList.innerHTML = thumbs
+      .map(function (t, i) {
+        return (
+          '<div class="thumb-item">' +
+          '<img src="' + t.dataUrl + '" alt="アップロードしたサムネ ' + (i + 1) + '" />' +
+          '<button type="button" class="thumb-remove" data-tremove="' + i + '" aria-label="この画像を削除">' +
+          '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>' +
+          "</button>" +
+          "</div>"
+        );
+      })
+      .join("");
+    thumbAdd.disabled = thumbs.length >= THUMB_MAX;
+    thumbAdd.textContent = thumbs.length >= THUMB_MAX ? "3 枚までです" : "画像を選ぶ(最大 3 枚)";
+  }
+
+  thumbAdd.addEventListener("click", function () {
+    thumbInput.click();
+  });
+
+  thumbInput.addEventListener("change", function () {
+    const files = Array.prototype.slice.call(thumbInput.files || []);
+    thumbInput.value = "";
+    if (!files.length) return;
+    showThumbError("");
+    const room = THUMB_MAX - thumbs.length;
+    if (files.length > room) {
+      showThumbError("アップロードできるのは 3 枚までです。");
+    }
+    files.slice(0, Math.max(0, room)).forEach(function (file) {
+      if (!/^image\//.test(file.type) && !/\.(png|jpe?g|webp|gif|bmp|heic)$/i.test(file.name)) {
+        showThumbError("画像ファイルを選んでください。");
+        return;
+      }
+      compressImage(file)
+        .then(function (dataUrl) {
+          if (thumbs.length >= THUMB_MAX) return;
+          thumbs.push({ dataUrl: dataUrl });
+          renderThumbs();
+        })
+        .catch(function () {
+          showThumbError("「" + file.name + "」は読み込めませんでした。スクリーンショットや JPEG で試してみてください。");
+        });
+    });
+  });
+
+  thumbList.addEventListener("click", function (e) {
+    const btn = e.target.closest("[data-tremove]");
+    if (!btn) return;
+    thumbs.splice(parseInt(btn.getAttribute("data-tremove"), 10), 1);
+    renderThumbs();
+  });
+
   // ---- 送信 ----
   function setError(msg) {
     formErr.textContent = msg;
@@ -234,9 +370,15 @@ function esc(str) {
     const discord = discordEl.value.trim().replace(/^@/, "");
     const reason = reasonEl.value.trim();
 
+    const softs = chosenSofts();
+    const needVideos = softs.some(function (s) { return VIDEO_SOFTS.indexOf(s) !== -1; });
+    const needThumbs = softs.indexOf("photoshop") !== -1;
+
     if (!name) { setError("名前を入れてください。"); nameEl.focus(); return; }
     if (!discord) { setError("Discord のユーザー名を入れてください。"); discordEl.focus(); return; }
-    if (videos.length === 0) { setError("自分が編集した動画を 1 本以上追加してください。"); videoEl.focus(); return; }
+    if (softs.length === 0) { setError("使っているソフトを 1 つ以上選んでください。"); return; }
+    if (needVideos && videos.length === 0) { setError("自分が編集した動画を 1 本以上追加してください。"); videoEl.focus(); return; }
+    if (needThumbs && thumbs.length === 0) { setError("自分で作ったサムネを 1 枚以上アップロードしてください。"); return; }
     if (reason.length < 5) { setError("応募した理由をもう少し書いてください。"); reasonEl.focus(); return; }
 
     submitBtn.disabled = true;
@@ -250,7 +392,9 @@ function esc(str) {
         name: name,
         discord: discord,
         reason: reason,
-        videos: videos.map(function (v) { return { id: v.id, title: v.title }; }),
+        software: softs,
+        videos: needVideos ? videos.map(function (v) { return { id: v.id, title: v.title }; }) : [],
+        thumbs: needThumbs ? thumbs.map(function (t) { return t.dataUrl; }) : [],
         website: form.elements.website ? form.elements.website.value : "",
       }),
     })
