@@ -1034,11 +1034,9 @@ Promise.all([CONTENT_READY, LOOPS_READY]).then(function (res) {
   tl.to(glow, { autoAlpha: 0, duration: 0.12 }, 0.5);
   tl.set(burst, { autoAlpha: 0 }, 0.62);
 
-  // 0.48-0.64: 丘が少し高くなって、最後の画面の土台になる
-  if (grass) {
-    tl.to(grass, { height: function () { return Math.round(stage.clientHeight * 0.42); }, minHeight: 0, duration: 0.16, ease: "power2.inOut" }, 0.48);
-    tl.to(grass, { "--hill-r": function () { return Math.round(Math.min(stage.clientHeight * 0.25, 130)) + "px"; }, duration: 0.16, ease: "power2.inOut" }, 0.48);
-  }
+  // 0.46-0.62: 明るい空の世界から、編集部屋のような暗い背景に切り替わる
+  const studio = intro.querySelector(".studio-bg");
+  if (studio) tl.to(studio, { autoAlpha: 1, duration: 0.16, ease: "power1.inOut" }, 0.46);
 
   // 0.60-0.78: 空白の画面は作らない。条件の帯が立て札のように立ち、応募ボタンが続く
   tl.set(fin, { autoAlpha: 1 }, 0.6);

@@ -5,7 +5,7 @@
 
 @font-face {
   font-family: "Jiyucho";
-  src: url("font/jiyucho-subset.woff2?v=20261002d") format("woff2");
+  src: url("font/jiyucho-subset.woff2?v=20261002e") format("woff2");
   font-weight: 400;
   font-style: normal;
   font-display: swap;
@@ -442,6 +442,20 @@ p {
    本文(オープニングのあと): 条件 → 編集の見本 → 応募
    丘の緑がそのままフッターまで続く
    ========================================================== */
+/* 編集部屋の暗い背景(演出の後半で、明るい空からこれに切り替わる) */
+.studio-bg {
+  position: absolute;
+  z-index: 3;
+  inset: 0;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  background:
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.03) 0 1px, transparent 1px 72px),
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.03) 0 1px, transparent 1px 72px),
+    linear-gradient(180deg, #1b1e26 0%, #14161c 100%);
+}
+
 /* 演出の最後の画面: 空白の画面を作らず、条件の帯と応募ボタンがそのまま現れる */
 .intro-final {
   position: absolute;
@@ -495,7 +509,7 @@ p {
 .works-section {
   display: none;
   position: relative;
-  background: #62b52f;
+  background: #14161c;
   padding: 26px 16px 72px;
 }
 
@@ -511,7 +525,16 @@ p {
 .cta-big {
   padding: 15px 42px;
   font-size: 22px;
-  box-shadow: 5px 5px 0 var(--ink);
+  box-shadow: 5px 5px 0 rgba(0, 0, 0, 0.6), 0 16px 40px rgba(0, 0, 0, 0.45);
+}
+
+/* 暗い背景の上では、黒い落ち影が見えないので、ふわっとした影で浮かせる */
+.job-band .job-grid {
+  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.6), 0 18px 50px rgba(0, 0, 0, 0.42) !important;
+}
+
+.wall {
+  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.6), 0 22px 60px rgba(0, 0, 0, 0.45) !important;
 }
 
 @media (min-width: 960px) and (min-aspect-ratio: 5/4) {
@@ -2615,7 +2638,7 @@ body.cta-on .site-header .btn-primary:not(.is-disabled) {
   .intro.is-static .cloud-intro-r { top: 15%; }
 }
 
-/* ---- 草: 丘は 1 つだけ。その下はフッターまで 1 枚の草原(公認切り抜きを出していても同じ) ---- */
+/* ---- 編集部屋の暗い背景は、見本の壁からフッターまで 1 枚でつながる ---- */
 .site-footer {
   padding-top: 48px;
 }
@@ -2623,14 +2646,18 @@ body.cta-on .site-header .btn-primary:not(.is-disabled) {
 .site-footer::before {
   top: 0;
   border-radius: 0;
-  background: linear-gradient(180deg, #62b52f 0%, var(--grass-dark) 100%);
+  background: linear-gradient(180deg, #14161c 0%, #0d0f13 100%);
+}
+
+.footer-brand {
+  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.55);
 }
 
 body.has-clips #clips {
-  background: #62b52f;
+  background: #14161c;
 }
 
 body.has-clips #clips .section-title,
 body.has-clips #clips .clip-name {
-  text-shadow: 2px 2px 0 var(--grass-dark);
+  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.55);
 }
