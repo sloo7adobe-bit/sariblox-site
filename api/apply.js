@@ -245,7 +245,7 @@ module.exports = async function handler(req, res) {
   if (videos.length) {
     fields.push({ name: `編集した動画(${videos.length}本)`, value: videoLines || "-" });
   }
-  fields.push({ name: "応募した理由", value: reason.slice(0, 1024) });
+  fields.push({ name: "自己PR", value: reason.slice(0, 1024) });
 
   const main = {
     title: "新しい応募が届きました",

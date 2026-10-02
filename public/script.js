@@ -379,7 +379,7 @@ function esc(str) {
     if (softs.length === 0) { setError("使用ソフトを 1 つ以上選んでください。"); return; }
     if (needVideos && videos.length === 0) { setError("自分が編集した動画を 1 本以上追加してください。"); videoEl.focus(); return; }
     if (needThumbs && thumbs.length === 0) { setError("自分で作ったサムネを 1 枚以上アップロードしてください。"); return; }
-    if (reason.length < 5) { setError("応募した理由をもう少し書いてください。"); reasonEl.focus(); return; }
+    if (reason.length < 5) { setError("自己PRをもう少し書いてください。"); reasonEl.focus(); return; }
 
     submitBtn.disabled = true;
     submitBtn.textContent = "送信中…";
