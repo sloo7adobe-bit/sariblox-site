@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>アイディア | サリーぶろっくす</title>
+  <meta property="og:title" content="アイディア | サリーぶろっくす" />
+  <meta property="og:image" content="https://sariblox.com/avatar.jpg" />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://sariblox.com/idea" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700&family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css?v=20261015b" />
+  <link rel="icon" href="favicon.ico" sizes="any" />
+  <link rel="icon" href="favicon.png" type="image/png" sizes="64x64" />
+  <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+  <meta name="theme-color" content="#cfc097" />
+</head>
+<body class="idea-page">
+  <header class="site-header">
+    <div class="container header-inner">
+      <a href="/" class="brand" aria-label="サリーぶろっくす トップへ">
+        <img class="brand-avatar" src="avatar.jpg" alt="" width="36" height="36" />
+        <span class="brand-text">サリーぶろっくす</span>
+      </a>
+      <a class="btn btn-primary btn-sm" href="/?apply=1">応募する</a>
+    </div>
+  </header>
+
+  <main class="idea-page-main">
+    <section class="idea-section" id="idea">
+      <div class="idea-card">
+        <span class="band-tag">アイディア募集</span>
+        <p class="idea-lead">動画のことじゃなくてもOK。思いついたこと、なんでも送ってください。サリーが全部読みます。</p>
+        <form id="idea-form" novalidate>
+          <textarea class="field-input field-textarea idea-text" id="idea-text" maxlength="500" rows="5" placeholder="思いついたことをそのままどうぞ。なんでもOK!"></textarea>
+          <input type="text" name="website" class="hp" tabindex="-1" autocomplete="off" aria-hidden="true" />
+          <div class="idea-foot">
+            <span class="idea-count" id="idea-count">0 / 500</span>
+            <button type="submit" class="btn btn-primary" id="idea-send">送る</button>
+          </div>
+          <p class="field-error" id="idea-error" hidden></p>
+          <p class="idea-done" id="idea-done" hidden>届きました!ありがとう🙌</p>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <script src="idea.js?v=20261015b" defer></script>
+</body>
+</html>

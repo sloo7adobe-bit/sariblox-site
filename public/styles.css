@@ -5,7 +5,7 @@
 
 @font-face {
   font-family: "Jiyucho";
-  src: url("font/jiyucho-subset.woff2?v=20261015a") format("woff2");
+  src: url("font/jiyucho-subset.woff2?v=20261015b") format("woff2");
   font-weight: 400;
   font-style: normal;
   font-display: swap;
@@ -568,6 +568,27 @@ p {
 
 .idea-done[hidden] {
   display: none;
+}
+
+/* /idea 独立ページ: 明るいベージュの上にカードをまん中に */
+.idea-page .idea-page-main {
+  min-height: calc(100vh - 64px);
+  min-height: calc(100svh - 64px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.idea-page .idea-section {
+  width: 100%;
+  background: none;
+  padding: 44px 16px 72px;
+}
+
+/* フッターのアイディアリンク */
+.footer-idea {
+  text-decoration: none;
+  font-weight: 700;
 }
 
 @media (min-width: 960px) and (min-aspect-ratio: 5/4) {
