@@ -11,7 +11,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700&family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=20261003d" />
+  <link rel="stylesheet" href="styles.css?v=20261015a" />
   <link rel="icon" href="favicon.ico" sizes="any" />
   <link rel="icon" href="favicon.png" type="image/png" sizes="64x64" />
   <link rel="apple-touch-icon" href="apple-touch-icon.png" />
@@ -110,6 +110,24 @@
     <section class="works-section" id="works">
       <div class="works-inner">
         <div class="clip-parade" id="clip-parade" role="group" aria-label="編集サンプル(音は出ません)"></div>
+      </div>
+    </section>
+
+    <!-- アイディア箱: テキストを書いて送るだけ -->
+    <section class="idea-section" id="idea">
+      <div class="idea-card">
+        <span class="band-tag">アイディア募集</span>
+        <p class="idea-lead">「こんな動画見たい!」「こんな企画どう?」を気軽にどうぞ。サリーが全部読みます。</p>
+        <form id="idea-form" novalidate>
+          <textarea class="field-input field-textarea idea-text" id="idea-text" maxlength="500" rows="3" placeholder="例: 視聴者 100 人とかくれんぼしてほしい!"></textarea>
+          <input type="text" name="website" class="hp" tabindex="-1" autocomplete="off" aria-hidden="true" />
+          <div class="idea-foot">
+            <span class="idea-count" id="idea-count">0 / 500</span>
+            <button type="submit" class="btn btn-primary" id="idea-send">送る</button>
+          </div>
+          <p class="field-error" id="idea-error" hidden></p>
+          <p class="idea-done" id="idea-done" hidden>届きました!ありがとう🙌</p>
+        </form>
       </div>
     </section>
 
@@ -228,6 +246,6 @@
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
-  <script src="script.js?v=20261003d" defer></script>
+  <script src="script.js?v=20261015a" defer></script>
 </body>
 </html>

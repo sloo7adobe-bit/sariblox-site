@@ -5,7 +5,7 @@
 
 @font-face {
   font-family: "Jiyucho";
-  src: url("font/jiyucho-subset.woff2?v=20261003d") format("woff2");
+  src: url("font/jiyucho-subset.woff2?v=20261015a") format("woff2");
   font-weight: 400;
   font-style: normal;
   font-display: swap;
@@ -516,6 +516,75 @@ p {
   display: block;
 }
 
+/* アイディア箱 */
+.idea-section {
+  position: relative;
+  background: #c3b287;
+  padding: 30px 16px 78px;
+}
+
+.idea-card {
+  position: relative;
+  width: min(100%, 560px);
+  margin: 0 auto;
+  background: #fff;
+  border: 2px solid var(--ink);
+  border-radius: 16px;
+  box-shadow: 4px 4px 0 var(--ink), 0 12px 30px rgba(96, 80, 42, 0.25);
+  padding: 16px 16px 12px;
+}
+
+.idea-lead {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink-soft);
+  margin-bottom: 10px;
+}
+
+.idea-text {
+  min-height: 84px;
+  font-size: 15px;
+}
+
+.idea-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.idea-count {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.idea-done {
+  margin-top: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #2f8f3f;
+}
+
+.idea-done[hidden] {
+  display: none;
+}
+
+@media (min-width: 960px) and (min-aspect-ratio: 5/4) {
+  .idea-section {
+    padding: 36px 16px 92px;
+  }
+
+  .idea-card {
+    width: min(100%, 640px);
+    padding: 20px 22px 16px;
+  }
+
+  .idea-lead {
+    font-size: 15px;
+  }
+}
+
 .works-inner {
   max-width: 1180px;
   margin: 0 auto;
@@ -554,7 +623,7 @@ p {
   }
 
   .works-section {
-    padding: 34px max(32px, 5vw) 88px;
+    padding: 34px max(32px, 5vw) 48px;
   }
 
   .cta-big {
