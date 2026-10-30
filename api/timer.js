@@ -5,7 +5,7 @@
 const S = require("../lib/store");
 
 const PATH = "timer/state.json";
-const PASS = process.env.TIMER_PASS || ""; // 操作用パスワード(Vercel の環境変数に設定)
+const PASS = String(process.env.TIMER_PASS || "").trim(); // 操作用パスワード(Vercel の環境変数に設定)
 const MAX_MS = 100 * 60 * 60 * 1000; // 最長 100 時間
 
 const DEF = { label: "", shadow: true, running: false, remainMs: 0, endAt: 0 };
