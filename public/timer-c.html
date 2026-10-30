@@ -93,6 +93,19 @@
     .seg { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
     .seg .btn { padding: 11px 2px; font-size: 13px; border-radius: 10px; }
     .seg .btn.on { background: #ffd60a; border-color: #ffd60a; color: #15161a; }
+    .seg2 { grid-template-columns: 1fr 1fr; }
+    .seg2 .btn { font-size: 15px; padding: 13px 4px; }
+    #theme-seg .btn[data-theme="halloween"].on { background: #ff9f1c; border-color: #ff9f1c; }
+    .theme-note { font-size: 12px; color: #9aa3b2; margin: 10px 2px 0; line-height: 1.6; }
+    .color-row.locked { opacity: 0.35; pointer-events: none; }
+    /* プレビューのハロウィン飾り */
+    .preview { position: relative; }
+    .pv-deco { display: none; }
+    .preview.hw .pv-deco { display: block; }
+    .pv-deco span { position: absolute; font-size: 22px; filter: drop-shadow(0 3px 5px rgba(26, 6, 46, 0.6)); }
+    .pv-deco .p1 { left: 10px; top: 8px; }
+    .pv-deco .p2 { right: 12px; top: 6px; font-size: 17px; }
+    .pv-deco .p3 { right: 8px; bottom: 8px; }
     .f-maru { font-family: "M PLUS Rounded 1c", sans-serif; font-weight: 800; }
     .f-gothic { font-family: "Noto Sans JP", sans-serif; font-weight: 900; }
     .f-pop { font-family: "Mochiy Pop One", sans-serif; }
@@ -139,6 +152,7 @@
     <!-- 本体 -->
     <div id="panel" hidden>
       <div class="preview" id="preview">
+        <div class="pv-deco" aria-hidden="true"><span class="p1">🎃</span><span class="p2">🦇</span><span class="p3">👻</span></div>
         <div class="pv-label" id="pv-label"></div>
         <div class="pv-time" id="pv-time">0:00</div>
       </div>
@@ -180,6 +194,15 @@
           <button type="button" class="btn btn-ghost" data-adj="-10000">−10秒</button>
         </div>
         <button type="button" class="btn btn-stop mt" id="reset">リセット(表示を消す)</button>
+      </div>
+
+      <div class="card">
+        <h2>テーマ</h2>
+        <div class="seg seg2" id="theme-seg">
+          <button type="button" class="btn" data-theme="normal">ノーマル</button>
+          <button type="button" class="btn" data-theme="halloween">🎃 ハロウィン</button>
+        </div>
+        <p class="theme-note" id="theme-note" hidden>ハロウィン中は色は専用の配色になります(サイズ・フォント・フチの太さはそのまま効きます)</p>
       </div>
 
       <div class="card">
@@ -331,18 +354,21 @@
         if (!state) return;
         var remain = state.running ? state.endAt - (Date.now() + offset) : state.remainMs;
         var pl = $("pv-label"), pt = $("pv-time");
+        var hw = state.theme === "halloween";
         pl.textContent = state.label || "";
         pt.textContent = format(remain);
         $("preview").classList.toggle("sh", state.shadow !== false);
+        $("preview").classList.toggle("hw", hw);
         $("preview").style.fontFamily = FONT_MAP[state.font] || FONT_MAP.maru;
         pl.style.fontSize = Math.round(22 * (state.labelSize || 100) / 100) + "px";
         pt.style.fontSize = Math.round(54 * (state.timeSize || 100) / 100) + "px";
-        pl.style.color = state.labelColor || "#ffd60a";
-        pt.style.color = state.timeColor || "#ffffff";
+        pl.style.color = hw ? "#aef53c" : (state.labelColor || "#ffd60a");
+        pt.style.color = hw ? "#ff9f1c" : (state.timeColor || "#ffffff");
         var noOutline = state.outline === false;
         var k = (state.outlineW || 100) / 100;
+        var oc = hw ? "#2e0f54" : "#000";
         function oshadow(o) {
-          return o * k + "px 0 #000, " + -o * k + "px 0 #000, 0 " + o * k + "px #000, 0 " + -o * k + "px #000, " + 1.6 * o * k + "px " + 1.8 * o * k + "px #000";
+          return o * k + "px 0 " + oc + ", " + -o * k + "px 0 " + oc + ", 0 " + o * k + "px " + oc + ", 0 " + -o * k + "px " + oc + ", " + 1.6 * o * k + "px " + 1.8 * o * k + "px " + oc;
         }
         pl.style.textShadow = noOutline ? "none" : oshadow(1.5);
         pt.style.textShadow = noOutline ? "none" : oshadow(2.5);
@@ -350,6 +376,11 @@
         document.querySelectorAll("#font-seg .btn").forEach(function (b) {
           b.classList.toggle("on", b.getAttribute("data-font") === (state.font || "maru"));
         });
+        document.querySelectorAll("#theme-seg .btn").forEach(function (b) {
+          b.classList.toggle("on", b.getAttribute("data-theme") === (state.theme || "normal"));
+        });
+        $("theme-note").hidden = !hw;
+        document.querySelector(".color-row").classList.toggle("locked", hw);
       }
 
       // ---- 操作 ----
@@ -382,6 +413,12 @@
           act({ action: "set", font: b.getAttribute("data-font") });
         });
       });
+      document.querySelectorAll("#theme-seg .btn").forEach(function (b) {
+        b.addEventListener("click", function () {
+          if (state) state.theme = b.getAttribute("data-theme");
+          act({ action: "set", theme: b.getAttribute("data-theme") });
+        });
+      });
       function bindSlider(id, outId, key) {
         var el = $(id), out = $(outId);
         el.addEventListener("input", function () { // 動かしている間はプレビューだけ更新
@@ -402,7 +439,7 @@
       $("time-color").addEventListener("change", function () { act({ action: "set", timeColor: $("time-color").value }); });
       $("look-reset").addEventListener("click", function () {
         synced = false; // 返ってきた値でスライダーなども戻す
-        act({ action: "set", font: "maru", labelSize: 100, timeSize: 100, labelColor: "#ffd60a", timeColor: "#ffffff", outline: true, outlineW: 100, shadow: true });
+        act({ action: "set", theme: "normal", font: "maru", labelSize: 100, timeSize: 100, labelColor: "#ffd60a", timeColor: "#ffffff", outline: true, outlineW: 100, shadow: true });
       });
 
       // ---- 定期更新 ----

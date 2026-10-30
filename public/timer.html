@@ -36,17 +36,18 @@
       opacity: 1;
     }
 
-    /* 黒いフチは 8 方向の文字影で作る(OBS の古いブラウザでも確実に出る) */
+    /* フチは 8 方向の文字影で作る(OBS の古いブラウザでも確実に出る)。色はテーマで変わる */
     .label,
     .time {
+      --oc: #000;
       line-height: 1.05;
       white-space: nowrap;
       text-shadow:
-        calc(var(--o) * 1) 0 0 #000, calc(var(--o) * -1) 0 0 #000,
-        0 calc(var(--o) * 1) 0 #000, 0 calc(var(--o) * -1) 0 #000,
-        calc(var(--o) * 0.8) calc(var(--o) * 0.8) 0 #000, calc(var(--o) * -0.8) calc(var(--o) * 0.8) 0 #000,
-        calc(var(--o) * 0.8) calc(var(--o) * -0.8) 0 #000, calc(var(--o) * -0.8) calc(var(--o) * -0.8) 0 #000,
-        calc(var(--o) * 1.6) calc(var(--o) * 1.8) 0 #000;
+        calc(var(--o) * 1) 0 0 var(--oc), calc(var(--o) * -1) 0 0 var(--oc),
+        0 calc(var(--o) * 1) 0 var(--oc), 0 calc(var(--o) * -1) 0 var(--oc),
+        calc(var(--o) * 0.8) calc(var(--o) * 0.8) 0 var(--oc), calc(var(--o) * -0.8) calc(var(--o) * 0.8) 0 var(--oc),
+        calc(var(--o) * 0.8) calc(var(--o) * -0.8) 0 var(--oc), calc(var(--o) * -0.8) calc(var(--o) * -0.8) 0 var(--oc),
+        calc(var(--o) * 1.6) calc(var(--o) * 1.8) 0 var(--oc);
     }
 
     .label {
@@ -77,12 +78,66 @@
     .wrap.has-shadow {
       filter: drop-shadow(0 1vw 2.2vw rgba(0, 0, 0, 0.65));
     }
+
+    /* ==========================================================
+       ハロウィンテーマ: かぼちゃオレンジの数字 + 深い紫のフチ + ライムのラベル
+       まわりに🎃🦇👻がふわふわ浮かぶ(配信の雰囲気用。読みやすさ優先で動きはゆっくり)
+       ========================================================== */
+    .wrap.theme-halloween .label {
+      color: #aef53c;
+      --oc: #2e0f54;
+    }
+
+    .wrap.theme-halloween .time {
+      color: #ff9f1c;
+      --oc: #2e0f54;
+    }
+
+    .wrap.theme-halloween.has-shadow {
+      filter: drop-shadow(0 0.7vw 1.1vw rgba(26, 6, 46, 0.75)) drop-shadow(0 0 1.1vw rgba(154, 74, 255, 0.3));
+    }
+
+    .deco {
+      position: absolute;
+      inset: 0;
+      display: none;
+      pointer-events: none;
+      font-family: "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif;
+    }
+
+    .deco.is-on {
+      display: block;
+    }
+
+    .deco span {
+      position: absolute;
+      line-height: 1;
+      animation: hw-float 3.4s ease-in-out infinite alternate;
+      filter: drop-shadow(0 0.4vw 0.9vw rgba(26, 6, 46, 0.55));
+    }
+
+    .deco .d1 { left: 1.5%;  top: 6%;    font-size: 7vw;   animation-delay: -0.4s; }
+    .deco .d2 { right: 2%;   top: 3%;    font-size: 4.8vw; animation-delay: -1.5s; animation-duration: 2.8s; }
+    .deco .d3 { left: 2.5%;  bottom: 6%; font-size: 4.8vw; animation-delay: -2.2s; animation-duration: 4s; }
+    .deco .d4 { right: 1.5%; bottom: 8%; font-size: 6.5vw; animation-delay: -1s; }
+
+    @keyframes hw-float {
+      from { transform: translateY(-0.7vw) rotate(-7deg); }
+      to   { transform: translateY(0.9vw) rotate(6deg); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .deco span { animation: none; }
+    }
   </style>
 </head>
 <body>
   <div class="wrap" id="wrap">
     <div class="label" id="label"></div>
     <div class="time" id="time"></div>
+  </div>
+  <div class="deco" id="deco" aria-hidden="true">
+    <span class="d1">🎃</span><span class="d2">🦇</span><span class="d3">👻</span><span class="d4">🎃</span>
   </div>
 
   <script>
@@ -132,6 +187,8 @@
         wrap.classList.toggle("is-on", !!show);
         wrap.classList.toggle("has-shadow", state.shadow !== false);
         wrap.classList.toggle("no-outline", state.outline === false);
+        wrap.classList.toggle("theme-halloween", state.theme === "halloween");
+        document.getElementById("deco").classList.toggle("is-on", state.theme === "halloween" && !!show);
         wrap.style.fontFamily = FONT_MAP[state.font] || FONT_MAP.maru;
         wrap.style.setProperty("--ow", (state.outlineW || 100) / 100);
         wrap.style.setProperty("--ls", (state.labelSize || 100) / 100);

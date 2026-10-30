@@ -12,8 +12,10 @@ const DEF = {
   label: "", shadow: true, running: false, remainMs: 0, endAt: 0,
   // 見た目(コントローラーから変えられる)
   font: "maru", labelSize: 100, timeSize: 100, labelColor: "#ffd60a", timeColor: "#ffffff", outline: true, outlineW: 100,
+  theme: "normal",
 };
 const FONTS = ["maru", "gothic", "pop", "dot", "mincho"];
+const THEMES = ["normal", "halloween"];
 
 function clampPct(v, def) {
   v = Math.round(Number(v));
@@ -80,6 +82,7 @@ module.exports = async function handler(req, res) {
     if (body.shadow !== undefined) state.shadow = !!body.shadow;
     if (body.outline !== undefined) state.outline = !!body.outline;
     if (body.font !== undefined) state.font = FONTS.indexOf(String(body.font)) !== -1 ? String(body.font) : state.font || "maru";
+    if (body.theme !== undefined) state.theme = THEMES.indexOf(String(body.theme)) !== -1 ? String(body.theme) : state.theme || "normal";
     if (body.labelSize !== undefined) state.labelSize = clampPct(body.labelSize, state.labelSize || 100);
     if (body.timeSize !== undefined) state.timeSize = clampPct(body.timeSize, state.timeSize || 100);
     if (body.outlineW !== undefined) {
