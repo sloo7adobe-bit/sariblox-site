@@ -36,7 +36,8 @@
       opacity: 1;
     }
 
-    /* フチは 8 方向の文字影で作る(OBS の古いブラウザでも確実に出る)。色はテーマで変わる */
+    /* フチ(8 方向の縁取り)と、右下へずれた斜めの影は別もの。それぞれ ON/OFF と太さを変えられる
+       OBS の古いブラウザでも確実に出るよう、どちらも文字影で作る。色はテーマで変わる */
     .label,
     .time {
       --oc: #000;
@@ -45,13 +46,43 @@
       text-shadow:
         calc(var(--o) * 1) 0 0 var(--oc), calc(var(--o) * -1) 0 0 var(--oc),
         0 calc(var(--o) * 1) 0 var(--oc), 0 calc(var(--o) * -1) 0 var(--oc),
-        calc(var(--o) * 0.8) calc(var(--o) * 0.8) 0 var(--oc), calc(var(--o) * -0.8) calc(var(--o) * 0.8) 0 var(--oc),
-        calc(var(--o) * 0.8) calc(var(--o) * -0.8) 0 var(--oc), calc(var(--o) * -0.8) calc(var(--o) * -0.8) 0 var(--oc),
-        calc(var(--o) * 1.6) calc(var(--o) * 1.8) 0 var(--oc);
+        calc(var(--o) * 0.707) calc(var(--o) * 0.707) 0 var(--oc), calc(var(--o) * -0.707) calc(var(--o) * 0.707) 0 var(--oc),
+        calc(var(--o) * 0.707) calc(var(--o) * -0.707) 0 var(--oc), calc(var(--o) * -0.707) calc(var(--o) * -0.707) 0 var(--oc),
+        calc(var(--o) * 0.924) calc(var(--o) * 0.383) 0 var(--oc), calc(var(--o) * -0.924) calc(var(--o) * 0.383) 0 var(--oc),
+        calc(var(--o) * 0.924) calc(var(--o) * -0.383) 0 var(--oc), calc(var(--o) * -0.924) calc(var(--o) * -0.383) 0 var(--oc),
+        calc(var(--o) * 0.383) calc(var(--o) * 0.924) 0 var(--oc), calc(var(--o) * -0.383) calc(var(--o) * 0.924) 0 var(--oc),
+        calc(var(--o) * 0.383) calc(var(--o) * -0.924) 0 var(--oc), calc(var(--o) * -0.383) calc(var(--o) * -0.924) 0 var(--oc),
+        calc(var(--d) * 1.6) calc(var(--d) * 1.8) 0 var(--oc);
+    }
+
+    /* フチだけ消す(斜めの影は残る) */
+    .wrap.no-outline .label,
+    .wrap.no-outline .time {
+      text-shadow: calc(var(--d) * 1.6) calc(var(--d) * 1.8) 0 var(--oc);
+    }
+
+    /* 斜めの影だけ消す(フチは残る) */
+    .wrap.no-drop .label,
+    .wrap.no-drop .time {
+      text-shadow:
+        calc(var(--o) * 1) 0 0 var(--oc), calc(var(--o) * -1) 0 0 var(--oc),
+        0 calc(var(--o) * 1) 0 var(--oc), 0 calc(var(--o) * -1) 0 var(--oc),
+        calc(var(--o) * 0.707) calc(var(--o) * 0.707) 0 var(--oc), calc(var(--o) * -0.707) calc(var(--o) * 0.707) 0 var(--oc),
+        calc(var(--o) * 0.707) calc(var(--o) * -0.707) 0 var(--oc), calc(var(--o) * -0.707) calc(var(--o) * -0.707) 0 var(--oc),
+        calc(var(--o) * 0.924) calc(var(--o) * 0.383) 0 var(--oc), calc(var(--o) * -0.924) calc(var(--o) * 0.383) 0 var(--oc),
+        calc(var(--o) * 0.924) calc(var(--o) * -0.383) 0 var(--oc), calc(var(--o) * -0.924) calc(var(--o) * -0.383) 0 var(--oc),
+        calc(var(--o) * 0.383) calc(var(--o) * 0.924) 0 var(--oc), calc(var(--o) * -0.383) calc(var(--o) * 0.924) 0 var(--oc),
+        calc(var(--o) * 0.383) calc(var(--o) * -0.924) 0 var(--oc), calc(var(--o) * -0.383) calc(var(--o) * -0.924) 0 var(--oc);
+    }
+
+    .wrap.no-outline.no-drop .label,
+    .wrap.no-outline.no-drop .time {
+      text-shadow: none;
     }
 
     .label {
       --o: calc(0.5vw * var(--ls, 1) * var(--ow, 1));
+      --d: calc(0.5vw * var(--ls, 1) * var(--dw, 1));
       font-size: calc(7.5vw * var(--ls, 1));
       color: var(--lc, #ffd60a);
     }
@@ -62,16 +93,11 @@
 
     .time {
       --o: calc(0.9vw * var(--ts, 1) * var(--ow, 1));
+      --d: calc(0.9vw * var(--ts, 1) * var(--dw, 1));
       font-size: calc(19vw * var(--ts, 1));
       color: var(--tc, #fff);
       font-variant-numeric: tabular-nums;
       letter-spacing: 0.02em;
-    }
-
-    /* フチなし */
-    .wrap.no-outline .label,
-    .wrap.no-outline .time {
-      text-shadow: none;
     }
 
     /* シャドウ(コントローラーから ON / OFF できる) */
@@ -187,10 +213,12 @@
         wrap.classList.toggle("is-on", !!show);
         wrap.classList.toggle("has-shadow", state.shadow !== false);
         wrap.classList.toggle("no-outline", state.outline === false);
+        wrap.classList.toggle("no-drop", state.drop === false);
         wrap.classList.toggle("theme-halloween", state.theme === "halloween");
         document.getElementById("deco").classList.toggle("is-on", state.theme === "halloween" && !!show);
         wrap.style.fontFamily = FONT_MAP[state.font] || FONT_MAP.maru;
         wrap.style.setProperty("--ow", (state.outlineW || 100) / 100);
+        wrap.style.setProperty("--dw", (state.dropW || 100) / 100);
         wrap.style.setProperty("--ls", (state.labelSize || 100) / 100);
         wrap.style.setProperty("--ts", (state.timeSize || 100) / 100);
         wrap.style.setProperty("--lc", state.labelColor || "#ffd60a");

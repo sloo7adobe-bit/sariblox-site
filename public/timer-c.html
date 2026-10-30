@@ -226,9 +226,14 @@
             <output id="time-size-out">100%</output>
           </div>
           <div class="slider-row">
-            <label>黒フチの太さ</label>
+            <label>フチの太さ</label>
             <input type="range" id="outline-w" min="10" max="300" step="5" value="100" />
             <output id="outline-w-out">100%</output>
+          </div>
+          <div class="slider-row">
+            <label>斜め影のずれ</label>
+            <input type="range" id="drop-w" min="10" max="300" step="5" value="100" />
+            <output id="drop-w-out">100%</output>
           </div>
         </div>
         <div class="color-row">
@@ -237,12 +242,17 @@
         </div>
         <div class="toggles">
           <label class="switch">
-            <b>黒フチ</b>
+            <b>フチ(まわりの縁取り)</b>
             <input type="checkbox" id="outline" checked />
             <span class="sw-track"><span class="sw-thumb"></span></span>
           </label>
           <label class="switch">
-            <b>シャドウ(影)</b>
+            <b>斜めの影(うしろのくっきり影)</b>
+            <input type="checkbox" id="drop" checked />
+            <span class="sw-track"><span class="sw-thumb"></span></span>
+          </label>
+          <label class="switch">
+            <b>ふんわりシャドウ(ぼかし)</b>
             <input type="checkbox" id="shadow" checked />
             <span class="sw-track"><span class="sw-thumb"></span></span>
           </label>
@@ -339,6 +349,9 @@
         $("time-size-out").textContent = (state.timeSize || 100) + "%";
         $("outline-w").value = state.outlineW || 100;
         $("outline-w-out").textContent = (state.outlineW || 100) + "%";
+        $("drop").checked = state.drop !== false;
+        $("drop-w").value = state.dropW || 100;
+        $("drop-w-out").textContent = (state.dropW || 100) + "%";
         $("label-color").value = state.labelColor || "#ffd60a";
         $("time-color").value = state.timeColor || "#ffffff";
       }
@@ -364,14 +377,23 @@
         pt.style.fontSize = Math.round(54 * (state.timeSize || 100) / 100) + "px";
         pl.style.color = hw ? "#aef53c" : (state.labelColor || "#ffd60a");
         pt.style.color = hw ? "#ff9f1c" : (state.timeColor || "#ffffff");
-        var noOutline = state.outline === false;
         var k = (state.outlineW || 100) / 100;
+        var kd = (state.dropW || 100) / 100;
         var oc = hw ? "#2e0f54" : "#000";
-        function oshadow(o) {
-          return o * k + "px 0 " + oc + ", " + -o * k + "px 0 " + oc + ", 0 " + o * k + "px " + oc + ", 0 " + -o * k + "px " + oc + ", " + 1.6 * o * k + "px " + 1.8 * o * k + "px " + oc;
+        function shadows(o) {
+          var parts = [];
+          if (state.outline !== false) {
+            var r = o * k, d7 = r * 0.707;
+            parts.push(r + "px 0 " + oc, -r + "px 0 " + oc, "0 " + r + "px " + oc, "0 " + -r + "px " + oc,
+              d7 + "px " + d7 + "px " + oc, -d7 + "px " + d7 + "px " + oc, d7 + "px " + -d7 + "px " + oc, -d7 + "px " + -d7 + "px " + oc);
+          }
+          if (state.drop !== false) {
+            parts.push(1.6 * o * kd + "px " + 1.8 * o * kd + "px " + oc);
+          }
+          return parts.length ? parts.join(", ") : "none";
         }
-        pl.style.textShadow = noOutline ? "none" : oshadow(1.5);
-        pt.style.textShadow = noOutline ? "none" : oshadow(2.5);
+        pl.style.textShadow = shadows(1.5);
+        pt.style.textShadow = shadows(2.5);
         $("dot").classList.toggle("on", !!state.running);
         document.querySelectorAll("#font-seg .btn").forEach(function (b) {
           b.classList.toggle("on", b.getAttribute("data-font") === (state.font || "maru"));
@@ -435,11 +457,13 @@
       bindSlider("label-size", "label-size-out", "labelSize");
       bindSlider("time-size", "time-size-out", "timeSize");
       bindSlider("outline-w", "outline-w-out", "outlineW");
+      bindSlider("drop-w", "drop-w-out", "dropW");
+      $("drop").addEventListener("change", function () { act({ action: "set", drop: $("drop").checked }); });
       $("label-color").addEventListener("change", function () { act({ action: "set", labelColor: $("label-color").value }); });
       $("time-color").addEventListener("change", function () { act({ action: "set", timeColor: $("time-color").value }); });
       $("look-reset").addEventListener("click", function () {
         synced = false; // 返ってきた値でスライダーなども戻す
-        act({ action: "set", theme: "normal", font: "maru", labelSize: 100, timeSize: 100, labelColor: "#ffd60a", timeColor: "#ffffff", outline: true, outlineW: 100, shadow: true });
+        act({ action: "set", theme: "normal", font: "maru", labelSize: 100, timeSize: 100, labelColor: "#ffd60a", timeColor: "#ffffff", outline: true, outlineW: 100, drop: true, dropW: 100, shadow: true });
       });
 
       // ---- 定期更新 ----
