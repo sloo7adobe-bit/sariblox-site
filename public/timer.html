@@ -109,53 +109,18 @@
 
     /* ==========================================================
        ハロウィンテーマ: 炎のグラデーション文字 + 立体の厚み + こげ茶のフチ(timer-hw.css / timer-hw.js)
-       ふんわりシャドウは、下の暗い影 + まわりのオレンジの光。四すみに🎃🦇👻がゆっくり浮かぶ
+       ふんわりシャドウは、紫がかった落ち影だけ
        ========================================================== */
     .wrap.theme-halloween.has-shadow {
       filter: drop-shadow(0 0.6vw 1vw rgba(20, 4, 34, 0.6));
     }
 
-    .deco {
-      position: absolute;
-      inset: 0;
-      display: none;
-      pointer-events: none;
-      font-family: "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif;
-    }
-
-    .deco.is-on {
-      display: block;
-    }
-
-    .deco span {
-      position: absolute;
-      line-height: 1;
-      animation: hw-float 3.4s ease-in-out infinite alternate;
-      filter: drop-shadow(0 0.4vw 0.9vw rgba(26, 6, 46, 0.55));
-    }
-
-    .deco .d1 { left: 1.5%;  top: 6%;    font-size: 7vw;   animation-delay: -0.4s; }
-    .deco .d2 { right: 2%;   top: 3%;    font-size: 4.8vw; animation-delay: -1.5s; animation-duration: 2.8s; }
-    .deco .d3 { left: 2.5%;  bottom: 6%; font-size: 4.8vw; animation-delay: -2.2s; animation-duration: 4s; }
-    .deco .d4 { right: 1.5%; bottom: 8%; font-size: 6.5vw; animation-delay: -1s; }
-
-    @keyframes hw-float {
-      from { transform: translateY(-0.7vw) rotate(-7deg); }
-      to   { transform: translateY(0.9vw) rotate(6deg); }
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-      .deco span { animation: none; }
-    }
   </style>
 </head>
 <body>
   <div class="wrap" id="wrap">
     <div class="label" id="label"></div>
     <div class="time" id="time"></div>
-  </div>
-  <div class="deco" id="deco" aria-hidden="true">
-    <span class="d1">🎃</span><span class="d2">🦇</span><span class="d3">👻</span><span class="d4">🎃</span>
   </div>
 
   <script>
@@ -209,7 +174,6 @@
         wrap.classList.toggle("no-drop", state.drop === false);
         var hw = state.theme === "halloween" && !!window.TimerHW;
         wrap.classList.toggle("theme-halloween", hw);
-        document.getElementById("deco").classList.toggle("is-on", hw && !!show);
         wrap.style.fontFamily = FONT_MAP[state.font] || FONT_MAP.maru;
         var hwShadow = hw
           ? TimerHW.shadow({ k: (state.outlineW || 100) / 100, kd: (state.dropW || 100) / 100, outline: state.outline !== false, drop: state.drop !== false })
