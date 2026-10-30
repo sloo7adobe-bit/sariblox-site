@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>タイマー</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@800&display=swap" rel="stylesheet" />
+  <style>
+    /* OBS のブラウザソースにそのまま入れる前提: 背景は完全に透明 */
+    html, body {
+      margin: 0;
+      height: 100%;
+      background: transparent;
+      overflow: hidden;
+    }
+
+    .wrap {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5vw;
+      font-family: "M PLUS Rounded 1c", "Hiragino Maru Gothic ProN", sans-serif;
+      font-weight: 800;
+      text-align: center;
+      opacity: 0;
+      transition: opacity 250ms linear;
+      user-select: none;
+    }
+
+    .wrap.is-on {
+      opacity: 1;
+    }
+
+    /* 黒いフチは 8 方向の文字影で作る(OBS の古いブラウザでも確実に出る) */
+    .label,
+    .time {
+      line-height: 1.05;
+      white-space: nowrap;
+      text-shadow:
+        calc(var(--o) * 1) 0 0 #000, calc(var(--o) * -1) 0 0 #000,
+        0 calc(var(--o) * 1) 0 #000, 0 calc(var(--o) * -1) 0 #000,
+        calc(var(--o) * 0.8) calc(var(--o) * 0.8) 0 #000, calc(var(--o) * -0.8) calc(var(--o) * 0.8) 0 #000,
+        calc(var(--o) * 0.8) calc(var(--o) * -0.8) 0 #000, calc(var(--o) * -0.8) calc(var(--o) * -0.8) 0 #000,
+        calc(var(--o) * 1.6) calc(var(--o) * 1.8) 0 #000;
+    }
+
+    .label {
+      --o: 0.5vw;
+      font-size: 7.5vw;
+      color: #ffd60a;
+    }
+
+    .label:empty {
+      display: none;
+    }
+
+    .time {
+      --o: 0.9vw;
+      font-size: 19vw;
+      color: #fff;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: 0.02em;
+    }
+
+    /* シャドウ(コントローラーから ON / OFF できる) */
+    .wrap.has-shadow {
+      filter: drop-shadow(0 1vw 2.2vw rgba(0, 0, 0, 0.65));
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap" id="wrap">
+    <div class="label" id="label"></div>
+    <div class="time" id="time"></div>
+  </div>
+
+  <script>
+    (function () {
+      var wrap = document.getElementById("wrap");
+      var labelEl = document.getElementById("label");
+      var timeEl = document.getElementById("time");
+      var state = null;
+      var offset = 0; // サーバー時計とのずれ
+
+      function fetchState() {
+        fetch("/api/timer", { cache: "no-store" })
+          .then(function (r) { return r.json(); })
+          .then(function (j) {
+            if (!j || !j.ok) return;
+            state = j.state || null;
+            if (j.now) offset = j.now - Date.now();
+          })
+          .catch(function () {});
+      }
+
+      function pad(n) { return (n < 10 ? "0" : "") + n; }
+
+      function format(ms) {
+        var t = Math.max(0, Math.ceil(ms / 1000));
+        var h = Math.floor(t / 3600);
+        var m = Math.floor((t % 3600) / 60);
+        var s = t % 60;
+        return h > 0 ? h + ":" + pad(m) + ":" + pad(s) : m + ":" + pad(s);
+      }
+
+      function tick() {
+        if (!state) {
+          wrap.classList.remove("is-on");
+          return;
+        }
+        var remain = state.running ? state.endAt - (Date.now() + offset) : state.remainMs;
+        var show = state.running || state.remainMs > 0;
+        wrap.classList.toggle("is-on", !!show);
+        wrap.classList.toggle("has-shadow", state.shadow !== false);
+        if (!show) return;
+        labelEl.textContent = state.label || "";
+        timeEl.textContent = format(remain);
+      }
+
+      fetchState();
+      setInterval(fetchState, 3000);
+      setInterval(tick, 200);
+    })();
+  </script>
+</body>
+</html>

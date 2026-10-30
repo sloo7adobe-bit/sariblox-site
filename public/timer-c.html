@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>タイマー操作 | サリーぶろっくす</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <meta name="theme-color" content="#17191f" />
+  <link rel="icon" href="favicon.ico" sizes="any" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&family=M+PLUS+Rounded+1c:wght@800&display=swap" rel="stylesheet" />
+  <style>
+    * { box-sizing: border-box; }
+    html, body { margin: 0; }
+    body {
+      font-family: "Zen Maru Gothic", sans-serif;
+      background: #17191f;
+      color: #fff;
+      min-height: 100vh;
+      padding: 18px 14px 40px;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .box { max-width: 460px; margin: 0 auto; }
+    h1 { font-size: 18px; margin: 0 0 14px; display: flex; align-items: center; gap: 8px; }
+    h1 .dot { width: 10px; height: 10px; border-radius: 50%; background: #555; }
+    h1 .dot.on { background: #4ade66; box-shadow: 0 0 10px #4ade66; }
+
+    /* プレビュー */
+    .preview {
+      background: #000;
+      background-image: linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
+      background-size: 24px 24px;
+      border: 2px solid #3a3f4a;
+      border-radius: 14px;
+      padding: 16px 10px 18px;
+      text-align: center;
+      margin-bottom: 16px;
+      font-family: "M PLUS Rounded 1c", sans-serif;
+      font-weight: 800;
+      overflow: hidden;
+      white-space: nowrap;
+    }
+    .pv-label { color: #ffd60a; font-size: 22px; min-height: 26px;
+      text-shadow: 1.5px 0 #000, -1.5px 0 #000, 0 1.5px #000, 0 -1.5px #000, 2px 2.5px #000; }
+    .pv-time { color: #fff; font-size: 54px; line-height: 1.1; font-variant-numeric: tabular-nums;
+      text-shadow: 2.5px 0 #000, -2.5px 0 #000, 0 2.5px #000, 0 -2.5px #000, 4px 4.5px #000; }
+    .preview.sh .pv-label, .preview.sh .pv-time { filter: drop-shadow(0 6px 10px rgba(0,0,0,0.9)); }
+
+    .card { background: #22252d; border: 1px solid #3a3f4a; border-radius: 14px; padding: 14px; margin-bottom: 14px; }
+    .card h2 { font-size: 13px; color: #9aa3b2; margin: 0 0 10px; font-weight: 700; letter-spacing: 0.08em; }
+
+    input[type="text"], input[type="password"], input[type="number"] {
+      width: 100%; font: inherit; font-size: 16px; color: #fff;
+      background: #17191f; border: 2px solid #3a3f4a; border-radius: 10px;
+      padding: 12px; outline: none;
+    }
+    input:focus { border-color: #ffd60a; }
+    input[type="number"] { text-align: center; -moz-appearance: textfield; }
+    input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+
+    .btn {
+      font: inherit; font-weight: 700; font-size: 16px; color: #fff;
+      background: #2e3340; border: 2px solid #474e5e; border-radius: 12px;
+      padding: 13px 10px; cursor: pointer; width: 100%;
+      touch-action: manipulation; transition: transform 80ms, background 120ms;
+    }
+    .btn:active { transform: scale(0.97); }
+    .btn-main { background: #ffd60a; border-color: #ffd60a; color: #15161a; }
+    .btn-stop { background: #ff5c6c; border-color: #ff5c6c; color: #15161a; }
+    .btn-ghost { background: transparent; }
+    .btn:disabled { opacity: 0.4; }
+
+    .row { display: flex; gap: 8px; }
+    .row > * { flex: 1; }
+    .grid4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .mt { margin-top: 10px; }
+
+    .hms { display: grid; grid-template-columns: 1fr auto 1fr auto 1fr auto; gap: 6px; align-items: center; }
+    .hms span { color: #9aa3b2; font-size: 14px; }
+
+    /* スイッチ */
+    .switch { display: flex; align-items: center; justify-content: space-between; cursor: pointer; }
+    .switch b { font-size: 15px; }
+    .switch input { position: absolute; opacity: 0; }
+    .sw-track { width: 56px; height: 32px; border-radius: 999px; background: #474e5e; position: relative; transition: background 150ms; flex-shrink: 0; }
+    .sw-thumb { position: absolute; top: 3px; left: 3px; width: 26px; height: 26px; border-radius: 50%; background: #fff; transition: transform 150ms; }
+    .switch input:checked + .sw-track { background: #ffd60a; }
+    .switch input:checked + .sw-track .sw-thumb { transform: translateX(24px); }
+
+    .msg { font-size: 13px; color: #ff8c98; min-height: 18px; margin: 6px 2px 0; }
+    .hint { font-size: 12px; color: #9aa3b2; margin-top: 10px; line-height: 1.7; }
+    .hint code { background: #17191f; padding: 2px 6px; border-radius: 6px; font-size: 11px; }
+    [hidden] { display: none !important; }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h1><span class="dot" id="dot"></span>タイマー操作</h1>
+
+    <!-- パスワード -->
+    <div class="card" id="gate">
+      <h2>パスワード</h2>
+      <div class="row">
+        <input type="password" id="pass" inputmode="numeric" placeholder="パスワード" autocomplete="off" />
+        <button type="button" class="btn btn-main" id="login" style="flex:0 0 96px">開く</button>
+      </div>
+      <p class="msg" id="gate-msg"></p>
+    </div>
+
+    <!-- 本体 -->
+    <div id="panel" hidden>
+      <div class="preview" id="preview">
+        <div class="pv-label" id="pv-label"></div>
+        <div class="pv-time" id="pv-time">0:00</div>
+      </div>
+
+      <div class="card">
+        <h2>上のテキスト</h2>
+        <div class="row">
+          <input type="text" id="label" maxlength="40" placeholder="例: イベントまで:" />
+          <button type="button" class="btn" id="label-set" style="flex:0 0 96px">反映</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>時間をセット</h2>
+        <div class="hms">
+          <input type="number" id="h" min="0" max="99" value="0" /><span>時間</span>
+          <input type="number" id="m" min="0" max="59" value="10" /><span>分</span>
+          <input type="number" id="s" min="0" max="59" value="0" /><span>秒</span>
+        </div>
+        <button type="button" class="btn mt" id="set-time">この時間にセット</button>
+        <div class="grid4 mt">
+          <button type="button" class="btn btn-ghost" data-preset="300">5分</button>
+          <button type="button" class="btn btn-ghost" data-preset="600">10分</button>
+          <button type="button" class="btn btn-ghost" data-preset="1800">30分</button>
+          <button type="button" class="btn btn-ghost" data-preset="3600">1時間</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>操作</h2>
+        <div class="grid2">
+          <button type="button" class="btn btn-main" id="start">▶ スタート</button>
+          <button type="button" class="btn" id="pause">⏸ 一時停止</button>
+        </div>
+        <div class="grid4 mt">
+          <button type="button" class="btn btn-ghost" data-adj="60000">+1分</button>
+          <button type="button" class="btn btn-ghost" data-adj="-60000">−1分</button>
+          <button type="button" class="btn btn-ghost" data-adj="10000">+10秒</button>
+          <button type="button" class="btn btn-ghost" data-adj="-10000">−10秒</button>
+        </div>
+        <button type="button" class="btn btn-stop mt" id="reset">リセット(表示を消す)</button>
+      </div>
+
+      <div class="card">
+        <label class="switch">
+          <b>シャドウ(影)</b>
+          <input type="checkbox" id="shadow" checked />
+          <span class="sw-track"><span class="sw-thumb"></span></span>
+        </label>
+      </div>
+
+      <p class="msg" id="msg"></p>
+      <p class="hint">
+        OBS には「ブラウザ」ソースで <code>https://sariblox.com/timer</code> を追加(幅 800 × 高さ 300 がおすすめ)。背景は自動で透明になります。
+      </p>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      var LS = "sb_timer_pass";
+      var $ = function (id) { return document.getElementById(id); };
+      var pass = "";
+      var state = null;
+      var offset = 0;
+      var synced = false;
+
+      function api(body) {
+        body.pass = pass;
+        return fetch("/api/timer", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        }).then(function (r) { return r.json().then(function (j) { return { status: r.status, body: j }; }); });
+      }
+
+      function showMsg(t) {
+        $("msg").textContent = t || "";
+        if (t) setTimeout(function () { $("msg").textContent = ""; }, 2500);
+      }
+
+      function apply(res) {
+        if (res.status === 401) { logout(); return; }
+        if (res.body && res.body.ok) {
+          state = res.body.state;
+          if (res.body.now) offset = res.body.now - Date.now();
+          syncInputs();
+        } else {
+          showMsg((res.body && res.body.error) || "失敗しました。");
+        }
+      }
+
+      function act(body) { api(body).then(apply).catch(function () { showMsg("通信に失敗しました。"); }); }
+
+      function logout() {
+        try { localStorage.removeItem(LS); } catch (e) {}
+        pass = "";
+        $("panel").hidden = true;
+        $("gate").hidden = false;
+        $("gate-msg").textContent = "パスワードが違います。";
+      }
+
+      function login(p) {
+        pass = p;
+        api({ action: "auth" }).then(function (res) {
+          if (res.body && res.body.ok) {
+            try { localStorage.setItem(LS, p); } catch (e) {}
+            $("gate").hidden = true;
+            $("panel").hidden = false;
+            state = res.body.state;
+            if (res.body.now) offset = res.body.now - Date.now();
+            synced = false;
+            syncInputs();
+          } else {
+            pass = "";
+            $("gate-msg").textContent = (res.body && res.body.error) || "パスワードが違います。";
+          }
+        }).catch(function () { $("gate-msg").textContent = "通信に失敗しました。"; });
+      }
+
+      function syncInputs() {
+        if (!state || synced) return;
+        synced = true;
+        $("label").value = state.label || "";
+        $("shadow").checked = state.shadow !== false;
+      }
+
+      function pad(n) { return (n < 10 ? "0" : "") + n; }
+      function format(ms) {
+        var t = Math.max(0, Math.ceil(ms / 1000));
+        var h = Math.floor(t / 3600), m = Math.floor((t % 3600) / 60), s = t % 60;
+        return h > 0 ? h + ":" + pad(m) + ":" + pad(s) : m + ":" + pad(s);
+      }
+
+      function tick() {
+        if (!state) return;
+        var remain = state.running ? state.endAt - (Date.now() + offset) : state.remainMs;
+        $("pv-label").textContent = state.label || "";
+        $("pv-time").textContent = format(remain);
+        $("preview").classList.toggle("sh", state.shadow !== false);
+        $("dot").classList.toggle("on", !!state.running);
+      }
+
+      // ---- 操作 ----
+      $("login").addEventListener("click", function () { login($("pass").value.trim()); });
+      $("pass").addEventListener("keydown", function (e) { if (e.key === "Enter") login($("pass").value.trim()); });
+
+      $("label-set").addEventListener("click", function () { act({ action: "set", label: $("label").value }); });
+      $("set-time").addEventListener("click", function () {
+        var ms = ((+$("h").value || 0) * 3600 + (+$("m").value || 0) * 60 + (+$("s").value || 0)) * 1000;
+        act({ action: "set", remainMs: ms });
+      });
+      document.querySelectorAll("[data-preset]").forEach(function (b) {
+        b.addEventListener("click", function () {
+          var sec = +b.getAttribute("data-preset");
+          $("h").value = Math.floor(sec / 3600); $("m").value = Math.floor((sec % 3600) / 60); $("s").value = 0;
+          act({ action: "set", remainMs: sec * 1000 });
+        });
+      });
+      $("start").addEventListener("click", function () { act({ action: "start" }); });
+      $("pause").addEventListener("click", function () { act({ action: "pause" }); });
+      $("reset").addEventListener("click", function () { act({ action: "reset" }); });
+      document.querySelectorAll("[data-adj]").forEach(function (b) {
+        b.addEventListener("click", function () { act({ action: "adjust", deltaMs: +b.getAttribute("data-adj") }); });
+      });
+      $("shadow").addEventListener("change", function () { act({ action: "set", shadow: $("shadow").checked }); });
+
+      // ---- 定期更新 ----
+      setInterval(function () {
+        if (!pass || $("panel").hidden) return;
+        fetch("/api/timer", { cache: "no-store" }).then(function (r) { return r.json(); }).then(function (j) {
+          if (j && j.ok) { state = j.state; if (j.now) offset = j.now - Date.now(); }
+        }).catch(function () {});
+      }, 2500);
+      setInterval(tick, 200);
+
+      // 保存済みパスワードで自動ログイン
+      var saved = "";
+      try { saved = localStorage.getItem(LS) || ""; } catch (e) {}
+      if (saved) login(saved);
+    })();
+  </script>
+</body>
+</html>
