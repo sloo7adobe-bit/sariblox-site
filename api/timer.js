@@ -8,7 +8,23 @@ const PATH = "timer/state.json";
 const PASS = String(process.env.TIMER_PASS || "").trim(); // 操作用パスワード(Vercel の環境変数に設定)
 const MAX_MS = 100 * 60 * 60 * 1000; // 最長 100 時間
 
-const DEF = { label: "", shadow: true, running: false, remainMs: 0, endAt: 0 };
+const DEF = {
+  label: "", shadow: true, running: false, remainMs: 0, endAt: 0,
+  // 見た目(コントローラーから変えられる)
+  font: "maru", labelSize: 100, timeSize: 100, labelColor: "#ffd60a", timeColor: "#ffffff", outline: true,
+};
+const FONTS = ["maru", "gothic", "pop", "dot", "mincho"];
+
+function clampPct(v, def) {
+  v = Math.round(Number(v));
+  if (!isFinite(v)) return def;
+  return Math.max(30, Math.min(300, v));
+}
+
+function color(v, def) {
+  v = String(v || "");
+  return /^#[0-9a-fA-F]{6}$/.test(v) ? v.toLowerCase() : def;
+}
 
 function clean(str, max) {
   return String(str == null ? "" : str)
@@ -26,7 +42,7 @@ module.exports = async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");
 
   if (req.method === "GET") {
-    const state = await S.readJson(PATH, DEF);
+    const state = Object.assign({}, DEF, await S.readJson(PATH, DEF)); // 古い保存データに新しい項目が無くても既定値で埋める
     res.status(200).json({ ok: true, state, now: Date.now() });
     return;
   }
@@ -50,7 +66,7 @@ module.exports = async function handler(req, res) {
     return;
   }
 
-  const state = await S.readJson(PATH, DEF);
+  const state = Object.assign({}, DEF, await S.readJson(PATH, DEF)); // 古い保存データに新しい項目が無くても既定値で埋める
   const action = String(body.action || "");
   const now = Date.now();
 
@@ -62,6 +78,12 @@ module.exports = async function handler(req, res) {
   if (action === "set") {
     if (body.label !== undefined) state.label = clean(body.label, 40);
     if (body.shadow !== undefined) state.shadow = !!body.shadow;
+    if (body.outline !== undefined) state.outline = !!body.outline;
+    if (body.font !== undefined) state.font = FONTS.indexOf(String(body.font)) !== -1 ? String(body.font) : state.font || "maru";
+    if (body.labelSize !== undefined) state.labelSize = clampPct(body.labelSize, state.labelSize || 100);
+    if (body.timeSize !== undefined) state.timeSize = clampPct(body.timeSize, state.timeSize || 100);
+    if (body.labelColor !== undefined) state.labelColor = color(body.labelColor, state.labelColor || "#ffd60a");
+    if (body.timeColor !== undefined) state.timeColor = color(body.timeColor, state.timeColor || "#ffffff");
     if (body.remainMs !== undefined) {
       state.remainMs = clampMs(body.remainMs);
       if (state.running) state.endAt = now + state.remainMs; // 動いている最中のセットは、そこから数え直す

@@ -9,7 +9,7 @@
   <link rel="icon" href="favicon.ico" sizes="any" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&family=M+PLUS+Rounded+1c:wght@800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&family=M+PLUS+Rounded+1c:wght@800&family=Noto+Sans+JP:wght@900&family=Mochiy+Pop+One&family=DotGothic16&family=Shippori+Mincho+B1:wght@800&display=swap" rel="stylesheet" />
   <style>
     * { box-sizing: border-box; }
     html, body { margin: 0; }
@@ -89,6 +89,33 @@
     .switch input:checked + .sw-track { background: #ffd60a; }
     .switch input:checked + .sw-track .sw-thumb { transform: translateX(24px); }
 
+    /* 見た目の設定 */
+    .seg { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+    .seg .btn { padding: 11px 2px; font-size: 13px; border-radius: 10px; }
+    .seg .btn.on { background: #ffd60a; border-color: #ffd60a; color: #15161a; }
+    .f-maru { font-family: "M PLUS Rounded 1c", sans-serif; font-weight: 800; }
+    .f-gothic { font-family: "Noto Sans JP", sans-serif; font-weight: 900; }
+    .f-pop { font-family: "Mochiy Pop One", sans-serif; }
+    .f-dot { font-family: "DotGothic16", monospace; }
+    .f-mincho { font-family: "Shippori Mincho B1", serif; font-weight: 800; }
+
+    .slider-row { display: grid; grid-template-columns: 86px 1fr 52px; gap: 10px; align-items: center; margin-top: 10px; }
+    .slider-row:first-of-type { margin-top: 0; }
+    .slider-row label { font-size: 13px; color: #cdd3de; }
+    .slider-row output { font-size: 13px; color: #9aa3b2; text-align: right; font-variant-numeric: tabular-nums; }
+    input[type="range"] { -webkit-appearance: none; appearance: none; width: 100%; height: 30px; background: transparent; }
+    input[type="range"]::-webkit-slider-runnable-track { height: 6px; border-radius: 3px; background: #474e5e; }
+    input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 26px; height: 26px; border-radius: 50%; background: #ffd60a; margin-top: -10px; border: none; }
+    input[type="range"]::-moz-range-track { height: 6px; border-radius: 3px; background: #474e5e; }
+    input[type="range"]::-moz-range-thumb { width: 26px; height: 26px; border-radius: 50%; background: #ffd60a; border: none; }
+
+    .color-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+    .color-item { display: flex; align-items: center; gap: 10px; background: #17191f; border: 2px solid #3a3f4a; border-radius: 10px; padding: 8px 10px; }
+    .color-item span { font-size: 13px; color: #cdd3de; }
+    input[type="color"] { width: 40px; height: 32px; padding: 0; border: none; background: none; border-radius: 8px; cursor: pointer; }
+
+    .toggles { display: grid; gap: 12px; margin-top: 14px; }
+
     .msg { font-size: 13px; color: #ff8c98; min-height: 18px; margin: 6px 2px 0; }
     .hint { font-size: 12px; color: #9aa3b2; margin-top: 10px; line-height: 1.7; }
     .hint code { background: #17191f; padding: 2px 6px; border-radius: 6px; font-size: 11px; }
@@ -156,11 +183,43 @@
       </div>
 
       <div class="card">
-        <label class="switch">
-          <b>シャドウ(影)</b>
-          <input type="checkbox" id="shadow" checked />
-          <span class="sw-track"><span class="sw-thumb"></span></span>
-        </label>
+        <h2>見た目</h2>
+        <div class="seg" id="font-seg">
+          <button type="button" class="btn f-maru" data-font="maru">まる</button>
+          <button type="button" class="btn f-gothic" data-font="gothic">ゴシック</button>
+          <button type="button" class="btn f-pop" data-font="pop">ポップ</button>
+          <button type="button" class="btn f-dot" data-font="dot">ドット</button>
+          <button type="button" class="btn f-mincho" data-font="mincho">明朝</button>
+        </div>
+        <div class="mt">
+          <div class="slider-row">
+            <label>上のテキスト</label>
+            <input type="range" id="label-size" min="50" max="250" step="5" value="100" />
+            <output id="label-size-out">100%</output>
+          </div>
+          <div class="slider-row">
+            <label>数字</label>
+            <input type="range" id="time-size" min="50" max="250" step="5" value="100" />
+            <output id="time-size-out">100%</output>
+          </div>
+        </div>
+        <div class="color-row">
+          <label class="color-item"><input type="color" id="label-color" value="#ffd60a" /><span>上のテキストの色</span></label>
+          <label class="color-item"><input type="color" id="time-color" value="#ffffff" /><span>数字の色</span></label>
+        </div>
+        <div class="toggles">
+          <label class="switch">
+            <b>黒フチ</b>
+            <input type="checkbox" id="outline" checked />
+            <span class="sw-track"><span class="sw-thumb"></span></span>
+          </label>
+          <label class="switch">
+            <b>シャドウ(影)</b>
+            <input type="checkbox" id="shadow" checked />
+            <span class="sw-track"><span class="sw-thumb"></span></span>
+          </label>
+        </div>
+        <button type="button" class="btn btn-ghost mt" id="look-reset">見た目を最初に戻す</button>
       </div>
 
       <p class="msg" id="msg"></p>
@@ -232,11 +291,26 @@
         }).catch(function () { $("gate-msg").textContent = "通信に失敗しました。"; });
       }
 
+      var FONT_MAP = {
+        maru: "'M PLUS Rounded 1c', sans-serif",
+        gothic: "'Noto Sans JP', sans-serif",
+        pop: "'Mochiy Pop One', sans-serif",
+        dot: "'DotGothic16', monospace",
+        mincho: "'Shippori Mincho B1', serif",
+      };
+
       function syncInputs() {
         if (!state || synced) return;
         synced = true;
         $("label").value = state.label || "";
         $("shadow").checked = state.shadow !== false;
+        $("outline").checked = state.outline !== false;
+        $("label-size").value = state.labelSize || 100;
+        $("time-size").value = state.timeSize || 100;
+        $("label-size-out").textContent = (state.labelSize || 100) + "%";
+        $("time-size-out").textContent = (state.timeSize || 100) + "%";
+        $("label-color").value = state.labelColor || "#ffd60a";
+        $("time-color").value = state.timeColor || "#ffffff";
       }
 
       function pad(n) { return (n < 10 ? "0" : "") + n; }
@@ -249,10 +323,22 @@
       function tick() {
         if (!state) return;
         var remain = state.running ? state.endAt - (Date.now() + offset) : state.remainMs;
-        $("pv-label").textContent = state.label || "";
-        $("pv-time").textContent = format(remain);
+        var pl = $("pv-label"), pt = $("pv-time");
+        pl.textContent = state.label || "";
+        pt.textContent = format(remain);
         $("preview").classList.toggle("sh", state.shadow !== false);
+        $("preview").style.fontFamily = FONT_MAP[state.font] || FONT_MAP.maru;
+        pl.style.fontSize = Math.round(22 * (state.labelSize || 100) / 100) + "px";
+        pt.style.fontSize = Math.round(54 * (state.timeSize || 100) / 100) + "px";
+        pl.style.color = state.labelColor || "#ffd60a";
+        pt.style.color = state.timeColor || "#ffffff";
+        var noOutline = state.outline === false;
+        pl.style.textShadow = noOutline ? "none" : "";
+        pt.style.textShadow = noOutline ? "none" : "";
         $("dot").classList.toggle("on", !!state.running);
+        document.querySelectorAll("#font-seg .btn").forEach(function (b) {
+          b.classList.toggle("on", b.getAttribute("data-font") === (state.font || "maru"));
+        });
       }
 
       // ---- 操作 ----
@@ -278,6 +364,34 @@
         b.addEventListener("click", function () { act({ action: "adjust", deltaMs: +b.getAttribute("data-adj") }); });
       });
       $("shadow").addEventListener("change", function () { act({ action: "set", shadow: $("shadow").checked }); });
+      $("outline").addEventListener("change", function () { act({ action: "set", outline: $("outline").checked }); });
+      document.querySelectorAll("#font-seg .btn").forEach(function (b) {
+        b.addEventListener("click", function () {
+          if (state) state.font = b.getAttribute("data-font"); // 先に見た目へ反映
+          act({ action: "set", font: b.getAttribute("data-font") });
+        });
+      });
+      function bindSlider(id, outId, key) {
+        var el = $(id), out = $(outId);
+        el.addEventListener("input", function () { // 動かしている間はプレビューだけ更新
+          out.textContent = el.value + "%";
+          if (state) state[key] = +el.value;
+        });
+        el.addEventListener("change", function () { // 指を離したら送信
+          var body = { action: "set" };
+          body[key] = +el.value;
+          act(body);
+        });
+        out.textContent = el.value + "%";
+      }
+      bindSlider("label-size", "label-size-out", "labelSize");
+      bindSlider("time-size", "time-size-out", "timeSize");
+      $("label-color").addEventListener("change", function () { act({ action: "set", labelColor: $("label-color").value }); });
+      $("time-color").addEventListener("change", function () { act({ action: "set", timeColor: $("time-color").value }); });
+      $("look-reset").addEventListener("click", function () {
+        synced = false; // 返ってきた値でスライダーなども戻す
+        act({ action: "set", font: "maru", labelSize: 100, timeSize: 100, labelColor: "#ffd60a", timeColor: "#ffffff", outline: true, shadow: true });
+      });
 
       // ---- 定期更新 ----
       setInterval(function () {

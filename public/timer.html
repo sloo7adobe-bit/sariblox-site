@@ -7,7 +7,7 @@
   <meta name="robots" content="noindex, nofollow" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@800&family=Noto+Sans+JP:wght@900&family=Mochiy+Pop+One&family=DotGothic16&family=Shippori+Mincho+B1:wght@800&display=swap" rel="stylesheet" />
   <style>
     /* OBS のブラウザソースにそのまま入れる前提: 背景は完全に透明 */
     html, body {
@@ -50,9 +50,9 @@
     }
 
     .label {
-      --o: 0.5vw;
-      font-size: 7.5vw;
-      color: #ffd60a;
+      --o: calc(0.5vw * var(--ls, 1));
+      font-size: calc(7.5vw * var(--ls, 1));
+      color: var(--lc, #ffd60a);
     }
 
     .label:empty {
@@ -60,11 +60,17 @@
     }
 
     .time {
-      --o: 0.9vw;
-      font-size: 19vw;
-      color: #fff;
+      --o: calc(0.9vw * var(--ts, 1));
+      font-size: calc(19vw * var(--ts, 1));
+      color: var(--tc, #fff);
       font-variant-numeric: tabular-nums;
       letter-spacing: 0.02em;
+    }
+
+    /* フチなし */
+    .wrap.no-outline .label,
+    .wrap.no-outline .time {
+      text-shadow: none;
     }
 
     /* シャドウ(コントローラーから ON / OFF できる) */
@@ -108,6 +114,14 @@
         return h > 0 ? h + ":" + pad(m) + ":" + pad(s) : m + ":" + pad(s);
       }
 
+      var FONT_MAP = {
+        maru: "'M PLUS Rounded 1c', 'Hiragino Maru Gothic ProN', sans-serif",
+        gothic: "'Noto Sans JP', sans-serif",
+        pop: "'Mochiy Pop One', sans-serif",
+        dot: "'DotGothic16', monospace",
+        mincho: "'Shippori Mincho B1', serif",
+      };
+
       function tick() {
         if (!state) {
           wrap.classList.remove("is-on");
@@ -117,6 +131,12 @@
         var show = state.running || state.remainMs > 0;
         wrap.classList.toggle("is-on", !!show);
         wrap.classList.toggle("has-shadow", state.shadow !== false);
+        wrap.classList.toggle("no-outline", state.outline === false);
+        wrap.style.fontFamily = FONT_MAP[state.font] || FONT_MAP.maru;
+        wrap.style.setProperty("--ls", (state.labelSize || 100) / 100);
+        wrap.style.setProperty("--ts", (state.timeSize || 100) / 100);
+        wrap.style.setProperty("--lc", state.labelColor || "#ffd60a");
+        wrap.style.setProperty("--tc", state.timeColor || "#ffffff");
         if (!show) return;
         labelEl.textContent = state.label || "";
         timeEl.textContent = format(remain);
