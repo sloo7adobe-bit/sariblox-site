@@ -9,7 +9,9 @@
   <link rel="icon" href="favicon.ico" sizes="any" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&family=M+PLUS+Rounded+1c:wght@800&family=Noto+Sans+JP:wght@900&family=Mochiy+Pop+One&family=DotGothic16&family=Shippori+Mincho+B1:wght@800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&family=M+PLUS+Rounded+1c:wght@800&family=Noto+Sans+JP:wght@900&family=Mochiy+Pop+One&family=DotGothic16&family=Shippori+Mincho+B1:wght@800&family=Creepster&family=Dela+Gothic+One&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="timer-hw.css?v=2" />
+  <script src="timer-hw.js?v=2"></script>
   <style>
     * { box-sizing: border-box; }
     html, body { margin: 0; }
@@ -97,7 +99,8 @@
     .seg2 .btn { font-size: 15px; padding: 13px 4px; }
     #theme-seg .btn[data-theme="halloween"].on { background: #ff9f1c; border-color: #ff9f1c; }
     .theme-note { font-size: 12px; color: #9aa3b2; margin: 10px 2px 0; line-height: 1.6; }
-    .color-row.locked { opacity: 0.35; pointer-events: none; }
+    .color-row.locked,
+    .seg.locked { opacity: 0.35; pointer-events: none; }
     /* プレビューのハロウィン飾り */
     .preview { position: relative; }
     .pv-deco { display: none; }
@@ -202,7 +205,7 @@
           <button type="button" class="btn" data-theme="normal">ノーマル</button>
           <button type="button" class="btn" data-theme="halloween">🎃 ハロウィン</button>
         </div>
-        <p class="theme-note" id="theme-note" hidden>ハロウィン中は色は専用の配色になります(サイズ・フォント・フチの太さはそのまま効きます)</p>
+        <p class="theme-note" id="theme-note" hidden>ハロウィン中は色とフォントが専用になります。サイズ・フチの太さはそのまま効き、「斜め影のずれ」は立体の深さになります。</p>
       </div>
 
       <div class="card">
@@ -367,16 +370,36 @@
         if (!state) return;
         var remain = state.running ? state.endAt - (Date.now() + offset) : state.remainMs;
         var pl = $("pv-label"), pt = $("pv-time");
-        var hw = state.theme === "halloween";
-        pl.textContent = state.label || "";
-        pt.textContent = format(remain);
+        var hw = state.theme === "halloween" && !!window.TimerHW;
+        var lt = state.label || "", tt = format(remain);
+        if (pl.textContent !== lt) { pl.textContent = lt; pl.setAttribute("data-text", lt); }
+        if (pt.textContent !== tt) { pt.textContent = tt; pt.setAttribute("data-text", tt); }
         $("preview").classList.toggle("sh", state.shadow !== false);
         $("preview").classList.toggle("hw", hw);
-        $("preview").style.fontFamily = FONT_MAP[state.font] || FONT_MAP.maru;
+        $("preview").style.fontFamily = hw ? TimerHW.font : FONT_MAP[state.font] || FONT_MAP.maru;
         pl.style.fontSize = Math.round(22 * (state.labelSize || 100) / 100) + "px";
-        pt.style.fontSize = Math.round(54 * (state.timeSize || 100) / 100) + "px";
-        pl.style.color = hw ? "#aef53c" : (state.labelColor || "#ffd60a");
-        pt.style.color = hw ? "#ff9f1c" : (state.timeColor || "#ffffff");
+        pt.style.fontSize = Math.round(54 * (hw ? 1.24 : 1) * (state.timeSize || 100) / 100) + "px";
+        pt.style.letterSpacing = hw ? "0.07em" : "";
+        pl.classList.toggle("hw", hw);
+        pt.classList.toggle("hw", hw);
+        pl.style.color = hw ? "#3a0c03" : (state.labelColor || "#ffd60a");
+        pt.style.color = hw ? "#3a0c03" : (state.timeColor || "#ffffff");
+        document.getElementById("font-seg").classList.toggle("locked", hw);
+        if (hw) {
+          var hs = TimerHW.shadow({ k: (state.outlineW || 100) / 100, kd: (state.dropW || 100) / 100, outline: state.outline !== false, drop: state.drop !== false });
+          if (hs !== tick.lastHs) { // ブラウザは読み返すと書き方を変えるので、自分で前回の値を覚えておく
+            tick.lastHs = hs;
+            pl.style.textShadow = hs;
+            pt.style.textShadow = hs;
+          }
+          $("dot").classList.toggle("on", !!state.running);
+          document.querySelectorAll("#theme-seg .btn").forEach(function (b) {
+            b.classList.toggle("on", b.getAttribute("data-theme") === "halloween");
+          });
+          $("theme-note").hidden = false;
+          document.querySelector(".color-row").classList.add("locked");
+          return;
+        }
         var k = (state.outlineW || 100) / 100;
         var kd = (state.dropW || 100) / 100;
         var oc = hw ? "#2e0f54" : "#000";
@@ -392,6 +415,7 @@
           }
           return parts.length ? parts.join(", ") : "none";
         }
+        tick.lastHs = null;
         pl.style.textShadow = shadows(1.5);
         pt.style.textShadow = shadows(2.5);
         $("dot").classList.toggle("on", !!state.running);
