@@ -12,7 +12,7 @@ const DEF = {
   label: "", shadow: true, running: false, remainMs: 0, endAt: 0,
   // 見た目(コントローラーから変えられる)
   font: "maru", labelSize: 100, timeSize: 100, labelColor: "#ffd60a", timeColor: "#ffffff",
-  outline: true, outlineW: 100, drop: true, dropW: 100,
+  outline: true, outlineW: 100, drop: true, dropW: 100, glow: 0,
   theme: "normal",
 };
 const FONTS = ["maru", "gothic", "pop", "dot", "mincho"];
@@ -91,6 +91,10 @@ module.exports = async function handler(req, res) {
       state.outlineW = isFinite(w) ? Math.max(10, Math.min(300, w)) : state.outlineW || 100;
     }
     if (body.drop !== undefined) state.drop = !!body.drop;
+    if (body.glow !== undefined) {
+      const g = Math.round(Number(body.glow));
+      state.glow = isFinite(g) ? Math.max(0, Math.min(100, g)) : state.glow || 0;
+    }
     if (body.dropW !== undefined) {
       const w2 = Math.round(Number(body.dropW));
       state.dropW = isFinite(w2) ? Math.max(10, Math.min(300, w2)) : state.dropW || 100;

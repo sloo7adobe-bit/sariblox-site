@@ -36,7 +36,33 @@
     return parts.length ? parts.join(", ") : "none";
   }
 
+  function hexRgb(h) {
+    h = String(h || "");
+    if (!/^#[0-9a-fA-F]{6}$/.test(h)) return "255,255,255";
+    return [1, 3, 5].map(function (i) { return parseInt(h.substr(i, 2), 16); }).join(",");
+  }
+
+  // 文字全体にかける filter(グロー + ふんわりシャドウ)。どちらのテーマでも使う
+  // u: 数値 → CSS の長さ(オーバーレイは vw、プレビューは px に換算)
+  function filter(state, u) {
+    var hw = state.theme === "halloween";
+    var parts = [];
+    var g = (state.glow || 0) / 100;
+    if (g > 0) { // 内側のくっきりした光 + 外側のやわらかい光
+      var c = hw ? "255,150,40" : hexRgb(state.timeColor);
+      parts.push("drop-shadow(0 0 " + u(0.25 + 0.45 * g) + " rgba(" + c + "," + (0.45 + 0.4 * g).toFixed(2) + "))");
+      parts.push("drop-shadow(0 0 " + u(0.8 + 1.8 * g) + " rgba(" + c + "," + (0.2 + 0.4 * g).toFixed(2) + "))");
+    }
+    if (state.shadow !== false) {
+      parts.push(hw
+        ? "drop-shadow(0 " + u(0.6) + " " + u(1) + " rgba(20,4,34,0.6))"
+        : "drop-shadow(0 " + u(1) + " " + u(2.2) + " rgba(0,0,0,0.65))");
+    }
+    return parts.length ? parts.join(" ") : "none";
+  }
+
   window.TimerHW = {
     shadow: shadow,
+    filter: filter,
   };
 })();

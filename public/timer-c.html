@@ -10,8 +10,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&family=M+PLUS+Rounded+1c:wght@800&family=Noto+Sans+JP:wght@900&family=Mochiy+Pop+One&family=DotGothic16&family=Shippori+Mincho+B1:wght@800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="timer-hw.css?v=3" />
-  <script src="timer-hw.js?v=3"></script>
+  <link rel="stylesheet" href="timer-hw.css?v=4" />
+  <script src="timer-hw.js?v=4"></script>
   <style>
     * { box-sizing: border-box; }
     html, body { margin: 0; }
@@ -229,6 +229,11 @@
             <input type="range" id="drop-w" min="10" max="300" step="5" value="100" />
             <output id="drop-w-out">100%</output>
           </div>
+          <div class="slider-row">
+            <label>グロー(光)</label>
+            <input type="range" id="glow" min="0" max="100" step="5" value="0" />
+            <output id="glow-out">0%</output>
+          </div>
         </div>
         <div class="color-row">
           <label class="color-item"><input type="color" id="label-color" value="#ffd60a" /><span>上のテキストの色</span></label>
@@ -346,6 +351,8 @@
         $("drop").checked = state.drop !== false;
         $("drop-w").value = state.dropW || 100;
         $("drop-w-out").textContent = (state.dropW || 100) + "%";
+        $("glow").value = state.glow || 0;
+        $("glow-out").textContent = (state.glow || 0) + "%";
         $("label-color").value = state.labelColor || "#ffd60a";
         $("time-color").value = state.timeColor || "#ffffff";
       }
@@ -372,6 +379,10 @@
         pt.style.fontSize = Math.round(54 * (state.timeSize || 100) / 100) + "px";
         pl.classList.toggle("hw", hw);
         pt.classList.toggle("hw", hw);
+        if (window.TimerHW) { // グロー + ふんわりシャドウ(プレビューの大きさに合わせて vw を px に換算)
+          var f = TimerHW.filter(state, function (n) { return (n * 2.8).toFixed(1) + "px"; });
+          if (f !== tick.lastF) { tick.lastF = f; pl.style.filter = f; pt.style.filter = f; }
+        }
         pl.style.color = hw ? "#2b0d40" : (state.labelColor || "#ffd60a");
         pt.style.color = hw ? "#2b0d40" : (state.timeColor || "#ffffff");
         document.querySelectorAll("#font-seg .btn").forEach(function (b) {
@@ -474,12 +485,13 @@
       bindSlider("time-size", "time-size-out", "timeSize");
       bindSlider("outline-w", "outline-w-out", "outlineW");
       bindSlider("drop-w", "drop-w-out", "dropW");
+      bindSlider("glow", "glow-out", "glow");
       $("drop").addEventListener("change", function () { act({ action: "set", drop: $("drop").checked }); });
       $("label-color").addEventListener("change", function () { act({ action: "set", labelColor: $("label-color").value }); });
       $("time-color").addEventListener("change", function () { act({ action: "set", timeColor: $("time-color").value }); });
       $("look-reset").addEventListener("click", function () {
         synced = false; // 返ってきた値でスライダーなども戻す
-        act({ action: "set", theme: "normal", font: "maru", labelSize: 100, timeSize: 100, labelColor: "#ffd60a", timeColor: "#ffffff", outline: true, outlineW: 100, drop: true, dropW: 100, shadow: true });
+        act({ action: "set", theme: "normal", font: "maru", labelSize: 100, timeSize: 100, labelColor: "#ffd60a", timeColor: "#ffffff", outline: true, outlineW: 100, drop: true, dropW: 100, glow: 0, shadow: true });
       });
 
       // ---- 定期更新 ----

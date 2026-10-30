@@ -8,8 +8,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@800&family=Noto+Sans+JP:wght@900&family=Mochiy+Pop+One&family=DotGothic16&family=Shippori+Mincho+B1:wght@800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="timer-hw.css?v=3" />
-  <script src="timer-hw.js?v=3"></script>
+  <link rel="stylesheet" href="timer-hw.css?v=4" />
+  <script src="timer-hw.js?v=4"></script>
   <style>
     /* OBS のブラウザソースにそのまま入れる前提: 背景は完全に透明 */
     html, body {
@@ -102,18 +102,12 @@
       letter-spacing: 0.02em;
     }
 
-    /* シャドウ(コントローラーから ON / OFF できる) */
-    .wrap.has-shadow {
-      filter: drop-shadow(0 1vw 2.2vw rgba(0, 0, 0, 0.65));
-    }
+    /* ふんわりシャドウとグローは JS(timer-hw.js の filter)が wrap.style.filter に入れる */
 
     /* ==========================================================
        ハロウィンテーマ: 炎のグラデーション文字 + 立体の厚み + こげ茶のフチ(timer-hw.css / timer-hw.js)
        ふんわりシャドウは、紫がかった落ち影だけ
        ========================================================== */
-    .wrap.theme-halloween.has-shadow {
-      filter: drop-shadow(0 0.6vw 1vw rgba(20, 4, 34, 0.6));
-    }
 
   </style>
 </head>
@@ -131,6 +125,7 @@
       var state = null;
       var offset = 0; // サーバー時計とのずれ
       var lastHwShadow = null;
+      var lastFilter = null;
 
       function fetchState() {
         fetch("/api/timer", { cache: "no-store" })
@@ -178,6 +173,8 @@
         var hwShadow = hw
           ? TimerHW.shadow({ k: (state.outlineW || 100) / 100, kd: (state.dropW || 100) / 100, outline: state.outline !== false, drop: state.drop !== false })
           : "";
+        var flt = window.TimerHW ? TimerHW.filter(state, function (n) { return n + "vw"; }) : "none";
+        if (flt !== lastFilter) { lastFilter = flt; wrap.style.filter = flt; }
         if (hwShadow !== lastHwShadow) { // 変わったときだけ書き換える(毎回だと OBS で無駄に再描画される)
           lastHwShadow = hwShadow;
           [labelEl, timeEl].forEach(function (el) {
