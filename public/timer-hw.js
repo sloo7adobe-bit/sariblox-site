@@ -1,9 +1,9 @@
 /* ハロウィンテーマの文字の影(フチ + 立体の厚み)を作る。オーバーレイとコントローラーで共通
    単位は em なので、文字サイズを変えても形がそのまま拡大縮小される */
 (function () {
-  var RING = "#2a0702";
-  var NEAR = [194, 65, 12];  // 厚みの手前側(明るい焦げオレンジ)
-  var FAR = [62, 13, 3];     // 厚みの奥側(こげ茶)
+  var RING = "#2b0d40";
+  var NEAR = [125, 52, 178]; // 厚みの手前側(明るい紫)
+  var FAR = [43, 13, 64];    // 厚みの奥側(深い紫)
 
   function em(v) { return v.toFixed(4) + "em"; }
 
@@ -37,7 +37,6 @@
   }
 
   window.TimerHW = {
-    font: "'Creepster', 'Dela Gothic One', sans-serif",
     shadow: shadow,
   };
 })();

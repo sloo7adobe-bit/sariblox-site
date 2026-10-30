@@ -9,9 +9,9 @@
   <link rel="icon" href="favicon.ico" sizes="any" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&family=M+PLUS+Rounded+1c:wght@800&family=Noto+Sans+JP:wght@900&family=Mochiy+Pop+One&family=DotGothic16&family=Shippori+Mincho+B1:wght@800&family=Creepster&family=Dela+Gothic+One&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="timer-hw.css?v=2" />
-  <script src="timer-hw.js?v=2"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&family=M+PLUS+Rounded+1c:wght@800&family=Noto+Sans+JP:wght@900&family=Mochiy+Pop+One&family=DotGothic16&family=Shippori+Mincho+B1:wght@800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="timer-hw.css?v=3" />
+  <script src="timer-hw.js?v=3"></script>
   <style>
     * { box-sizing: border-box; }
     html, body { margin: 0; }
@@ -205,7 +205,7 @@
           <button type="button" class="btn" data-theme="normal">ノーマル</button>
           <button type="button" class="btn" data-theme="halloween">🎃 ハロウィン</button>
         </div>
-        <p class="theme-note" id="theme-note" hidden>ハロウィン中は色とフォントが専用になります。サイズ・フチの太さはそのまま効き、「斜め影のずれ」は立体の深さになります。</p>
+        <p class="theme-note" id="theme-note" hidden>ハロウィン中は色だけ専用(オレンジ×紫)になります。フォント・サイズ・フチの太さはそのまま効き、「斜め影のずれ」は立体の深さになります。</p>
       </div>
 
       <div class="card">
@@ -376,15 +376,16 @@
         if (pt.textContent !== tt) { pt.textContent = tt; pt.setAttribute("data-text", tt); }
         $("preview").classList.toggle("sh", state.shadow !== false);
         $("preview").classList.toggle("hw", hw);
-        $("preview").style.fontFamily = hw ? TimerHW.font : FONT_MAP[state.font] || FONT_MAP.maru;
+        $("preview").style.fontFamily = FONT_MAP[state.font] || FONT_MAP.maru;
         pl.style.fontSize = Math.round(22 * (state.labelSize || 100) / 100) + "px";
-        pt.style.fontSize = Math.round(54 * (hw ? 1.24 : 1) * (state.timeSize || 100) / 100) + "px";
-        pt.style.letterSpacing = hw ? "0.07em" : "";
+        pt.style.fontSize = Math.round(54 * (state.timeSize || 100) / 100) + "px";
         pl.classList.toggle("hw", hw);
         pt.classList.toggle("hw", hw);
-        pl.style.color = hw ? "#3a0c03" : (state.labelColor || "#ffd60a");
-        pt.style.color = hw ? "#3a0c03" : (state.timeColor || "#ffffff");
-        document.getElementById("font-seg").classList.toggle("locked", hw);
+        pl.style.color = hw ? "#2b0d40" : (state.labelColor || "#ffd60a");
+        pt.style.color = hw ? "#2b0d40" : (state.timeColor || "#ffffff");
+        document.querySelectorAll("#font-seg .btn").forEach(function (b) {
+          b.classList.toggle("on", b.getAttribute("data-font") === (state.font || "maru"));
+        });
         if (hw) {
           var hs = TimerHW.shadow({ k: (state.outlineW || 100) / 100, kd: (state.dropW || 100) / 100, outline: state.outline !== false, drop: state.drop !== false });
           if (hs !== tick.lastHs) { // ブラウザは読み返すと書き方を変えるので、自分で前回の値を覚えておく

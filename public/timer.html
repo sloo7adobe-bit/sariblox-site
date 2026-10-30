@@ -7,9 +7,9 @@
   <meta name="robots" content="noindex, nofollow" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@800&family=Noto+Sans+JP:wght@900&family=Mochiy+Pop+One&family=DotGothic16&family=Shippori+Mincho+B1:wght@800&family=Creepster&family=Dela+Gothic+One&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="timer-hw.css?v=2" />
-  <script src="timer-hw.js?v=2"></script>
+  <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@800&family=Noto+Sans+JP:wght@900&family=Mochiy+Pop+One&family=DotGothic16&family=Shippori+Mincho+B1:wght@800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="timer-hw.css?v=3" />
+  <script src="timer-hw.js?v=3"></script>
   <style>
     /* OBS のブラウザソースにそのまま入れる前提: 背景は完全に透明 */
     html, body {
@@ -111,15 +111,8 @@
        ハロウィンテーマ: 炎のグラデーション文字 + 立体の厚み + こげ茶のフチ(timer-hw.css / timer-hw.js)
        ふんわりシャドウは、下の暗い影 + まわりのオレンジの光。四すみに🎃🦇👻がゆっくり浮かぶ
        ========================================================== */
-    /* Creepster の数字は細身なので、ハロウィン中は数字だけ大きく・字間広めにして読みやすくする */
-    .wrap.theme-halloween .time {
-      font-size: calc(19vw * var(--ts, 1) * 1.24);
-      letter-spacing: 0.07em;
-      line-height: 1;
-    }
-
     .wrap.theme-halloween.has-shadow {
-      filter: drop-shadow(0 0.6vw 0.9vw rgba(20, 4, 0, 0.7)) drop-shadow(0 0 1.5vw rgba(255, 122, 20, 0.42));
+      filter: drop-shadow(0 0.6vw 1vw rgba(20, 4, 34, 0.6));
     }
 
     .deco {
@@ -217,7 +210,7 @@
         var hw = state.theme === "halloween" && !!window.TimerHW;
         wrap.classList.toggle("theme-halloween", hw);
         document.getElementById("deco").classList.toggle("is-on", hw && !!show);
-        wrap.style.fontFamily = hw ? TimerHW.font : FONT_MAP[state.font] || FONT_MAP.maru;
+        wrap.style.fontFamily = FONT_MAP[state.font] || FONT_MAP.maru;
         var hwShadow = hw
           ? TimerHW.shadow({ k: (state.outlineW || 100) / 100, kd: (state.dropW || 100) / 100, outline: state.outline !== false, drop: state.drop !== false })
           : "";
