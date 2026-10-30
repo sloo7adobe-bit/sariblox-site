@@ -50,7 +50,7 @@
     }
 
     .label {
-      --o: calc(0.5vw * var(--ls, 1));
+      --o: calc(0.5vw * var(--ls, 1) * var(--ow, 1));
       font-size: calc(7.5vw * var(--ls, 1));
       color: var(--lc, #ffd60a);
     }
@@ -60,7 +60,7 @@
     }
 
     .time {
-      --o: calc(0.9vw * var(--ts, 1));
+      --o: calc(0.9vw * var(--ts, 1) * var(--ow, 1));
       font-size: calc(19vw * var(--ts, 1));
       color: var(--tc, #fff);
       font-variant-numeric: tabular-nums;
@@ -133,6 +133,7 @@
         wrap.classList.toggle("has-shadow", state.shadow !== false);
         wrap.classList.toggle("no-outline", state.outline === false);
         wrap.style.fontFamily = FONT_MAP[state.font] || FONT_MAP.maru;
+        wrap.style.setProperty("--ow", (state.outlineW || 100) / 100);
         wrap.style.setProperty("--ls", (state.labelSize || 100) / 100);
         wrap.style.setProperty("--ts", (state.timeSize || 100) / 100);
         wrap.style.setProperty("--lc", state.labelColor || "#ffd60a");

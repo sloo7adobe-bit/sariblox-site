@@ -11,7 +11,7 @@ const MAX_MS = 100 * 60 * 60 * 1000; // 最長 100 時間
 const DEF = {
   label: "", shadow: true, running: false, remainMs: 0, endAt: 0,
   // 見た目(コントローラーから変えられる)
-  font: "maru", labelSize: 100, timeSize: 100, labelColor: "#ffd60a", timeColor: "#ffffff", outline: true,
+  font: "maru", labelSize: 100, timeSize: 100, labelColor: "#ffd60a", timeColor: "#ffffff", outline: true, outlineW: 100,
 };
 const FONTS = ["maru", "gothic", "pop", "dot", "mincho"];
 
@@ -82,6 +82,10 @@ module.exports = async function handler(req, res) {
     if (body.font !== undefined) state.font = FONTS.indexOf(String(body.font)) !== -1 ? String(body.font) : state.font || "maru";
     if (body.labelSize !== undefined) state.labelSize = clampPct(body.labelSize, state.labelSize || 100);
     if (body.timeSize !== undefined) state.timeSize = clampPct(body.timeSize, state.timeSize || 100);
+    if (body.outlineW !== undefined) {
+      const w = Math.round(Number(body.outlineW));
+      state.outlineW = isFinite(w) ? Math.max(10, Math.min(300, w)) : state.outlineW || 100;
+    }
     if (body.labelColor !== undefined) state.labelColor = color(body.labelColor, state.labelColor || "#ffd60a");
     if (body.timeColor !== undefined) state.timeColor = color(body.timeColor, state.timeColor || "#ffffff");
     if (body.remainMs !== undefined) {
