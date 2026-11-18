@@ -1,18 +1,21 @@
-// OBS タイマーをこの PC の中だけで動かすサーバー(Vercel もストレージも使わない、無料・上限なし)
-//   OBS のブラウザソース:  http://localhost:<port>/timer
-//   スマホ(同じ Wi-Fi):   http://<この PC の IP>:<port>/timer-c
-// 起動: リポジトリ直下の「タイマーを起動.bat」をダブルクリック(中身は node local-timer/server.js)
-// 設定(合言葉・ポート)は local-timer/config.json。Git には入れない(.gitignore 済み)
+// 家の PC で動かす OBS タイマー
+//   操作: スマホで https://sariblox.com/timer-c(どの Wi-Fi・モバイル回線からでも)
+//   表示: OBS のブラウザソースで http://localhost:<port>/timer
+// この PC は sariblox.com(Vercel の無料キャッシュ)へ設定を取りに行き、OBS にはこの PC の中から出す
+//   ふだんは 10 秒ごと、スマホでコントローラーを開いている間は 1 秒ごとに確認(無料枠を使い切らないため)
+// 起動: リポジトリ直下の「タイマーを起動.bat」。設定(合言葉・ポート)は local-timer/config.json(Git に入れない)
 
 const fs = require("fs");
 const http = require("http");
-const os = require("os");
 const path = require("path");
 
 const ROOT = path.join(__dirname, "..");
 const PUB = path.join(ROOT, "public");
 const CONFIG_FILE = path.join(__dirname, "config.json");
 const STATE_FILE = process.env.TIMER_STATE_FILE || path.join(__dirname, "state.json");
+
+const FAST_MS = 1000;
+const SLOW_MS = 10000;
 
 function loadConfig() {
   try {
@@ -22,92 +25,118 @@ function loadConfig() {
   }
 }
 
-// ---- api/timer.js の保存先を、この PC のファイルに差し替える ----
-// 状態は小さいので、メモリに持ちつつ、変わったらファイルにも書く(再起動しても続きから)
-let memory = null;
-const fileStore = {
-  hasBlob: () => true,
-  readBody: (req) => req.body || {},
-  readJson: async (p, fallback) => {
-    if (memory) return JSON.parse(JSON.stringify(memory));
-    try {
-      memory = JSON.parse(fs.readFileSync(STATE_FILE, "utf8"));
-      return JSON.parse(JSON.stringify(memory));
-    } catch (e) {
-      return fallback;
-    }
-  },
-  writeJson: async (p, data) => {
-    memory = JSON.parse(JSON.stringify(data));
-    const tmp = STATE_FILE + ".tmp";
-    fs.writeFileSync(tmp, JSON.stringify(data, null, 2));
-    fs.renameSync(tmp, STATE_FILE);
-  },
-};
-const storePath = require.resolve(path.join(ROOT, "lib", "store.js"));
-require.cache[storePath] = { id: storePath, filename: storePath, loaded: true, exports: fileStore };
+// ---- この PC の中の状態(OBS に出すもの。再起動しても続きから) ----
+function readLocal() {
+  try {
+    return JSON.parse(fs.readFileSync(STATE_FILE, "utf8"));
+  } catch (e) {
+    return null;
+  }
+}
 
-// ---- 配るファイル(タイマーに必要なものだけ) ----
+function writeLocal(state) {
+  const tmp = STATE_FILE + ".tmp";
+  fs.writeFileSync(tmp, JSON.stringify(state, null, 2));
+  fs.renameSync(tmp, STATE_FILE);
+}
+
+// ---- sariblox.com との同期 ----
+function createSync(opts) {
+  const cloud = String(opts.cloud || "https://sariblox.com").replace(/\/$/, "");
+  const pass = String(opts.pass || "").trim();
+  const log = opts.log || (() => {});
+  const fastMs = opts.fastMs || FAST_MS;
+  const slowMs = opts.slowMs || SLOW_MS;
+  const status = { online: false, lastOk: 0, lastError: "", clockOffset: 0, fastUntil: 0 };
+  let local = readLocal();
+  let timer = null;
+  let stopped = false;
+
+  async function once() {
+    const r = await fetch(cloud + "/api/timer", {
+      headers: { "x-timer-pass": pass, "x-timer-pc": "1" },
+      cache: "no-store",
+      signal: AbortSignal.timeout(8000),
+    });
+    if (r.status === 401) throw new Error("合言葉が sariblox.com と合っていません(local-timer/config.json の pass を確認)");
+    const j = await r.json();
+    if (!j.ok) throw new Error(j.error || "HTTP " + r.status);
+    if (j.now) status.clockOffset = j.now - Date.now(); // sariblox.com の時計に合わせる(PC の時計がずれていても正確に)
+
+    if (!j.state) {
+      // 中継が空(初回 or 消えた): この PC の状態を書き戻す
+      if (local) {
+        await fetch(cloud + "/api/timer", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ pass, action: "seed", state: local }),
+          signal: AbortSignal.timeout(8000),
+        });
+        log("中継が空だったので、この PC の設定を書き戻しました");
+      }
+    } else if (!local || Number(j.state.v || 0) !== Number(local.v || 0)) {
+      local = j.state;
+      writeLocal(local);
+      status.fastUntil = Date.now() + 90 * 1000; // 変更が来たら、続けて触られる前提でしばらく速く確認
+      log("設定を受け取りました(v" + (local.v || 0) + ")");
+    }
+    if (j.state && Number(j.state.activeUntil || 0) > Date.now() + status.clockOffset) {
+      status.fastUntil = Math.max(status.fastUntil, Date.now() + 5000);
+    }
+    if (!status.online) log("sariblox.com とつながりました");
+    status.online = true;
+    status.lastOk = Date.now();
+    status.lastError = "";
+  }
+
+  async function loop() {
+    if (stopped) return;
+    try {
+      await once();
+    } catch (e) {
+      const msg = String((e && e.message) || e);
+      if (status.online || status.lastError !== msg) log("sariblox.com に届きません: " + msg + "(この PC の設定のまま表示を続けます)");
+      status.online = false;
+      status.lastError = msg;
+    }
+    if (stopped) return;
+    timer = setTimeout(loop, Date.now() < status.fastUntil ? fastMs : slowMs);
+  }
+
+  return {
+    start() { loop(); },
+    stop() { stopped = true; clearTimeout(timer); },
+    status,
+    getLocal: () => local,
+  };
+}
+
+// ---- OBS に配るもの(タイマーに必要なファイルだけ) ----
 const FILES = {
   "/timer": ["timer.html", "text/html; charset=utf-8"],
-  "/timer-c": ["timer-c.html", "text/html; charset=utf-8"],
   "/timer-hw.css": ["timer-hw.css", "text/css; charset=utf-8"],
   "/timer-hw.js": ["timer-hw.js", "text/javascript; charset=utf-8"],
   "/favicon.ico": ["favicon.ico", "image/x-icon"],
 };
 
-function lanAddresses() {
-  const out = [];
-  const nets = os.networkInterfaces();
-  Object.keys(nets).forEach((name) => {
-    (nets[name] || []).forEach((n) => {
-      if (n.family === "IPv4" && !n.internal && !n.address.startsWith("169.254.")) out.push(n.address);
-    });
-  });
-  return out;
-}
-
-function createServer(opts) {
-  const pass = String(opts.pass || "").trim();
-  process.env.TIMER_PASS = pass;
-  delete require.cache[require.resolve(path.join(ROOT, "api", "timer.js"))];
-  const handler = require(path.join(ROOT, "api", "timer.js"));
-
+function createServer(sync, opts) {
+  const cloud = String((opts && opts.cloud) || "https://sariblox.com").replace(/\/$/, "");
   return http.createServer((req, res) => {
     const u = new URL(req.url, "http://local");
 
     if (u.pathname === "/api/timer") {
-      let raw = "";
-      req.on("data", (c) => {
-        raw += c;
-        if (raw.length > 20000) req.destroy(); // 変に大きい送信は切る
-      });
-      req.on("end", async () => {
-        let body = {};
-        try { body = raw ? JSON.parse(raw) : {}; } catch (e) { body = {}; }
-        const fake = {
-          code: 200,
-          headers: {},
-          setHeader(k, v) { this.headers[k] = v; },
-          status(c) { this.code = c; return this; },
-          json(j) {
-            res.writeHead(this.code, Object.assign({ "Content-Type": "application/json; charset=utf-8" }, this.headers));
-            res.end(JSON.stringify(j));
-          },
-        };
-        try {
-          await handler({ method: req.method, headers: req.headers, body, socket: req.socket }, fake);
-        } catch (e) {
-          console.error(e);
-          res.writeHead(500, { "Content-Type": "application/json; charset=utf-8" });
-          res.end('{"ok":false,"error":"タイマーでエラーが起きました。"}');
-        }
-      });
+      if (req.method !== "GET") {
+        res.writeHead(410, { "Content-Type": "application/json; charset=utf-8" });
+        res.end(JSON.stringify({ ok: false, error: "操作はスマホで " + cloud + "/timer-c からどうぞ。" }));
+        return;
+      }
+      res.writeHead(200, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" });
+      res.end(JSON.stringify({ ok: true, state: sync.getLocal(), now: Date.now() + sync.status.clockOffset }));
       return;
     }
 
-    if (u.pathname === "/") {
-      res.writeHead(302, { Location: "/timer-c" });
+    if (u.pathname === "/" || u.pathname === "/timer-c") {
+      res.writeHead(302, { Location: cloud + "/timer-c" });
       res.end();
       return;
     }
@@ -130,30 +159,35 @@ function createServer(opts) {
   });
 }
 
-module.exports = { createServer, lanAddresses };
+module.exports = { createSync, createServer };
 
 if (require.main === module) {
   const cfg = loadConfig();
   const port = Number(cfg.port) || 3939;
+  const cloud = cfg.cloud || "https://sariblox.com";
   if (!String(cfg.pass || "").trim()) {
     console.log("local-timer/config.json に合言葉(pass)を書いてください。例: { \"pass\": \"1234\", \"port\": 3939 }");
-    process.exit(1);
+    setTimeout(() => process.exit(1), 15000);
+    return;
   }
-  const server = createServer({ pass: cfg.pass });
+  const stamp = () => new Date().toLocaleTimeString("ja-JP", { hour12: false });
+  const sync = createSync({ cloud, pass: cfg.pass, log: (m) => console.log("  [" + stamp() + "] " + m) });
+  const server = createServer(sync, { cloud });
   server.on("error", (e) => {
-    if (e.code === "EADDRINUSE") console.log("\nもうタイマーが起動しています(ポート " + port + " が使用中)。この窓は閉じてOKです。");
+    if (e.code === "EADDRINUSE") console.log("\n  もうタイマーが起動しています(ポート " + port + " が使用中)。この窓は閉じてOKです。");
     else console.error(e);
     setTimeout(() => process.exit(1), 8000);
   });
-  server.listen(port, "0.0.0.0", () => {
-    const ips = lanAddresses();
+  // OBS 用なので、この PC の中からだけ受け付ける(外からは開けない)
+  server.listen(port, "127.0.0.1", () => {
     console.log("");
     console.log("  ===== サリーぶろっくす タイマー 起動中 =====");
     console.log("");
     console.log("  OBS(ブラウザソース):  http://localhost:" + port + "/timer");
-    ips.forEach((ip) => console.log("  スマホ(同じ Wi-Fi):    http://" + ip + ":" + port + "/timer-c"));
+    console.log("  スマホで操作:          " + cloud + "/timer-c   (どの Wi-Fi・モバイル回線からでもOK)");
     console.log("");
     console.log("  この窓を閉じるとタイマーも止まります(最小化はOK)。");
     console.log("");
+    sync.start();
   });
 }

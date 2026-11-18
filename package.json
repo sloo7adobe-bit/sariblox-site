@@ -4,7 +4,8 @@
   "version": "1.0.0",
   "description": "サリーぶろっくす 横動画 編集者募集サイト",
   "dependencies": {
-    "@vercel/blob": "^2.8.0"
+    "@vercel/blob": "^2.8.0",
+    "@vercel/functions": "^3.11.3"
   },
   "scripts": {
     "local": "vercel dev --listen 5173 --yes"

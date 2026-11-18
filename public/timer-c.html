@@ -127,12 +127,16 @@
     .msg { font-size: 13px; color: #ff8c98; min-height: 18px; margin: 6px 2px 0; }
     .hint { font-size: 12px; color: #9aa3b2; margin-top: 10px; line-height: 1.7; }
     .hint code { background: #17191f; padding: 2px 6px; border-radius: 6px; font-size: 11px; }
+    .pc-status { font-size: 13px; margin: -6px 0 14px; padding: 9px 12px; border-radius: 10px; background: #22252d; border: 1px solid #3a3f4a; color: #cdd3de; }
+    .pc-status.ok { border-color: #2f7d45; color: #8ff0a8; }
+    .pc-status.ng { border-color: #7d2f37; color: #ff9aa5; }
     [hidden] { display: none !important; }
   </style>
 </head>
 <body>
   <div class="box">
     <h1><span class="dot" id="dot"></span>タイマー操作</h1>
+    <p class="pc-status" id="pc-status" hidden></p>
 
     <!-- パスワード -->
     <div class="card" id="gate">
@@ -261,7 +265,7 @@
 
       <p class="msg" id="msg"></p>
       <p class="hint">
-        OBS には「ブラウザ」ソースで <code>http://localhost:<span id="obs-port">3939</span>/timer</code> を追加(幅 800 × 高さ 300 がおすすめ)。背景は自動で透明になります。
+        家の PC で「タイマーを起動.bat」を開いておき、OBS には「ブラウザ」ソースで <code>http://localhost:3939/timer</code> を追加(幅 800 × 高さ 300 がおすすめ)。背景は自動で透明。このページはどの Wi-Fi・モバイル回線からでも使えます。
       </p>
     </div>
   </div>
@@ -289,10 +293,27 @@
         if (t) setTimeout(function () { $("msg").textContent = ""; }, 2500);
       }
 
+      var pcSeen = 0;
+      function showPc(pc) {
+        if (pc && pc.seen) pcSeen = pc.seen;
+      }
+      function renderPc() {
+        var el = $("pc-status");
+        if (!pass || $("panel").hidden) { el.hidden = true; return; }
+        el.hidden = false;
+        var ago = pcSeen ? Math.round((Date.now() + offset - pcSeen) / 1000) : -1;
+        var ok = ago >= 0 && ago < 90;
+        el.className = "pc-status " + (ok ? "ok" : "ng");
+        el.textContent = ok
+          ? "🖥 家の PC とつながっています(操作は約 1 秒で OBS に出ます)"
+          : "🖥 家の PC が見つかりません。PC で「タイマーを起動.bat」を開いてください" + (ago > 0 ? "(最後の確認 " + Math.round(ago / 60) + " 分前)" : "");
+      }
+
       function apply(res) {
         if (res.status === 401) { logout(); return; }
         if (res.body && res.body.ok) {
-          state = res.body.state;
+          state = res.body.state || state;
+          showPc(res.body.pc);
           if (res.body.now) offset = res.body.now - Date.now();
           syncInputs();
         } else {
@@ -318,6 +339,7 @@
             $("gate").hidden = true;
             $("panel").hidden = false;
             state = res.body.state;
+            showPc(res.body.pc);
             if (res.body.now) offset = res.body.now - Date.now();
             synced = false;
             syncInputs();
@@ -496,13 +518,20 @@
 
       // ---- 定期更新 ----
       setInterval(function () {
-        if (!pass || $("panel").hidden) return;
-        fetch("/api/timer", { cache: "no-store" }).then(function (r) { return r.json(); }).then(function (j) {
-          if (j && j.ok) { state = j.state; if (j.now) offset = j.now - Date.now(); }
+        if (!pass || $("panel").hidden || document.hidden) return;
+        fetch("/api/timer", { cache: "no-store", headers: { "x-timer-pass": pass } }).then(function (r) { return r.json(); }).then(function (j) {
+          if (j && j.ok) { if (j.state) state = j.state; showPc(j.pc); if (j.now) offset = j.now - Date.now(); }
         }).catch(function () {});
-      }, 2500);
+      }, 3000);
+      setInterval(function () {
+        if (!pass || $("panel").hidden || document.hidden) return;
+        api({ action: "wake" }).then(function (res) { if (res.body && res.body.ok) showPc(res.body.pc); }).catch(function () {});
+      }, 45000);
+      document.addEventListener("visibilitychange", function () { // スマホに戻ってきたら、すぐ家の PC を起こす
+        if (!document.hidden && pass && !$("panel").hidden) api({ action: "wake" }).then(apply).catch(function () {});
+      });
+      setInterval(renderPc, 1000);
       setInterval(tick, 200);
-      if (location.port) $("obs-port").textContent = location.port;
 
       // 保存済みパスワードで自動ログイン
       var saved = "";

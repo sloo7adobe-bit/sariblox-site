@@ -1,10 +1,12 @@
-// OBS オーバーレイ用タイマー
-// GET  : 今の状態を返す(誰でも見られる)
-// POST : パスワードが合っているときだけ操作できる(set / start / pause / adjust / reset / auth)
+// OBS オーバーレイ用タイマーの中継(スマホ → sariblox.com → 家の PC)
+// GET  : 今の状態を返す。合言葉(x-timer-pass ヘッダー)が必要。家の PC は x-timer-pc: 1 を付けて「生きている」合図も兼ねる
+// POST : 合言葉が合っているときだけ操作できる(set / start / pause / adjust / reset / auth / wake / seed)
+// 状態は lib/timer-store(Vercel Runtime Cache)。家の PC が 10 秒ごと、スマホが開いている間は 1 秒ごとに取りに来る
 
-const S = require("../lib/store");
+const T = require("../lib/timer-store");
 
-const PATH = "timer/state.json";
+const ACTIVE_MS = 90 * 1000; // スマホが触ってから、家の PC が 1 秒ごとの確認を続ける長さ
+const PING_EVERY_MS = 50 * 1000; // 家の PC の「生きている」合図を書く間隔(書き込み回数を抑える)
 const PASS = String(process.env.TIMER_PASS || "").trim(); // 操作用パスワード(Vercel の環境変数に設定)
 const MAX_MS = 100 * 60 * 60 * 1000; // 最長 100 時間
 
@@ -41,40 +43,110 @@ function clampMs(v) {
   return Math.max(0, Math.min(MAX_MS, v));
 }
 
+// 家の PC から書き戻された状態は、知っている項目を同じ型のものだけ受け取る
+function sanitizeSeed(input) {
+  const out = Object.assign({}, DEF);
+  input = input || {};
+  Object.keys(DEF).forEach((k) => {
+    if (typeof input[k] === typeof DEF[k]) out[k] = input[k];
+  });
+  out.label = clean(out.label, 40);
+  out.remainMs = clampMs(out.remainMs);
+  out.endAt = Math.max(0, Math.round(Number(input.endAt) || 0));
+  out.v = Math.max(1, Math.round(Number(input.v) || 1));
+  return out;
+}
+
+let lastPingWrite = 0; // 同じインスタンス内での最後の合図の書き込み(書き込みすぎ防止の目安)
+
+function passOf(req, body) {
+  const h = req.headers && (req.headers["x-timer-pass"] || req.headers["X-Timer-Pass"]);
+  return String((body && body.pass) || h || "");
+}
+
+function readBody(req) {
+  let body = req.body;
+  if (typeof body === "string") {
+    try { body = JSON.parse(body); } catch (e) { body = {}; }
+  }
+  return body || {};
+}
+
+function down(res, e) {
+  console.error("timer cache failed", e);
+  res.status(503).json({ ok: false, storeDown: true, error: "中継(Vercel のキャッシュ)が一時的に使えません。少し待ってからもう一度お試しください。" });
+}
+
 module.exports = async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");
 
-  if (req.method === "GET") {
-    const state = Object.assign({}, DEF, await S.readJson(PATH, DEF)); // 古い保存データに新しい項目が無くても既定値で埋める
-    res.status(200).json({ ok: true, state, now: Date.now() });
+  if (req.method !== "GET" && req.method !== "POST") {
+    res.status(405).json({ ok: false, error: "GET / POST のみ" });
     return;
   }
-
-  if (req.method !== "POST") {
-    res.status(405).json({ ok: false, error: "POST のみ" });
-    return;
-  }
-
   if (!PASS) {
     res.status(503).json({ ok: false, error: "操作用パスワードが未設定です。" });
     return;
   }
-  const body = S.readBody(req);
-  if (String(body.pass || "") !== PASS) {
+  const body = req.method === "POST" ? readBody(req) : {};
+  // 合言葉が違うときはキャッシュを一切読まない(知らない人の連打で無料枠を減らされないように)
+  if (passOf(req, body) !== PASS) {
     res.status(401).json({ ok: false, error: "パスワードが違います。" });
     return;
   }
-  if (!S.hasBlob()) {
-    res.status(503).json({ ok: false, error: "保存先の準備中です。" });
+  const now = Date.now();
+
+  if (req.method === "GET") {
+    try {
+      const state = await T.readState();
+      const isPc = String(req.headers["x-timer-pc"] || "") === "1";
+      let pc = null;
+      if (isPc) {
+        if (now - lastPingWrite > PING_EVERY_MS) {
+          lastPingWrite = now;
+          await T.writePc({ seen: now });
+        }
+      } else {
+        pc = await T.readPc();
+      }
+      res.status(200).json({ ok: true, state: state ? Object.assign({}, DEF, state) : null, pc, now });
+    } catch (e) {
+      down(res, e);
+    }
     return;
   }
 
-  const state = Object.assign({}, DEF, await S.readJson(PATH, DEF)); // 古い保存データに新しい項目が無くても既定値で埋める
   const action = String(body.action || "");
-  const now = Date.now();
+  let stored;
+  try {
+    stored = await T.readState();
+  } catch (e) {
+    down(res, e);
+    return;
+  }
 
-  if (action === "auth") {
-    res.status(200).json({ ok: true, state, now });
+  // 家の PC からの書き戻し: 中継が空のとき(消えた・初回)だけ受け取る
+  if (action === "seed") {
+    if (stored) {
+      res.status(200).json({ ok: true, state: Object.assign({}, DEF, stored), now });
+      return;
+    }
+    const seeded = sanitizeSeed(body.state);
+    try { await T.writeState(seeded); } catch (e) { down(res, e); return; }
+    res.status(200).json({ ok: true, state: seeded, now });
+    return;
+  }
+
+  const state = Object.assign({}, DEF, stored || {}); // 古い保存データに新しい項目が無くても既定値で埋める
+  const prevV = Number(state.v) || 0;
+
+  if (action === "auth" || action === "wake") {
+    // スマホでコントローラーを開いている合図: 家の PC をしばらく 1 秒ごとの確認にする(見た目は変えないので v は上げない)
+    state.activeUntil = now + ACTIVE_MS;
+    try { await T.writeState(state); } catch (e) { down(res, e); return; }
+    let pc = null;
+    try { pc = await T.readPc(); } catch (e) {}
+    res.status(200).json({ ok: true, state, pc, now });
     return;
   }
 
@@ -130,11 +202,12 @@ module.exports = async function handler(req, res) {
   }
 
   state.updatedAt = new Date(now).toISOString();
+  state.v = prevV + 1; // 家の PC はこの番号が変わったら取り込む
+  state.activeUntil = now + ACTIVE_MS;
   try {
-    await S.writeJson(PATH, state);
+    await T.writeState(state);
   } catch (e) {
-    console.error("timer save failed", e);
-    res.status(503).json({ ok: false, storeDown: true, error: "保存先(Vercel のストレージ)が一時停止中のため、いまは操作を保存できません。" });
+    down(res, e);
     return;
   }
   res.status(200).json({ ok: true, state, now });

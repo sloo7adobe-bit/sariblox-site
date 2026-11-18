@@ -5,6 +5,5 @@ public/font/*.ttf
 .git
 ループ動画
 tools
-# タイマーは PC の中で動かす(Vercel では動かさない。ストレージの上限を使い切った原因)
+# 家の PC で動かすタイマー本体(Vercel には上げない。中継の api/timer.js だけ Vercel で動かす)
 local-timer
-api/timer.js
