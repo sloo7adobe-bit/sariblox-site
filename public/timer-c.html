@@ -536,7 +536,7 @@
         fetch("/api/timer", { cache: "no-store", headers: { "x-timer-pass": pass } }).then(function (r) { return r.json(); }).then(function (j) {
           if (j && j.ok) { if (j.state) state = j.state; showPc(j.pc); if (j.now) offset = j.now - Date.now(); }
         }).catch(function () {});
-      }, 3000);
+      }, 10000); // 自分の操作の結果はその場で返ってくるので、これは PC の接続確認用(無料枠を家の PC の高速確認に回す)
       setInterval(function () {
         if (!pass || $("panel").hidden || document.hidden) return;
         api({ action: "wake" }).then(function (res) { if (res.body && res.body.ok) showPc(res.body.pc); }).catch(function () {});

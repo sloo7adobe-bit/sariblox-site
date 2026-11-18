@@ -2,7 +2,8 @@
 //   操作: スマホで https://sariblox.com/timer-c(どの Wi-Fi・モバイル回線からでも)
 //   表示: OBS のブラウザソースで http://localhost:<port>/timer
 // この PC は sariblox.com(Vercel の無料キャッシュ)へ設定を取りに行き、OBS にはこの PC の中から出す
-//   ふだんは 10 秒ごと、スマホでコントローラーを開いている間は 1 秒ごとに確認(無料枠を使い切らないため)
+//   確認の間隔: スマホでコントローラーを開いている間 1 秒 / OBS がタイマーを表示している間 3 秒 / それ以外 15 秒
+//   (無料枠: 読み 100 万回/月 を使い切らないため)。OBS には受け取った瞬間に押し出す(SSE)
 // 起動: リポジトリ直下の「タイマーを起動.bat」。設定(合言葉・ポート)は local-timer/config.json(Git に入れない)
 
 const fs = require("fs");
@@ -14,8 +15,10 @@ const PUB = path.join(ROOT, "public");
 const CONFIG_FILE = path.join(__dirname, "config.json");
 const STATE_FILE = process.env.TIMER_STATE_FILE || path.join(__dirname, "state.json");
 
-const FAST_MS = 1000;
-const SLOW_MS = 10000;
+const BURST_MS = 400;  // 変更が届いた直後 20 秒(続けて触られることが多いので最速で)
+const FAST_MS = 1000;  // スマホでいじっている間
+const OBS_MS = 3000;   // OBS がタイマーを表示している間(配信中)
+const SLOW_MS = 15000; // OBS も閉じているとき
 
 function loadConfig() {
   try {
@@ -45,9 +48,13 @@ function createSync(opts) {
   const cloud = String(opts.cloud || "https://sariblox.com").replace(/\/$/, "");
   const pass = String(opts.pass || "").trim();
   const log = opts.log || (() => {});
+  const burstMs = opts.burstMs || BURST_MS;
   const fastMs = opts.fastMs || FAST_MS;
+  const obsMs = opts.obsMs || OBS_MS;
   const slowMs = opts.slowMs || SLOW_MS;
-  const status = { online: false, lastOk: 0, lastError: "", clockOffset: 0, fastUntil: 0 };
+  const isObsActive = opts.isObsActive || (() => false);
+  let onChange = () => {};
+  const status = { online: false, lastOk: 0, lastError: "", clockOffset: 0, fastUntil: 0, burstUntil: 0 };
   let local = readLocal();
   let timer = null;
   let stopped = false;
@@ -76,8 +83,10 @@ function createSync(opts) {
       }
     } else if (!local || Number(j.state.v || 0) !== Number(local.v || 0)) {
       local = j.state;
+      onChange(local); // OBS へすぐ押し出す(ファイル保存より先)
       writeLocal(local);
       status.fastUntil = Date.now() + 90 * 1000; // 変更が来たら、続けて触られる前提でしばらく速く確認
+      status.burstUntil = Date.now() + 20 * 1000;
       log("設定を受け取りました(v" + (local.v || 0) + ")");
     }
     if (j.state && Number(j.state.activeUntil || 0) > Date.now() + status.clockOffset) {
@@ -100,11 +109,14 @@ function createSync(opts) {
       status.lastError = msg;
     }
     if (stopped) return;
-    timer = setTimeout(loop, Date.now() < status.fastUntil ? fastMs : slowMs);
+    const t = Date.now();
+    const wait = t < status.burstUntil ? burstMs : t < status.fastUntil ? fastMs : isObsActive() ? obsMs : slowMs;
+    timer = setTimeout(loop, wait);
   }
 
   return {
     start() { loop(); },
+    setOnChange(fn) { onChange = fn; },
     stop() { stopped = true; clearTimeout(timer); },
     status,
     getLocal: () => local,
@@ -121,10 +133,31 @@ const FILES = {
 
 function createServer(sync, opts) {
   const cloud = String((opts && opts.cloud) || "https://sariblox.com").replace(/\/$/, "");
-  return http.createServer((req, res) => {
+  const clients = new Set(); // OBS の表示ページ(押し出し先)
+  let lastObsGet = 0;
+  const payload = () => JSON.stringify({ ok: true, state: sync.getLocal(), now: Date.now() + sync.status.clockOffset });
+
+  const EOL2 = "\n\n";
+  sync.setOnChange(() => {
+    const msg = "data: " + payload() + EOL2;
+    clients.forEach((c) => c.write(msg));
+  });
+  setInterval(() => clients.forEach((c) => c.write(": ping" + EOL2)), 15000).unref(); // つなぎっぱなしを保つ
+
+  const server = http.createServer((req, res) => {
     const u = new URL(req.url, "http://local");
 
+    if (u.pathname === "/api/timer/stream") {
+      res.writeHead(200, { "Content-Type": "text/event-stream; charset=utf-8", "Cache-Control": "no-store", Connection: "keep-alive" });
+      res.write("retry: 1000" + EOL2);
+      res.write("data: " + payload() + EOL2);
+      clients.add(res);
+      req.on("close", () => clients.delete(res));
+      return;
+    }
+
     if (u.pathname === "/api/timer") {
+      lastObsGet = Date.now();
       if (req.method !== "GET") {
         res.writeHead(410, { "Content-Type": "application/json; charset=utf-8" });
         res.end(JSON.stringify({ ok: false, error: "操作はスマホで " + cloud + "/timer-c からどうぞ。" }));
@@ -157,6 +190,9 @@ function createServer(sync, opts) {
       res.end(buf);
     });
   });
+  // OBS がタイマーを表示しているか(押し出し先がつながっている / 最近確認が来た)
+  server.isObsActive = () => clients.size > 0 || Date.now() - lastObsGet < 10000;
+  return server;
 }
 
 module.exports = { createSync, createServer };
@@ -171,8 +207,9 @@ if (require.main === module) {
     return;
   }
   const stamp = () => new Date().toLocaleTimeString("ja-JP", { hour12: false });
-  const sync = createSync({ cloud, pass: cfg.pass, log: (m) => console.log("  [" + stamp() + "] " + m) });
-  const server = createServer(sync, { cloud });
+  let server = null;
+  const sync = createSync({ cloud, pass: cfg.pass, log: (m) => console.log("  [" + stamp() + "] " + m), isObsActive: () => !!server && server.isObsActive() });
+  server = createServer(sync, { cloud });
   server.on("error", (e) => {
     if (e.code === "EADDRINUSE") console.log("\n  もうタイマーが起動しています(ポート " + port + " が使用中)。この窓は閉じてOKです。");
     else console.error(e);

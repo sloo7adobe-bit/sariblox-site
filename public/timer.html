@@ -217,8 +217,21 @@
         if (timeEl.textContent !== tt) { timeEl.textContent = tt; timeEl.setAttribute("data-text", tt); }
       }
 
+      // PC が設定を受け取った瞬間に押し出してもらう(待ち時間ゼロ)。つながらないときのために、たまに自分でも確認する
+      if (window.EventSource) {
+        var es = new EventSource("/api/timer/stream");
+        es.onmessage = function (e) {
+          try {
+            var j = JSON.parse(e.data);
+            if (!j || !j.ok) return;
+            state = j.state || null;
+            if (j.now) offset = j.now - Date.now();
+            tick();
+          } catch (err) {}
+        };
+      }
       fetchState();
-      setInterval(fetchState, 1000); // PC の中のサーバーに聞くだけなので、短い間隔でも費用はかからない
+      setInterval(fetchState, 3000);
       setInterval(tick, 200);
     })();
   </script>
