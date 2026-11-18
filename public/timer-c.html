@@ -43,7 +43,7 @@
       overflow: hidden;
       white-space: nowrap;
     }
-    .pv-label { color: #ffd60a; font-size: 22px; min-height: 26px;
+    .pv-label { color: #fce80c; font-size: 22px; min-height: 26px;
       text-shadow: 1.5px 0 #000, -1.5px 0 #000, 0 1.5px #000, 0 -1.5px #000, 2px 2.5px #000; }
     .pv-time { color: #fff; font-size: 54px; line-height: 1.1; font-variant-numeric: tabular-nums;
       text-shadow: 2.5px 0 #000, -2.5px 0 #000, 0 2.5px #000, 0 -2.5px #000, 4px 4.5px #000; }
@@ -244,7 +244,7 @@
           </div>
         </div>
         <div class="color-row">
-          <label class="color-item"><input type="color" id="label-color" value="#ffd60a" /><span>上のテキストの色</span></label>
+          <label class="color-item"><input type="color" id="label-color" value="#fce80c" /><span>上のテキストの色</span></label>
           <label class="color-item"><input type="color" id="time-color" value="#ffffff" /><span>数字の色</span></label>
         </div>
         <div class="toggles">
@@ -379,7 +379,7 @@
         $("drop-w-out").textContent = (state.dropW || 100) + "%";
         $("glow").value = state.glow || 0;
         $("glow-out").textContent = (state.glow || 0) + "%";
-        $("label-color").value = state.labelColor || "#ffd60a";
+        $("label-color").value = state.labelColor || "#fce80c";
         $("time-color").value = state.timeColor || "#ffffff";
       }
 
@@ -413,7 +413,7 @@
           var f = TimerHW.filter(state, function (n) { return (n * 2.8).toFixed(1) + "px"; });
           if (f !== tick.lastF) { tick.lastF = f; pl.style.filter = f; pt.style.filter = f; }
         }
-        pl.style.color = hw ? "#2b0d40" : (state.labelColor || "#ffd60a");
+        pl.style.color = hw ? "#2b0d40" : (state.labelColor || "#fce80c");
         pt.style.color = hw ? "#2b0d40" : (state.timeColor || "#ffffff");
         document.querySelectorAll("#font-seg .btn").forEach(function (b) {
           b.classList.toggle("on", b.getAttribute("data-font") === (state.font || "maru"));
@@ -527,7 +527,7 @@
       $("time-color").addEventListener("change", function () { act({ action: "set", timeColor: $("time-color").value }); });
       $("look-reset").addEventListener("click", function () {
         synced = false; // 返ってきた値でスライダーなども戻す
-        act({ action: "set", theme: "normal", font: "maru", labelSize: 100, timeSize: 100, labelColor: "#ffd60a", timeColor: "#ffffff", outline: true, outlineW: 100, drop: true, dropW: 100, glow: 0, shadow: true });
+        act({ action: "set", theme: "normal", font: "gothic", labelSize: 100, timeSize: 100, labelColor: "#fce80c", timeColor: "#ffffff", outline: true, outlineW: 100, drop: true, dropW: 100, glow: 0, shadow: true });
       });
 
       // ---- 定期更新 ----

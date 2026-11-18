@@ -92,7 +92,7 @@
       --o: calc(var(--lo) * var(--ls, 1) * var(--ow, 1));
       --d: calc(var(--lo) * var(--ls, 1) * var(--dw, 1));
       font-size: calc(var(--lf) * var(--ls, 1));
-      color: var(--lc, #ffd60a);
+      color: var(--lc, #fce80c);
     }
 
     .label:empty {
@@ -114,9 +114,9 @@
       .wrap {
         justify-content: flex-start;
         --lf: 2.42vw;
-        --lo: 0.105vw;
+        --lo: 0.19vw;
         --tf: 2.05vw;
-        --to: 0.095vw;
+        --to: 0.17vw;
         --gap: 0.86vw;
         padding-top: 4.26vw;
       }
@@ -208,7 +208,7 @@
         wrap.style.setProperty("--dw", (state.dropW || 100) / 100);
         wrap.style.setProperty("--ls", (state.labelSize || 100) / 100);
         wrap.style.setProperty("--ts", (state.timeSize || 100) / 100);
-        wrap.style.setProperty("--lc", state.labelColor || "#ffd60a");
+        wrap.style.setProperty("--lc", state.labelColor || "#fce80c");
         wrap.style.setProperty("--tc", state.timeColor || "#ffffff");
         if (!show) return;
         var lt = state.label || "";

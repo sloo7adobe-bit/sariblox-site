@@ -13,7 +13,7 @@ const MAX_MS = 100 * 60 * 60 * 1000; // 最長 100 時間
 const DEF = {
   label: "", shadow: true, running: false, remainMs: 0, endAt: 0,
   // 見た目(コントローラーから変えられる)
-  font: "maru", labelSize: 100, timeSize: 100, labelColor: "#ffd60a", timeColor: "#ffffff",
+  font: "gothic", labelSize: 100, timeSize: 100, labelColor: "#fce80c", timeColor: "#ffffff",
   outline: true, outlineW: 100, drop: true, dropW: 100, glow: 0,
   theme: "normal",
   format: "colon", // colon = 1:00:00 / ms = 32m 50s
@@ -174,7 +174,7 @@ module.exports = async function handler(req, res) {
       const w2 = Math.round(Number(body.dropW));
       state.dropW = isFinite(w2) ? Math.max(10, Math.min(300, w2)) : state.dropW || 100;
     }
-    if (body.labelColor !== undefined) state.labelColor = color(body.labelColor, state.labelColor || "#ffd60a");
+    if (body.labelColor !== undefined) state.labelColor = color(body.labelColor, state.labelColor || "#fce80c");
     if (body.timeColor !== undefined) state.timeColor = color(body.timeColor, state.timeColor || "#ffffff");
     if (body.remainMs !== undefined) {
       state.remainMs = clampMs(body.remainMs);
