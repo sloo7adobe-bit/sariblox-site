@@ -216,6 +216,10 @@ if (require.main === module) {
     setTimeout(() => process.exit(1), 8000);
   });
   // OBS 用なので、この PC の中からだけ受け付ける(外からは開けない)
+  // Windows の localhost は先に IPv6(::1)へつなぎに行き、待ち受けていないと約 2 秒待たされる。両方で待ち受ける(どちらもこの PC の中だけ)
+  const server6 = http.createServer((req, res) => server.emit("request", req, res));
+  server6.on("error", () => {}); // IPv6 が無い PC ではそのまま IPv4 だけで動く
+  server6.listen(port, "::1");
   server.listen(port, "127.0.0.1", () => {
     console.log("");
     console.log("  ===== サリーぶろっくす タイマー 起動中 =====");
