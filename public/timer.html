@@ -25,7 +25,13 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 0.5vw;
+      gap: var(--gap);
+      /* 大きさのものさし(箱モード: 800×300 など横長の小さいソース。ステージモードは下の @media で上書き) */
+      --lf: 7.5vw;  /* 上の文字の大きさ */
+      --lo: 0.5vw;  /* 上の文字のフチ */
+      --tf: 19vw;   /* 数字の大きさ */
+      --to: 0.9vw;  /* 数字のフチ */
+      --gap: 0.5vw;
       font-family: "M PLUS Rounded 1c", "Hiragino Maru Gothic ProN", sans-serif;
       font-weight: 800;
       text-align: center;
@@ -83,9 +89,9 @@
     }
 
     .label {
-      --o: calc(0.5vw * var(--ls, 1) * var(--ow, 1));
-      --d: calc(0.5vw * var(--ls, 1) * var(--dw, 1));
-      font-size: calc(7.5vw * var(--ls, 1));
+      --o: calc(var(--lo) * var(--ls, 1) * var(--ow, 1));
+      --d: calc(var(--lo) * var(--ls, 1) * var(--dw, 1));
+      font-size: calc(var(--lf) * var(--ls, 1));
       color: var(--lc, #ffd60a);
     }
 
@@ -94,12 +100,27 @@
     }
 
     .time {
-      --o: calc(0.9vw * var(--ts, 1) * var(--ow, 1));
-      --d: calc(0.9vw * var(--ts, 1) * var(--dw, 1));
-      font-size: calc(19vw * var(--ts, 1));
+      --o: calc(var(--to) * var(--ts, 1) * var(--ow, 1));
+      --d: calc(var(--to) * var(--ts, 1) * var(--dw, 1));
+      font-size: calc(var(--tf) * var(--ts, 1));
       color: var(--tc, #fff);
       font-variant-numeric: tabular-nums;
       letter-spacing: 0.02em;
+    }
+
+    /* ステージモード: OBS に画面いっぱい(1920×1080 など 16:9)で入れたとき、上のまん中に置く
+       位置と大きさは配信画面の見本(上の文字 34px・数字 28px の高さ、x=960 中心)に合わせた。単位は vw なので 1280×720 でも同じ見え方 */
+    @media (min-aspect-ratio: 3/2) and (max-aspect-ratio: 2/1) {
+      .wrap {
+        justify-content: flex-start;
+        --lf: 2.42vw;
+        --lo: 0.105vw;
+        --tf: 2.05vw;
+        --to: 0.095vw;
+        --gap: 0.86vw;
+        padding-top: 4.26vw;
+      }
+      .label, .time { line-height: 1; }
     }
 
     /* ふんわりシャドウとグローは JS(timer-hw.js の filter)が wrap.style.filter に入れる */
@@ -140,11 +161,12 @@
 
       function pad(n) { return (n < 10 ? "0" : "") + n; }
 
-      function format(ms) {
+      function format(ms, style) {
         var t = Math.max(0, Math.ceil(ms / 1000));
         var h = Math.floor(t / 3600);
         var m = Math.floor((t % 3600) / 60);
         var s = t % 60;
+        if (style === "ms") return h > 0 ? h + "h " + m + "m " + pad(s) + "s" : m > 0 ? m + "m " + pad(s) + "s" : s + "s";
         return h > 0 ? h + ":" + pad(m) + ":" + pad(s) : m + ":" + pad(s);
       }
 
@@ -190,7 +212,7 @@
         wrap.style.setProperty("--tc", state.timeColor || "#ffffff");
         if (!show) return;
         var lt = state.label || "";
-        var tt = format(remain);
+        var tt = format(remain, state.format);
         if (labelEl.textContent !== lt) { labelEl.textContent = lt; labelEl.setAttribute("data-text", lt); }
         if (timeEl.textContent !== tt) { timeEl.textContent = tt; timeEl.setAttribute("data-text", tt); }
       }

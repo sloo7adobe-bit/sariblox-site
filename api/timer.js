@@ -16,9 +16,11 @@ const DEF = {
   font: "maru", labelSize: 100, timeSize: 100, labelColor: "#ffd60a", timeColor: "#ffffff",
   outline: true, outlineW: 100, drop: true, dropW: 100, glow: 0,
   theme: "normal",
+  format: "colon", // colon = 1:00:00 / ms = 32m 50s
 };
 const FONTS = ["maru", "gothic", "pop", "dot", "mincho"];
 const THEMES = ["normal", "halloween"];
+const FORMATS = ["colon", "ms"];
 
 function clampPct(v, def) {
   v = Math.round(Number(v));
@@ -155,6 +157,7 @@ module.exports = async function handler(req, res) {
     if (body.shadow !== undefined) state.shadow = !!body.shadow;
     if (body.outline !== undefined) state.outline = !!body.outline;
     if (body.font !== undefined) state.font = FONTS.indexOf(String(body.font)) !== -1 ? String(body.font) : state.font || "maru";
+    if (body.format !== undefined) state.format = FORMATS.indexOf(String(body.format)) !== -1 ? String(body.format) : state.format || "colon";
     if (body.theme !== undefined) state.theme = THEMES.indexOf(String(body.theme)) !== -1 ? String(body.theme) : state.theme || "normal";
     if (body.labelSize !== undefined) state.labelSize = clampPct(body.labelSize, state.labelSize || 100);
     if (body.timeSize !== undefined) state.timeSize = clampPct(body.timeSize, state.timeSize || 100);

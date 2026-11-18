@@ -183,7 +183,7 @@ if (require.main === module) {
     console.log("");
     console.log("  ===== サリーぶろっくす タイマー 起動中 =====");
     console.log("");
-    console.log("  OBS(ブラウザソース):  http://localhost:" + port + "/timer");
+    console.log("  OBS(ブラウザソース):  http://localhost:" + port + "/timer   (幅 1920 × 高さ 1080 で追加)");
     console.log("  スマホで操作:          " + cloud + "/timer-c   (どの Wi-Fi・モバイル回線からでもOK)");
     console.log("");
     console.log("  この窓を閉じるとタイマーも止まります(最小化はOK)。");

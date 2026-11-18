@@ -205,6 +205,10 @@
 
       <div class="card">
         <h2>見た目</h2>
+        <div class="seg seg2" id="format-seg" style="margin-bottom:10px">
+          <button type="button" class="btn" data-format="colon">1:00:00</button>
+          <button type="button" class="btn" data-format="ms">32m 50s</button>
+        </div>
         <div class="seg" id="font-seg">
           <button type="button" class="btn f-maru" data-font="maru">まる</button>
           <button type="button" class="btn f-gothic" data-font="gothic">ゴシック</button>
@@ -265,7 +269,7 @@
 
       <p class="msg" id="msg"></p>
       <p class="hint">
-        家の PC で「タイマーを起動.bat」を開いておき、OBS には「ブラウザ」ソースで <code>http://localhost:3939/timer</code> を追加(幅 800 × 高さ 300 がおすすめ)。背景は自動で透明。このページはどの Wi-Fi・モバイル回線からでも使えます。
+        家の PC で「タイマーを起動.bat」を開いておき、OBS には「ブラウザ」ソースで <code>http://localhost:3939/timer</code> を追加。<b>幅 1920 × 高さ 1080</b> で入れると、画面の上のまん中に自動で置かれます(背景は透明)。このページはどの Wi-Fi・モバイル回線からでも使えます。
       </p>
     </div>
   </div>
@@ -380,9 +384,10 @@
       }
 
       function pad(n) { return (n < 10 ? "0" : "") + n; }
-      function format(ms) {
+      function format(ms, style) {
         var t = Math.max(0, Math.ceil(ms / 1000));
         var h = Math.floor(t / 3600), m = Math.floor((t % 3600) / 60), s = t % 60;
+        if (style === "ms") return h > 0 ? h + "h " + m + "m " + pad(s) + "s" : m > 0 ? m + "m " + pad(s) + "s" : s + "s";
         return h > 0 ? h + ":" + pad(m) + ":" + pad(s) : m + ":" + pad(s);
       }
 
@@ -391,7 +396,10 @@
         var remain = state.running ? state.endAt - (Date.now() + offset) : state.remainMs;
         var pl = $("pv-label"), pt = $("pv-time");
         var hw = state.theme === "halloween" && !!window.TimerHW;
-        var lt = state.label || "", tt = format(remain);
+        var lt = state.label || "", tt = format(remain, state.format);
+        document.querySelectorAll("#format-seg .btn").forEach(function (b) {
+          b.classList.toggle("on", b.getAttribute("data-format") === (state.format || "colon"));
+        });
         if (pl.textContent !== lt) { pl.textContent = lt; pl.setAttribute("data-text", lt); }
         if (pt.textContent !== tt) { pt.textContent = tt; pt.setAttribute("data-text", tt); }
         $("preview").classList.toggle("sh", state.shadow !== false);
@@ -482,6 +490,12 @@
         b.addEventListener("click", function () {
           if (state) state.font = b.getAttribute("data-font"); // 先に見た目へ反映
           act({ action: "set", font: b.getAttribute("data-font") });
+        });
+      });
+      document.querySelectorAll("#format-seg .btn").forEach(function (b) {
+        b.addEventListener("click", function () {
+          if (state) state.format = b.getAttribute("data-format");
+          act({ action: "set", format: b.getAttribute("data-format") });
         });
       });
       document.querySelectorAll("#theme-seg .btn").forEach(function (b) {
