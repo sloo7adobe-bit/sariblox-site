@@ -7,3 +7,5 @@ public/font/*.ttf
 tools
 # 家の PC で動かすタイマー本体(Vercel には上げない。中継の api/timer.js だけ Vercel で動かす)
 local-timer
+# OBS 用ページは家の PC(http://localhost:3939/timer)だけで出す。サイトに置くと間違えて OBS に入れたとき 1 秒ごとにアクセスされるため
+public/timer.html
