@@ -196,7 +196,7 @@
       }
 
       fetchState();
-      setInterval(fetchState, 3000);
+      setInterval(fetchState, 1000); // PC の中のサーバーに聞くだけなので、短い間隔でも費用はかからない
       setInterval(tick, 200);
     })();
   </script>

@@ -11,3 +11,8 @@ node_modules
 .agents
 ループ動画/*
 !ループ動画/使い方.txt
+
+# ローカルタイマーの合言葉と状態(この PC だけのもの)
+local-timer/config.json
+local-timer/state.json
+local-timer/state.json.tmp

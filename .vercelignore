@@ -5,3 +5,6 @@ public/font/*.ttf
 .git
 ループ動画
 tools
+# タイマーは PC の中で動かす(Vercel では動かさない。ストレージの上限を使い切った原因)
+local-timer
+api/timer.js

@@ -261,7 +261,7 @@
 
       <p class="msg" id="msg"></p>
       <p class="hint">
-        OBS には「ブラウザ」ソースで <code>https://sariblox.com/timer</code> を追加(幅 800 × 高さ 300 がおすすめ)。背景は自動で透明になります。
+        OBS には「ブラウザ」ソースで <code>http://localhost:<span id="obs-port">3939</span>/timer</code> を追加(幅 800 × 高さ 300 がおすすめ)。背景は自動で透明になります。
       </p>
     </div>
   </div>
@@ -281,7 +281,7 @@
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(body),
-        }).then(function (r) { return r.json().catch(function () { return { ok: false, error: "サーバーでエラーが起きました(" + r.status + ")。" }; }).then(function (j) { return { status: r.status, body: j }; }); });
+        }).then(function (r) { return r.json().catch(function () { return { ok: false, error: r.status === 404 ? "タイマーは PC で動かす方式になりました。PC で「タイマーを起動.bat」を開いて、そこに出る URL を使ってください。" : "サーバーでエラーが起きました(" + r.status + ")。" }; }).then(function (j) { return { status: r.status, body: j }; }); });
       }
 
       function showMsg(t) {
@@ -502,6 +502,7 @@
         }).catch(function () {});
       }, 2500);
       setInterval(tick, 200);
+      if (location.port) $("obs-port").textContent = location.port;
 
       // 保存済みパスワードで自動ログイン
       var saved = "";
