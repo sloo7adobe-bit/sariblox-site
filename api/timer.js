@@ -130,6 +130,12 @@ module.exports = async function handler(req, res) {
   }
 
   state.updatedAt = new Date(now).toISOString();
-  await S.writeJson(PATH, state);
+  try {
+    await S.writeJson(PATH, state);
+  } catch (e) {
+    console.error("timer save failed", e);
+    res.status(503).json({ ok: false, storeDown: true, error: "保存先(Vercel のストレージ)が一時停止中のため、いまは操作を保存できません。" });
+    return;
+  }
   res.status(200).json({ ok: true, state, now });
 };

@@ -12,7 +12,16 @@ module.exports = async function handler(req, res) {
     return;
   }
 
-  const config = await S.readJson(S.CONFIG_PATH, null);
+  // 読めなかったときに「まだパスワードが無い」と取り違えると、誰でも新しいパスワードを設定できてしまう
+  // なので保存先の障害時は、何もさせずに止める
+  let config;
+  try {
+    config = await S.readJsonStrict(S.CONFIG_PATH);
+  } catch (e) {
+    console.error("auth config read failed", e);
+    res.status(503).json({ ok: false, storeDown: true, error: "保存先が一時的に使えないため、いまはログインできません。" });
+    return;
+  }
   const loggedIn = S.sessionValid(req, config);
 
   if (req.method === "GET") {

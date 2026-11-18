@@ -281,7 +281,7 @@
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(body),
-        }).then(function (r) { return r.json().then(function (j) { return { status: r.status, body: j }; }); });
+        }).then(function (r) { return r.json().catch(function () { return { ok: false, error: "サーバーでエラーが起きました(" + r.status + ")。" }; }).then(function (j) { return { status: r.status, body: j }; }); });
       }
 
       function showMsg(t) {

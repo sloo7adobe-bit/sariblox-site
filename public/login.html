@@ -39,6 +39,11 @@
       function showErr(m) { err.textContent = m; err.hidden = !m; }
       fetch("/api/auth", { credentials: "same-origin" }).then(function (r) { return r.json(); }).then(function (j) {
         if (j.loggedIn) { location.href = "/admin"; return; }
+        if (!j.ok) { // 保存先の障害など: 設定画面は出さずに理由だけ見せる
+          showErr(j.error || "いまはログインできません。");
+          submit.disabled = true;
+          return;
+        }
         if (!j.setup) {
           mode = "setup";
           document.getElementById("title").textContent = "はじめての設定";
